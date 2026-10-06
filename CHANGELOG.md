@@ -3,6 +3,8 @@
 Định dạng theo [Keep a Changelog](https://keepachangelog.com/vi/1.1.0/), phiên bản theo [SemVer](https://semver.org/lang/vi/).
 
 ## [Chưa phát hành]
+### Thêm
+- Lõi mô phỏng mạch: 7 loại cổng, kiểm tra đoản mạch / dây hở / vòng lặp, bảng chân trị, Delay, Power (toggle theo mã Gray), mô hình lỗi stuck-at và gate-invert.
 
 ## [0.1.0] – 2026-10-06
 ### Thêm

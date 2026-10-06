@@ -27,7 +27,7 @@ Logic thời gian tính theo thời gian thực (`deltaTime`), không theo số 
 
 - **Area (A)**: số ô lưới bị chiếm (dây + cổng + via).
 - **Delay (D)**: độ sâu logic — số cổng nhiều nhất trên một đường từ đầu vào đến đầu ra.
-- **Power (P)**: tổng số lần đổi trạng thái 0↔1 trên mọi net khi duyệt hết bảng chân trị theo thứ tự mã Gray (đại lượng thay thế cho công suất động, vốn tỉ lệ với switching activity).
+- **Power (P)**: tổng số lần đổi trạng thái 0↔1 trên mọi net khi duyệt hết bảng chân trị theo thứ tự mã Gray (đại lượng thay thế cho công suất động, vốn tỉ lệ với switching activity). Tính cả net đầu vào; không tính bước quay vòng từ hàng cuối về hàng đầu. Ví dụ half adder: P = 8.
 
 **Chi phí:** `C = A + w_D·D + w_P·P`, với `w_D = 3`, `w_P = 1` (chỉnh sau khi chơi thử d01–d06).
 
@@ -114,3 +114,4 @@ Chỉ nói "tối ưu"/"tối thiểu" khi thuật toán đã duyệt hết khô
 | Ngày | Tham số | Cũ → Mới | Lý do |
 | --- | --- | --- | --- |
 | 06/10/2026 | — | Khởi tạo | Duyệt luật |
+| 07/10/2026 | Định nghĩa P | Làm rõ, không đổi luật | Ghi rõ cách đếm net đầu vào và bước quay vòng khi viết `simulate.ts` |
