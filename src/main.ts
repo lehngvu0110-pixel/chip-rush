@@ -8,18 +8,16 @@ import { attachPointer } from './input/pointer';
 import { createSafeStorage } from './platform/storage';
 import { watchVisibility } from './platform/visibility';
 import { installGlobalErrorHandlers, showErrorScreen } from './platform/errors';
+import { loadSave, recordRuntimeScore, writeSave } from './core/progress';
+import { vnDateSeed } from './core/util/rng';
 import { FrameStats, QUALITY_WINDOW, decideQuality } from './debug/stats';
 import { createPerfOverlay } from './debug/perf-overlay';
 import { SandboxScene } from './debug/sandbox-scene';
+import { RuntimeGame, type RuntimeMode, type RuntimeResult } from './modes/runtime/game';
+import { GATE_HINT, RuntimeScene, layoutRuntime } from './modes/runtime/runtime-scene';
 
-// Điểm vào của game. Hub thật làm ngày 22/10; hiện CHƠI NGAY mở màn THỬ NGHIỆM KỸ THUẬT
-// để đo hiệu năng trên điện thoại (xem docs/TESTING.md).
-
-interface Settings {
-  muted: boolean;
-  reducedMotion: boolean;
-}
-const SAVE_KEY = 'chiprush.v1';
+// Điểm vào của game. Hub thật (hình die chip, 3 chế độ) làm ngày 22/10;
+// hiện màn bắt đầu có: CHƠI NGAY (VẬN HÀNH – Vô tận), Thử thách 60 giây, và màn đo hiệu năng.
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -28,43 +26,46 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
   return e;
 }
 
+function button(cls: string, text: string): HTMLButtonElement {
+  const b = el('button', `btn ${cls}`.trim(), text);
+  b.type = 'button';
+  return b;
+}
+
 function boot(root: HTMLElement): void {
   const ui = el('div', 'ui');
   const stage = el('div', 'stage');
   root.append(stage, ui);
+  const params = new URLSearchParams(location.search);
 
-  // 1. Lỗi chết → màn hình lỗi (cài sớm nhất có thể; vòng lặp tạo sau nên dừng qua biến)
+  // 1. Lỗi chết → màn hình lỗi (cài sớm nhất; vòng lặp tạo sau nên dừng qua biến)
   let stopLoop = (): void => {};
   installGlobalErrorHandlers(window, versionLabel(), (r) => {
-    // Màn hình lỗi phải hiện kể cả khi việc dừng vòng lặp cũng hỏng.
     try {
       stopLoop();
     } catch {
-      /* bỏ qua */
+      /* màn hình lỗi vẫn phải hiện */
     }
     showErrorScreen(ui, r);
   });
 
-  // 2. Lưu trữ + cài đặt
-  const storage = createSafeStorage();
-  const save = storage.get<{ settings?: Partial<Settings> }>(SAVE_KEY, {});
-  const settings: Settings = { muted: false, reducedMotion: false, ...save.settings };
-  const persistSettings = (): void => {
-    const cur = storage.get<Record<string, unknown>>(SAVE_KEY, {});
-    storage.set(SAVE_KEY, { ...cur, version: 1, settings });
-  };
+  // 2. Lưu trữ
   const toast = (msg: string): void => {
     const t = el('div', 'toast', msg);
     t.setAttribute('role', 'status');
     ui.append(t);
     setTimeout(() => t.remove(), 5000);
   };
+  const storage = createSafeStorage();
+  const { data: save, wasReset } = loadSave(storage);
+  if (wasReset) toast('Dữ liệu lưu cũ không đọc được nên đã được đặt lại.');
   storage.onPersistenceLost(() => toast('Tiến độ không lưu được trên trình duyệt này.'));
+  const persist = (): void => void writeSave(storage, save);
 
   // 3. Canvas, âm thanh, vòng lặp
   const surface = createSurface(stage);
-  surface.reducedMotion ||= settings.reducedMotion;
-  const audio = createAudio(undefined, settings.muted);
+  surface.reducedMotion ||= save.settings.reducedMotion;
+  const audio = createAudio(undefined, save.settings.muted);
   const stats = new FrameStats();
   let scene: Scene | null = null;
   let pendingInputTs = -1;
@@ -81,12 +82,10 @@ function boot(root: HTMLElement): void {
       }
       // Tự tắt glow nếu máy không theo kịp (bỏ qua 2 giây đầu vì lúc tải hay giật).
       if (++warmup > QUALITY_WINDOW && warmup % 60 === 0) {
-        const q = decideQuality(surface.quality, stats.summary(QUALITY_WINDOW));
-        if (q !== surface.quality) surface.quality = q;
+        surface.quality = decideQuality(surface.quality, stats.summary(QUALITY_WINDOW));
       }
     },
   });
-
   stopLoop = () => loop.stop();
 
   attachPointer(surface.canvas, (p) => {
@@ -94,79 +93,195 @@ function boot(root: HTMLElement): void {
     scene?.onPointer?.(p);
   });
 
-  // 4. Tạm dừng khi rời đi
+  const setScene = (next: Scene | null): void => {
+    scene?.exit?.();
+    scene = next;
+    if (next) {
+      next.enter?.(surface);
+      loop.start();
+    } else {
+      loop.stop();
+    }
+  };
+
+  // 4. Thanh trên: tạm dừng + tắt tiếng (+ tải nặng ở màn đo hiệu năng)
+  const hud = el('div', 'hud');
+  hud.hidden = true;
+  const pauseBtn = button('btn-small', 'Dừng');
+  pauseBtn.setAttribute('aria-label', 'Tạm dừng');
+  const muteBtn = button('btn-small', save.settings.muted ? 'Bật tiếng' : 'Tắt tiếng');
+  muteBtn.setAttribute('aria-pressed', String(save.settings.muted));
+  const heavyBtn = button('btn-small', 'Tải nặng: tắt');
+  heavyBtn.hidden = true;
+  hud.append(pauseBtn, muteBtn, heavyBtn);
+  ui.append(hud);
+  muteBtn.addEventListener('click', () => {
+    audio.muted = save.settings.muted = !save.settings.muted;
+    muteBtn.textContent = save.settings.muted ? 'Bật tiếng' : 'Tắt tiếng';
+    muteBtn.setAttribute('aria-pressed', String(save.settings.muted));
+    persist();
+  });
+
+  // 5. Tạm dừng (nút Dừng, ẩn tab, blur, xoay màn hình)
   const pausePanel = el('div', 'panel pause-panel');
   pausePanel.hidden = true;
-  pausePanel.append(el('p', 'subtitle', 'Đã tạm dừng'));
-  const resumeBtn = el('button', 'btn', 'Tiếp tục');
-  resumeBtn.type = 'button';
-  pausePanel.append(resumeBtn);
+  const resumeBtn = button('btn-primary', 'Tiếp tục');
+  const quitBtn = button('btn-secondary', 'Về màn chính');
+  pausePanel.append(el('p', 'subtitle', 'Đã tạm dừng'), resumeBtn, quitBtn);
   ui.append(pausePanel);
+  const doPause = (): void => {
+    if (!scene || !resultPanel.hidden) return;
+    scene.pause?.();
+    pausePanel.hidden = false;
+    resumeBtn.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+  };
+  pauseBtn.addEventListener('click', doPause);
   resumeBtn.addEventListener('click', () => {
     pausePanel.hidden = true;
     scene?.resume?.();
+  });
+  quitBtn.addEventListener('click', () => {
+    pausePanel.hidden = true;
+    showStart();
   });
   watchVisibility({
     doc: document,
     win: window,
     onPause: (reason) => {
-      if (!scene) return;
-      scene.pause?.();
-      pausePanel.hidden = false;
+      doPause();
       if (reason === 'hidden') loop.stop();
     },
     onVisible: () => {
-      if (scene) loop.start(); // vẫn ở trạng thái dừng, chờ người chơi bấm Tiếp tục
+      if (scene) loop.start(); // game vẫn dừng, chờ người chơi bấm Tiếp tục
     },
   });
 
-  // 5. Màn bắt đầu
+  // 6. Màn kết quả
+  const resultPanel = el('div', 'panel result-panel');
+  resultPanel.hidden = true;
+  resultPanel.setAttribute('role', 'dialog');
+  resultPanel.setAttribute('aria-label', 'Kết quả');
+  ui.append(resultPanel);
+  let lastMode: RuntimeMode = 'endless';
+
+  const showResult = (r: RuntimeResult): void => {
+    const isRecord = recordRuntimeScore(save, r.mode, r.score);
+    persist();
+    const best = r.mode === 'endless' ? save.runtime.bestEndless : save.runtime.best60;
+    resultPanel.replaceChildren();
+    resultPanel.append(el('h2', 'result-title', r.mode === 'endless' ? 'Hết mạng!' : 'Hết giờ!'));
+    const score = el('p', 'result-score', String(r.score));
+    score.setAttribute('aria-label', `Điểm ${r.score}`);
+    resultPanel.append(score);
+    resultPanel.append(el('p', isRecord && r.score > 0 ? 'result-record' : 'subtitle', isRecord && r.score > 0 ? 'Kỷ lục mới!' : `Kỷ lục: ${best}`));
+    const statsList = el('ul', 'result-stats');
+    const li = (k: string, v: string): void => {
+      const item = el('li', '');
+      item.append(el('span', '', k), el('strong', '', v));
+      statsList.append(item);
+    };
+    li('Độ chính xác', `${Math.round(r.accuracy * 100)}% (${r.correct}/${r.answered})`);
+    li('Chuỗi đúng dài nhất', String(r.bestCombo));
+    resultPanel.append(statsList);
+    if (r.weakest) {
+      // Giải thích độ khó thích nghi (SPEC 5.4): người chơi biết vì sao game ra nhiều câu loại đó
+      resultPanel.append(
+        el('p', 'note', `Bạn hay sai cổng ${r.weakest.gate} (${GATE_HINT[r.weakest.gate] ?? ''}) nên game đã ra thêm câu ${r.weakest.gate} để bạn luyện.`),
+      );
+    }
+    const again = button('btn-primary', 'Chơi lại');
+    const home = button('btn-secondary', 'Về màn chính');
+    again.addEventListener('click', () => startRuntime(lastMode));
+    home.addEventListener('click', showStart);
+    resultPanel.append(again, home);
+    resultPanel.hidden = false;
+    hud.hidden = true;
+    // Đưa focus vào nút chính cho người dùng bàn phím/trình đọc màn hình, không vẽ viền focus khi chạm
+    again.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+  };
+
+  // 7. Màn bắt đầu
   const start = el('div', 'panel start-panel');
-  const playBtn = el('button', 'btn btn-primary', 'CHƠI NGAY');
-  playBtn.type = 'button';
-  start.append(
-    el('h1', 'title', 'CHIP RUSH'),
-    el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'),
-    playBtn,
-    el('p', 'note', 'Bản thử nghiệm kỹ thuật: chạm hoặc kéo trên lưới.'),
-    el('p', 'version', versionLabel()),
-  );
   ui.append(start);
 
-  // 6. Thanh trên: tắt tiếng + tải nặng
-  const hud = el('div', 'hud');
-  hud.hidden = true;
-  const muteBtn = el('button', 'btn btn-small', settings.muted ? 'Bật tiếng' : 'Tắt tiếng');
-  muteBtn.type = 'button';
-  muteBtn.setAttribute('aria-pressed', String(settings.muted));
-  const heavyBtn = el('button', 'btn btn-small', 'Tải nặng: tắt');
-  heavyBtn.type = 'button';
-  hud.append(muteBtn, heavyBtn);
-  ui.append(hud);
-  muteBtn.addEventListener('click', () => {
-    audio.muted = settings.muted = !settings.muted;
-    muteBtn.textContent = settings.muted ? 'Bật tiếng' : 'Tắt tiếng';
-    muteBtn.setAttribute('aria-pressed', String(settings.muted));
-    persistSettings();
-  });
-
-  playBtn.addEventListener('click', () => {
-    // Mở khóa âm thanh NGAY trong thao tác chạm (yêu cầu iOS); không chờ kết quả để không chậm.
+  const startRuntime = (mode: RuntimeMode): void => {
+    lastMode = mode;
+    // Mở khóa âm thanh NGAY trong thao tác chạm (yêu cầu iOS); không chờ để không chậm.
     void audio.unlock();
-    const sandbox = new SandboxScene(audio);
-    heavyBtn.addEventListener('click', () => {
-      sandbox.heavy = !sandbox.heavy;
-      heavyBtn.textContent = `Tải nặng: ${sandbox.heavy ? 'bật' : 'tắt'}`;
-    });
-    scene = sandbox;
-    sandbox.enter(surface);
-    start.remove();
+    // 60 giây: seed theo ngày (cả nước cùng chuỗi gói); Vô tận: ngẫu nhiên. ?seed= để test tái lập.
+    const seedParam = Number(params.get('seed'));
+    const seed = Number.isFinite(seedParam) && params.has('seed') ? seedParam : mode === 'sixty' ? vnDateSeed() : (Math.random() * 2 ** 32) >>> 0;
+    const game = new RuntimeGame(mode, seed);
+    exposeForTests(game);
+    start.hidden = true;
+    resultPanel.hidden = true;
+    pausePanel.hidden = true;
     hud.hidden = false;
-    loop.start();
-  });
+    heavyBtn.hidden = true;
+    setScene(new RuntimeScene(game, audio, showResult));
+  };
 
-  // 7. Công cụ dev
-  const params = new URLSearchParams(location.search);
+  const showStart = (): void => {
+    setScene(null);
+    hud.hidden = true;
+    resultPanel.hidden = true;
+    pausePanel.hidden = true;
+    start.replaceChildren();
+    const play = button('btn-primary', 'CHƠI NGAY');
+    const sixty = button('', 'Thử thách 60 giây');
+    const perf = button('btn-link', 'Đo hiệu năng (dành cho nhóm phát triển)');
+    play.addEventListener('click', () => startRuntime('endless'));
+    sixty.addEventListener('click', () => startRuntime('sixty'));
+    perf.addEventListener('click', () => {
+      void audio.unlock();
+      const sandbox = new SandboxScene(audio);
+      heavyBtn.hidden = false;
+      heavyBtn.onclick = () => {
+        sandbox.heavy = !sandbox.heavy;
+        heavyBtn.textContent = `Tải nặng: ${sandbox.heavy ? 'bật' : 'tắt'}`;
+      };
+      start.hidden = true;
+      hud.hidden = false;
+      setScene(sandbox);
+    });
+    start.append(
+      el('h1', 'title', 'CHIP RUSH'),
+      el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'),
+      play,
+      el('p', 'note', 'VẬN HÀNH: chọn cổng logic cho ra đúng bit trước khi gói bit chạm khe.'),
+      sixty,
+      el('p', 'note', `Kỷ lục: Vô tận ${save.runtime.bestEndless} · 60 giây ${save.runtime.best60}`),
+      perf,
+      el('p', 'version', versionLabel()),
+    );
+    start.hidden = false;
+  };
+
+  // Móc cho test tự động (Playwright) đọc trạng thái — chỉ khi URL có ?e2e hoặc ?debug.
+  function exposeForTests(game: RuntimeGame): void {
+    if (!params.has('e2e') && !params.has('debug')) return;
+    (window as unknown as { __CHIPRUSH__: unknown }).__CHIPRUSH__ = {
+      runtime: () => ({
+        mode: game.mode,
+        score: game.score,
+        lives: game.lives,
+        combo: game.combo,
+        ended: game.ended,
+        paused: game.paused,
+        unlocked: [...game.unlocked],
+        validGates: [...game.packet.validGates],
+        packet: { a: game.packet.a, b: game.packet.b, target: game.packet.target },
+        fall: game.fall,
+        timeLeft: game.timeLeft,
+      }),
+      // vị trí 4 nút cổng (CSS px) để test bấm bằng chạm thật lên canvas
+      buttons: () => layoutRuntime(surface.width, surface.height).buttons,
+    };
+  }
+
+  showStart();
+
+  // 8. Công cụ dev
   if (params.has('debug')) {
     createPerfOverlay(ui, stats, {
       version: versionLabel(),

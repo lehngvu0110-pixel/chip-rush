@@ -172,3 +172,35 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* --- Màn bắt đầu / kết quả --- */
+.start-panel .btn { min-width: 240px; }
+.btn-link {
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  font-weight: 400;
+  font-size: 14px;
+  text-decoration: underline;
+}
+.hud > [hidden] { display: none; }
+
+.result-panel { background: rgba(11, 16, 32, 0.92); gap: 12px; }
+.result-panel .btn { min-width: 220px; }
+.result-title { margin: 0; color: var(--text-dim); font-size: 20px; }
+.result-score {
+  margin: 0;
+  font: 700 64px ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  color: var(--accent);
+}
+.result-record { margin: 0; color: var(--accent-2); font-weight: 700; }
+.result-stats { list-style: none; padding: 0; margin: 4px 0; min-width: 260px; }
+.result-stats li {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 6px 0;
+  border-bottom: 1px solid #1d2647;
+  color: var(--text-dim);
+}
+.result-stats strong { color: var(--text); }

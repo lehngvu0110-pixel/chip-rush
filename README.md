@@ -4,7 +4,7 @@ Game web về vi mạch, chơi trên điện thoại: **Thiết kế** một con
 
 Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 
-> Trạng thái: đang phát triển (v0.1.0). Bản nộp dự kiến 26/10/2026.
+> Trạng thái: đang phát triển (v0.1.0). Đã chơi được: VẬN HÀNH. Đang làm: THIẾT KẾ, KIỂM THỬ. Bản nộp dự kiến 26/10/2026.
 
 ## Chơi thử
 - Bản mới nhất: _(link GitHub Pages sẽ cập nhật sau khi bật Pages)_
@@ -34,6 +34,8 @@ npm run dev        # mở http://localhost:5173 ; điện thoại cùng Wi-Fi m�
 npm test           # unit test
 npm run build      # build ra thư mục dist/
 npm run ci         # typecheck + test + build + kiểm tra dung lượng
+npx playwright install chromium webkit   # lần đầu
+npm run e2e        # test đầu-cuối trên bản build
 ```
 
 ## Tài liệu

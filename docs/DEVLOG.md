@@ -2,6 +2,29 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-07 (task ngày 09/10, làm sớm)
+**Đã làm**
+- Chế độ **VẬN HÀNH** chơi trọn vòng: CHƠI NGAY → Vô tận (3 mạng, độ khó thích nghi) hoặc Thử thách 60 giây (seed theo ngày) → màn kết quả → Chơi lại / Về màn chính; kỷ lục lưu lại sau khi tải trang.
+- Logic thuần (test được): `core/util/rng.ts`, `core/scoring/runtime.ts`, `ai/adaptive.ts` (Thompson sampling + điều tốc), `modes/runtime/spawner.ts`, `modes/runtime/game.ts`, `core/progress.ts`.
+- Màn chơi: `modes/runtime/runtime-scene.ts` — gói bit rơi, 4 nút cổng 2×2 (cao 72 px) có gợi ý ý nghĩa cổng, phím tắt 1–4, nút Dừng, hiệu ứng đúng/sai, thông báo mở khóa cổng.
+- Màn kết quả giải thích độ khó thích nghi ("Bạn hay sai cổng XOR nên game đã ra thêm câu XOR").
+- 95 unit test; Playwright E2E kịch bản 1 (2 test) xanh trên Chromium giả lập Pixel 7; CI thêm bước E2E (Chromium + WebKit).
+
+**Phát hiện khi viết test**
+- Phép kiểm chứng độ khó thích nghi trong SPEC sai: với người chơi có xác suất đúng cố định, điều tốc không thể kéo tỉ lệ đúng về 75–85%. Đã đổi sang mô hình "càng nhanh càng dễ sai": có thích nghi đạt 81%, đường cố định chỉ 74% (ngoài vùng mục tiêu).
+
+**Phát hiện khi xem ảnh chụp màn hình**
+- Trả lời nhanh liên tiếp làm chữ "+20 ×2" chồng lên nhau → chỉ giữ 1 chữ nổi.
+- "Đúng là: XOR" hiện khi gói mới đã ra → dễ hiểu nhầm là đáp án gói mới; đổi thành "Gói vừa rồi cần: XOR".
+- Viền focus màu cam hiện sẵn trên nút khi mở trang bằng điện thoại → bỏ tự focus ở màn bắt đầu.
+
+**Chưa kiểm chứng**
+- Dự án WebKit (giả lập iPhone SE) của Playwright chưa chạy được ở máy làm việc (không tải được trình duyệt); sẽ chạy lần đầu trên GitHub Actions sau khi push.
+
+**Việc tiếp theo**
+- Vũ: chơi thử trên 3 điện thoại; đo hiệu năng bằng `?debug=1` (giờ đo được ngay khi đang chơi VẬN HÀNH).
+- 10–11/10: `grid.ts` (lưới 2 lớp) + `netlist.ts` cho chế độ THIẾT KẾ.
+
 ## 2026-10-07 (task ngày 08/10, làm sớm)
 **Đã làm**
 - `src/platform/`: `storage.ts` (localStorage bọc try/catch, RAM dự phòng, báo mất lưu đúng 1 lần), `visibility.ts` (ẩn tab / blur / xoay → tạm dừng), `errors.ts` (bắt lỗi toàn cục, mã lỗi ổn định dạng E-XXXXXX, màn hình "Có lỗi xảy ra").

@@ -4,6 +4,8 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Chế độ VẬN HÀNH: Vô tận (3 mạng, độ khó thích nghi) và Thử thách 60 giây (cùng chuỗi gói theo ngày), màn kết quả, lưu kỷ lục.
+- Test tự động đầu-cuối bằng Playwright.
 - Nền tảng runtime: vòng lặp theo thời gian thực, canvas nét theo DPR (tối đa 2x), cảm ứng, âm thanh tổng hợp mở khóa bằng lần chạm đầu, tạm dừng khi ẩn tab/xoay màn hình, lưu trữ an toàn có dự phòng, màn hình lỗi có mã lỗi.
 - Overlay đo hiệu năng `?debug=1` và màn thử nghiệm kỹ thuật (thay tạm cho nút CHƠI NGAY).
 ### Sửa

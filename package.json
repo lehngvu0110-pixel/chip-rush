@@ -13,12 +13,14 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "size": "node tools/check-size.mjs",
-    "ci": "npm run typecheck && npm run test && npm run build && npm run size"
+    "ci": "npm run typecheck && npm run test && npm run build && npm run size",
+    "e2e": "playwright test"
   },
   "engines": {
     "node": ">=20"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@types/node": "^26.6.4",
     "typescript": "^7.0.2",
     "vite": "^8.3.3",

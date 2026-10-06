@@ -19,6 +19,12 @@
 
 Logic thời gian tính theo thời gian thực (`deltaTime`), không theo số frame: chạy giống nhau ở 60 Hz và 120 Hz.
 
+Làm rõ khi cài đặt (07/10, không đổi luật):
+- Chạm một nút = **trả lời ngay** cho gói đang rơi; gói mới xuất hiện ngay sau đó. Gói chạm khe mà chưa trả lời = **trượt** (tính như sai).
+- Mỗi lúc chỉ có 1 gói trên màn hình.
+- Cổng đã mở theo **điểm cao nhất từng đạt** trong ván, nên bị trừ điểm (60 giây) không làm khóa lại cổng.
+- Thử thách 60 giây dùng seed theo ngày giờ Việt Nam (YYYYMMDD): cùng ngày, mọi người gặp cùng chuỗi gói.
+
 ## 2. THIẾT KẾ (giải đố)
 
 **Qua màn** khi: đúng 100% số hàng bảng chân trị, không đoản mạch, mọi đầu ra đều được nối. Đúng một phần chỉ hiện phản hồi ("3/4 hàng đúng"). Không có thua; kiểm tra, hoàn tác, làm lại không giới hạn.
@@ -100,7 +106,8 @@ Chỉ nói "tối ưu"/"tối thiểu" khi thuật toán đã duyệt hết khô
 - Mục tiêu: tỉ lệ đúng 75–85% trên 20 gói gần nhất.
 - Tốc độ: > 85% → thời gian rơi × 0,95; < 75% → × 1,05; luôn trong 0,9–3,0 s (thay đường tăng tốc cố định ở chế độ này).
 - Loại gói: mỗi ô (cổng đáp án, cặp A-B) có Beta(sai + 1, đúng + 1); Thompson sampling ưu tiên ô hay sai; trộn 30% gói ngẫu nhiên đều.
-- Kiểm chứng: người chơi giả lập với xác suất đúng cố định theo cổng hội tụ về 75–85% sau 60 gói; cùng seed → cùng chuỗi gói.
+- Điều tốc chỉ xét sau mỗi 5 câu trả lời và cần ≥ 10 câu trong cửa sổ, để tốc độ không nhảy liên tục.
+- Kiểm chứng (sửa 07/10): người chơi giả lập có xác suất đúng **phụ thuộc tốc độ** (kỹ năng theo cổng × fall/(fall + 0,3)) được giữ ở tỉ lệ đúng trung bình 75–85% (đo được 81%; cùng mô hình với đường tăng tốc cố định chỉ đạt 74%). Bản cũ của câu này giả định xác suất đúng cố định — khi đó điều tốc không thể ảnh hưởng tỉ lệ đúng, nên phép kiểm chứng đó vô nghĩa. Cùng seed → cùng chuỗi gói.
 
 ### 5.4 Câu hiển thị cho người chơi
 | Tình huống | Câu |
@@ -114,4 +121,5 @@ Chỉ nói "tối ưu"/"tối thiểu" khi thuật toán đã duyệt hết khô
 | Ngày | Tham số | Cũ → Mới | Lý do |
 | --- | --- | --- | --- |
 | 06/10/2026 | — | Khởi tạo | Duyệt luật |
+| 07/10/2026 | VẬN HÀNH | Làm rõ, không đổi luật | Chạm = trả lời ngay; trượt khi chạm khe; mở khóa theo điểm cao nhất; nhịp điều tốc 5 câu; sửa phép kiểm chứng độ khó thích nghi |
 | 07/10/2026 | Định nghĩa P | Làm rõ, không đổi luật | Ghi rõ cách đếm net đầu vào và bước quay vòng khi viết `simulate.ts` |

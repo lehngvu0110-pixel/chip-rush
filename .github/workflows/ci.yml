@@ -29,6 +29,14 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run size
+      # E2E trên bản build: Chromium (giả lập Pixel 7) + WebKit (giả lập iPhone SE)
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-traces
+          path: test-results/
       - uses: actions/upload-pages-artifact@v3
         if: github.ref == 'refs/heads/main' && github.event_name == 'push'
         with:
