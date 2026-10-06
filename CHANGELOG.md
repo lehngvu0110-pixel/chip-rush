@@ -4,6 +4,11 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Nền tảng runtime: vòng lặp theo thời gian thực, canvas nét theo DPR (tối đa 2x), cảm ứng, âm thanh tổng hợp mở khóa bằng lần chạm đầu, tạm dừng khi ẩn tab/xoay màn hình, lưu trữ an toàn có dự phòng, màn hình lỗi có mã lỗi.
+- Overlay đo hiệu năng `?debug=1` và màn thử nghiệm kỹ thuật (thay tạm cho nút CHƠI NGAY).
+### Sửa
+- Gọi `requestAnimationFrame` sai ngữ cảnh làm game không chạy và màn hình lỗi không hiện.
+- Chữ tiếng Việt trong font mono hệ thống bị đặt dấu sai.
 - Lõi mô phỏng mạch: 7 loại cổng, kiểm tra đoản mạch / dây hở / vòng lặp, bảng chân trị, Delay, Power (toggle theo mã Gray), mô hình lỗi stuck-at và gate-invert.
 
 ## [0.1.0] – 2026-10-06

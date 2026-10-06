@@ -15,4 +15,5 @@ Nhiều font OFL (nhất là font pixel/display) thiếu dấu tiếng Việt. F
 - Đủ glyph cho toàn bộ chữ tiếng Việt trong chuỗi test.
 - **Không có tính năng `tnum`** (số đều độ rộng) → số trong bảng điểm dùng font mono hệ thống.
 - **Thiếu ✓ ✕ ↔** → các ký hiệu này vẽ bằng Canvas/SVG, không dùng ký tự.
+- **Font mono hệ thống đặt dấu tiếng Việt sai** (thấy khi chạy thử 08/10: "trễ" hiện thành "trê˜") → font mono chỉ dùng cho chữ số và ký tự ASCII; mọi chữ có dấu dùng Be Vietnam Pro.
 - Còn phải xem dấu hiển thị đúng trên máy thật bằng `font-test.html`.

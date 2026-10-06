@@ -17,9 +17,19 @@ Kế hoạch đầy đủ nằm trong tài liệu kế hoạch dự án; file n�
 | Độ trễ chạm p95 | ≤ 50 ms | ≤ 50 ms | — |
 | Chênh tốc độ so với 60 Hz | — | — | ≤ 2% |
 
+## Cách đo trên điện thoại
+1. Trên Mac: `npm run dev` (máy và điện thoại cùng Wi-Fi), xem IP của Mac.
+2. Điện thoại mở `http://<IP-Mac>:5173/?debug=1` → bấm **CHƠI NGAY**.
+3. Bấm **Đo 60 s**. Trong 30 s đầu: chạm và kéo liên tục trên lưới. 30 s sau: bật **Tải nặng** và tiếp tục chạm.
+4. Hết giờ → **Sao chép** → dán JSON vào bảng dưới (cột Kết quả), ghi thêm "Chu kỳ chấm chạy" hiển thị trên màn.
+5. iPhone 14 Pro Max: chỉ cần ghi "Chu kỳ chấm chạy" (phải ≈ 3,00 s như iPhone 11).
+
+Lưu ý: dev server chưa nén/tối ưu như bản build; số đo khung hình vẫn dùng được, còn thời gian tải phải đo trên bản GitHub Pages.
+
 ## Kết quả đo
 | Ngày | Bản (hash) | Thiết bị | Chỉ số | Kết quả | Đạt? |
 | --- | --- | --- | --- | --- | --- |
+| 07/10 | 47836a2+ | Chromium headless giả lập Pixel 7 (không phải máy thật, chỉ để so sánh) | frame trung vị / p95; trễ chạm p95; chu kỳ chấm | 16,7 / 16,7 ms; 36,7 ms; 3,00 s | Tham khảo |
 
 ## Kiểm tra dấu tiếng Việt (`font-test.html`)
 | Thiết bị | Ngày | Kết quả |
