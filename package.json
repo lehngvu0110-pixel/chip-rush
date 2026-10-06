@@ -1,0 +1,27 @@
+{
+  "name": "chip-rush",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CHIP RUSH – game web về vi mạch: Thiết kế, Kiểm thử, Vận hành. Dự thi Phần thi Công nghệ, Road to Predator League 2027.",
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "size": "node tools/check-size.mjs",
+    "ci": "npm run typecheck && npm run test && npm run build && npm run size"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.4",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.3",
+    "vitest": "^5.0.3"
+  }
+}

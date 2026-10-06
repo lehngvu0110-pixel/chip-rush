@@ -1,0 +1,25 @@
+<!doctype html>
+<!-- Trang kiểm tra dấu tiếng Việt, CHỈ dùng khi chạy `npm run dev` (không nằm trong bản build).
+     Mở trên điện thoại: http://<IP-máy-tính>:5173/font-test.html -->
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kiểm tra font</title>
+    <script type="module">import './src/ui/styles.css';</script>
+    <style>
+      body { padding: 16px; text-align: left; }
+      .row { margin: 12px 0; line-height: 1.6; }
+      .big { font-size: 28px; }
+      .mono { font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+    </style>
+  </head>
+  <body>
+    <div class="row big">Thiết kế · Kiểm thử · Vận hành</div>
+    <div class="row big" style="font-weight:700">THIẾT KẾ · KIỂM THỬ · VẬN HÀNH</div>
+    <div class="row">ỹ ữ ặ ẩ ộ ợ ư đ Đ — Ầ Ẫ Ậ Ẽ Ễ Ệ Ỗ Ộ Ở Ỡ Ợ Ừ Ử Ữ Ự Ỳ Ỷ Ỹ Ỵ</div>
+    <div class="row">Người chơi đạt 3 sao ở màn Cộng đủ, vượt par của AI kỹ sư.</div>
+    <div class="row mono">Điểm: 1000 · 0987 · 1111 (số dùng font mono hệ thống vì Be Vietnam Pro không có tnum)</div>
+    <div class="row">Đạt nếu: không có ô vuông/ký tự lạ, dấu không chồng lên chữ, dấu mũ + dấu thanh (ầ ẫ ậ) đặt đúng vị trí.</div>
+  </body>
+</html>
