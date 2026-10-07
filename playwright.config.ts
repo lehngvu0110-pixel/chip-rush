@@ -12,7 +12,7 @@ export default defineConfig({
   use: { baseURL, trace: 'retain-on-failure' },
   webServer: process.env.E2E_BASE_URL
     ? undefined
-    : { command: 'npx vite preview --port 4173 --strictPort', url: baseURL, reuseExistingServer: !process.env.CI },
+    : { command: 'npx vite preview --host 127.0.0.1 --port 4173 --strictPort', url: baseURL, reuseExistingServer: !process.env.CI },
   projects: [
     { name: 'android-chromium', use: { ...devices['Pixel 7'] } },
     // WebKit của Playwright gần Safari nhưng KHÔNG thay được test trên iPhone thật (xem docs/TESTING.md).
