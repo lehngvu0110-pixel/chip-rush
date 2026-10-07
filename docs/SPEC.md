@@ -58,6 +58,13 @@ Làm rõ khi cài đặt (07/10, không đổi luật):
 
 Lưới tối đa 8 cột × 10 hàng để ô ≥ 44 px trên màn rộng 360 px.
 
+Làm rõ khi cài đặt lưới (07/10, **chờ Vũ duyệt**, không đổi luật đã duyệt):
+- **Dây = cạnh nối tâm 2 ô kề nhau** (ngang/dọc) trên một lớp. Hai dây song song sát nhau không dính nhau.
+- Mọi dây cùng lớp chạm vào cùng một ô thường thì **nối với nhau** tại ô đó → hai dây **cắt nhau cùng lớp = chập** (d03). Muốn vượt qua phải lên lớp 2 bằng via (d09).
+- **Cổng chiếm 1 ô** ở lớp 1. Mỗi phía của ô cổng là một chân riêng: phía chân ra (mặc định bên phải, xoay được) và 3 phía còn lại là chân vào. Mọi cổng 2 đầu vào trong game đều giao hoán nên không cần phân biệt chân 1/chân 2. Cổng 2 đầu vào phải có đúng 2 dây vào; NOT đúng 1.
+- Lớp 2 đi được phía trên cổng và chân mà không nối vào; chỉ nối xuống lớp 1 qua via đặt ở ô thường.
+- **Area** = số ô có dây ở lớp 1 + số ô có dây ở lớp 2 + số cổng + số via; **không** tính ô chân vào/đèn (cố định của màn). Ví dụ: dây thẳng qua 4 ô giữa = 4; đi cầu vượt tốn thêm ô lớp 2 và 2 via.
+
 ## 3. KIỂM THỬ (suy luận)
 
 | Thành phần | Quy tắc |
@@ -123,3 +130,4 @@ Chỉ nói "tối ưu"/"tối thiểu" khi thuật toán đã duyệt hết khô
 | 06/10/2026 | — | Khởi tạo | Duyệt luật |
 | 07/10/2026 | VẬN HÀNH | Làm rõ, không đổi luật | Chạm = trả lời ngay; trượt khi chạm khe; mở khóa theo điểm cao nhất; nhịp điều tốc 5 câu; sửa phép kiểm chứng độ khó thích nghi |
 | 07/10/2026 | Định nghĩa P | Làm rõ, không đổi luật | Ghi rõ cách đếm net đầu vào và bước quay vòng khi viết `simulate.ts` |
+| 07/10/2026 | Lưới THIẾT KẾ | Làm rõ, chờ duyệt | Dây theo cạnh, cắt nhau cùng lớp = chập, cổng 1 ô có chân theo phía, cách tính Area |

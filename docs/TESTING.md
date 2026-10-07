@@ -19,7 +19,7 @@ Kế hoạch đầy đủ nằm trong tài liệu kế hoạch dự án; file n�
 
 ## Cách đo trên điện thoại
 1. Trên Mac: `npm run dev` (máy và điện thoại cùng Wi-Fi), xem IP của Mac.
-2. Điện thoại mở `http://<IP-Mac>:5173/?debug=1` → bấm **CHƠI NGAY**.
+2. Điện thoại mở `http://<IP-Mac>:5173/?debug=1` (hoặc link GitHub Pages + `?debug=1`) → bấm **Đo hiệu năng** (nút này chỉ hiện khi có `?debug=1`). Sau đó đo thêm một lượt **ngay trong màn chơi** (CHƠI NGAY) vì từ 07/10 màn chơi có nền bo mạch, xung điện và hạt sáng.
 3. Bấm **Đo 60 s**. Trong 30 s đầu: chạm và kéo liên tục trên lưới. 30 s sau: bật **Tải nặng** và tiếp tục chạm.
 4. Hết giờ → **Sao chép** → dán JSON vào bảng dưới (cột Kết quả), ghi thêm "Chu kỳ chấm chạy" hiển thị trên màn.
 5. iPhone 14 Pro Max: chỉ cần ghi "Chu kỳ chấm chạy" (phải ≈ 3,00 s như iPhone 11).

@@ -2,6 +2,22 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-07 (4) – Đồ hoạ bo mạch neon + lưới 2 lớp (việc 10–11/10 làm sớm)
+**Đã làm**
+- Sửa CI: `vite preview` bind `127.0.0.1` (trên runner, `localhost` có thể ra IPv6 nên Playwright chờ mãi). CI xanh, GitHub Pages chạy.
+- Đồ hoạ (Vũ chọn phong cách "bo mạch neon"): nền PCB sinh từ seed + xung điện; con chip có chân cắm vào ổ; nút có ký hiệu cổng IEEE; hạt sáng, vòng sóng, rung, viền đỏ khi sai; điểm đếm số; thanh chuỗi đúng 5 vạch; mạng là LED; logo SVG; màn bắt đầu/kết quả/tạm dừng dạng thẻ. Nút "Đo hiệu năng" chỉ hiện với `?debug=1`.
+- `src/core/circuit/grid.ts`: lưới 2 lớp (dây theo cạnh, via, cổng 1 ô có chân theo phía, lưu/nạp/hoàn tác).
+- `src/core/circuit/netlist.ts`: lưới → netlist (union-find), `diagnose` dịch lỗi mạch sang ô lưới để tô đỏ, `areaOf`.
+- 49 test mới (14 lưới, 25 netlist, 10 đồ hoạ thuần): dây cắt nhau, chập, dây hở, cầu vượt, cổng xoay, vòng lặp, half adder trên lưới khớp mạch mẫu (Delay 1, Power 8).
+
+**Quyết định**
+- ADR-0006: ánh sáng bằng sprite thay `shadowBlur`, nền vẽ 1 lần.
+- Mô hình lưới (chờ Vũ duyệt, ghi trong SPEC mục 2): dây theo cạnh; cắt nhau cùng lớp = chập; cổng 1 ô.
+
+**Việc tiếp theo**
+- Vũ: đo lại hiệu năng 3 máy với `?debug=1` ngay trong màn chơi; duyệt mô hình lưới.
+- 12–13/10: scene THIẾT KẾ (vẽ dây bằng kéo ngón tay, đặt cổng, kiểm tra, hoàn tác) dùng `grid.ts` + `gate-symbol.ts`.
+
 ## 2026-10-07 (task ngày 09/10, làm sớm)
 **Đã làm**
 - Chế độ **VẬN HÀNH** chơi trọn vòng: CHƠI NGAY → Vô tận (3 mạng, độ khó thích nghi) hoặc Thử thách 60 giây (seed theo ngày) → màn kết quả → Chơi lại / Về màn chính; kỷ lục lưu lại sau khi tải trang.

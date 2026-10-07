@@ -29,19 +29,33 @@ export interface RenderSurface {
   quality: Quality;
   /** true khi người chơi bật giảm chuyển động */
   reducedMotion: boolean;
+  /**
+   * Canvas NỀN nằm dưới canvas chính, chỉ vẽ lại khi cần (ví dụ đổi cỡ màn hình).
+   * Nhờ vậy mỗi frame không phải chép lại cả nền (tiết kiệm băng thông điểm ảnh trên máy yếu);
+   * trình duyệt tự ghép 2 lớp bằng GPU.
+   */
+  readonly backdrop: HTMLCanvasElement;
+  /** ai đang vẽ nền (để scene mới biết phải vẽ lại) */
+  backdropOwner: unknown;
 }
 
 /** Tạo canvas, gắn vào `host`, tự cập nhật kích thước khi đổi cỡ/xoay màn hình. */
 export function createSurface(host: HTMLElement): RenderSurface & { resize(): void } {
+  const backdrop = document.createElement('canvas');
+  backdrop.className = 'game-canvas backdrop-canvas';
+  backdrop.setAttribute('aria-hidden', 'true');
   const canvas = document.createElement('canvas');
   canvas.className = 'game-canvas';
-  host.prepend(canvas);
-  const ctx = canvas.getContext('2d', { alpha: false });
+  host.prepend(backdrop, canvas);
+  // alpha: true vì canvas chính trong suốt để thấy lớp nền bên dưới
+  const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Trình duyệt không hỗ trợ Canvas 2D');
 
   const surface = {
     canvas,
     ctx,
+    backdrop,
+    backdropOwner: null as unknown,
     width: 0,
     height: 0,
     quality: 'high' as Quality,

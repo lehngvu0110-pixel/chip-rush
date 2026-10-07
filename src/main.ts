@@ -15,6 +15,8 @@ import { createPerfOverlay } from './debug/perf-overlay';
 import { SandboxScene } from './debug/sandbox-scene';
 import { RuntimeGame, type RuntimeMode, type RuntimeResult } from './modes/runtime/game';
 import { GATE_HINT, RuntimeScene, layoutRuntime } from './modes/runtime/runtime-scene';
+import { TitleScene } from './modes/title/title-scene';
+import { ICON_PAUSE, ICON_SOUND_OFF, ICON_SOUND_ON, LOGO_SVG } from './ui/icons';
 
 // Điểm vào của game. Hub thật (hình die chip, 3 chế độ) làm ngày 22/10;
 // hiện màn bắt đầu có: CHƠI NGAY (VẬN HÀNH – Vô tận), Thử thách 60 giây, và màn đo hiệu năng.
@@ -73,7 +75,11 @@ function boot(root: HTMLElement): void {
 
   const loop = createLoop({
     update: (dt) => scene?.update(dt),
-    render: () => scene?.render(surface),
+    render: () => {
+      // canvas chính trong suốt (nền nằm ở lớp backdrop) nên xoá mỗi frame
+      surface.ctx.clearRect(0, 0, surface.width, surface.height);
+      scene?.render(surface);
+    },
     afterFrame: (frameMs) => {
       stats.addFrame(frameMs);
       if (pendingInputTs >= 0) {
@@ -83,6 +89,9 @@ function boot(root: HTMLElement): void {
       // Tự tắt glow nếu máy không theo kịp (bỏ qua 2 giây đầu vì lúc tải hay giật).
       if (++warmup > QUALITY_WINDOW && warmup % 60 === 0) {
         surface.quality = decideQuality(surface.quality, stats.summary(QUALITY_WINDOW));
+        // Máy không theo kịp: ẩn luôn lớp nền bo mạch. Đo trên Chromium chạy đồ hoạ bằng CPU,
+        // ghép 2 lớp canvas toàn màn hình chiếm khoảng nửa thời gian mỗi frame (ADR-0006).
+        surface.backdrop.style.visibility = surface.quality === 'low' ? 'hidden' : '';
       }
     },
   });
@@ -107,18 +116,23 @@ function boot(root: HTMLElement): void {
   // 4. Thanh trên: tạm dừng + tắt tiếng (+ tải nặng ở màn đo hiệu năng)
   const hud = el('div', 'hud');
   hud.hidden = true;
-  const pauseBtn = button('btn-small', 'Dừng');
+  const pauseBtn = button('btn-icon', '');
+  pauseBtn.innerHTML = ICON_PAUSE;
   pauseBtn.setAttribute('aria-label', 'Tạm dừng');
-  const muteBtn = button('btn-small', save.settings.muted ? 'Bật tiếng' : 'Tắt tiếng');
-  muteBtn.setAttribute('aria-pressed', String(save.settings.muted));
+  const muteBtn = button('btn-icon', '');
+  const syncMute = (): void => {
+    muteBtn.innerHTML = save.settings.muted ? ICON_SOUND_OFF : ICON_SOUND_ON;
+    muteBtn.setAttribute('aria-label', save.settings.muted ? 'Bật tiếng' : 'Tắt tiếng');
+    muteBtn.setAttribute('aria-pressed', String(save.settings.muted));
+  };
+  syncMute();
   const heavyBtn = button('btn-small', 'Tải nặng: tắt');
   heavyBtn.hidden = true;
   hud.append(pauseBtn, muteBtn, heavyBtn);
   ui.append(hud);
   muteBtn.addEventListener('click', () => {
     audio.muted = save.settings.muted = !save.settings.muted;
-    muteBtn.textContent = save.settings.muted ? 'Bật tiếng' : 'Tắt tiếng';
-    muteBtn.setAttribute('aria-pressed', String(save.settings.muted));
+    syncMute();
     persist();
   });
 
@@ -127,10 +141,13 @@ function boot(root: HTMLElement): void {
   pausePanel.hidden = true;
   const resumeBtn = button('btn-primary', 'Tiếp tục');
   const quitBtn = button('btn-secondary', 'Về màn chính');
-  pausePanel.append(el('p', 'subtitle', 'Đã tạm dừng'), resumeBtn, quitBtn);
+  const pauseCard = el('div', 'card');
+  pauseCard.append(el('p', 'card-title', 'Đã tạm dừng'), resumeBtn, quitBtn);
+  pausePanel.append(pauseCard);
   ui.append(pausePanel);
   const doPause = (): void => {
-    if (!scene || !resultPanel.hidden) return;
+    // Chỉ màn chơi có pause() mới hiện bảng tạm dừng (màn bắt đầu thì không)
+    if (!scene?.pause || !resultPanel.hidden) return;
     scene.pause?.();
     pausePanel.hidden = false;
     resumeBtn.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
@@ -169,11 +186,13 @@ function boot(root: HTMLElement): void {
     persist();
     const best = r.mode === 'endless' ? save.runtime.bestEndless : save.runtime.best60;
     resultPanel.replaceChildren();
-    resultPanel.append(el('h2', 'result-title', r.mode === 'endless' ? 'Hết mạng!' : 'Hết giờ!'));
+    const card = el('div', 'card');
+    resultPanel.append(card);
+    card.append(el('h2', 'result-title', r.mode === 'endless' ? 'Hết mạng!' : 'Hết giờ!'));
     const score = el('p', 'result-score', String(r.score));
     score.setAttribute('aria-label', `Điểm ${r.score}`);
-    resultPanel.append(score);
-    resultPanel.append(el('p', isRecord && r.score > 0 ? 'result-record' : 'subtitle', isRecord && r.score > 0 ? 'Kỷ lục mới!' : `Kỷ lục: ${best}`));
+    card.append(score);
+    card.append(el('p', isRecord && r.score > 0 ? 'result-record' : 'subtitle', isRecord && r.score > 0 ? 'Kỷ lục mới!' : `Kỷ lục: ${best}`));
     const statsList = el('ul', 'result-stats');
     const li = (k: string, v: string): void => {
       const item = el('li', '');
@@ -182,10 +201,10 @@ function boot(root: HTMLElement): void {
     };
     li('Độ chính xác', `${Math.round(r.accuracy * 100)}% (${r.correct}/${r.answered})`);
     li('Chuỗi đúng dài nhất', String(r.bestCombo));
-    resultPanel.append(statsList);
+    card.append(statsList);
     if (r.weakest) {
       // Giải thích độ khó thích nghi (SPEC 5.4): người chơi biết vì sao game ra nhiều câu loại đó
-      resultPanel.append(
+      card.append(
         el('p', 'note', `Bạn hay sai cổng ${r.weakest.gate} (${GATE_HINT[r.weakest.gate] ?? ''}) nên game đã ra thêm câu ${r.weakest.gate} để bạn luyện.`),
       );
     }
@@ -193,7 +212,7 @@ function boot(root: HTMLElement): void {
     const home = button('btn-secondary', 'Về màn chính');
     again.addEventListener('click', () => startRuntime(lastMode));
     home.addEventListener('click', showStart);
-    resultPanel.append(again, home);
+    card.append(again, home);
     resultPanel.hidden = false;
     hud.hidden = true;
     // Đưa focus vào nút chính cho người dùng bàn phím/trình đọc màn hình, không vẽ viền focus khi chạm
@@ -222,14 +241,16 @@ function boot(root: HTMLElement): void {
   };
 
   const showStart = (): void => {
-    setScene(null);
+    setScene(new TitleScene());
     hud.hidden = true;
     resultPanel.hidden = true;
     pausePanel.hidden = true;
     start.replaceChildren();
     const play = button('btn-primary', 'CHƠI NGAY');
     const sixty = button('', 'Thử thách 60 giây');
+    // Màn đo hiệu năng chỉ dành cho nhóm phát triển: chỉ hiện khi URL có ?debug=1
     const perf = button('btn-link', 'Đo hiệu năng (dành cho nhóm phát triển)');
+    perf.hidden = !params.has('debug');
     play.addEventListener('click', () => startRuntime('endless'));
     sixty.addEventListener('click', () => startRuntime('sixty'));
     perf.addEventListener('click', () => {
@@ -244,13 +265,20 @@ function boot(root: HTMLElement): void {
       hud.hidden = false;
       setScene(sandbox);
     });
-    start.append(
-      el('h1', 'title', 'CHIP RUSH'),
-      el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'),
+    const logo = el('div', 'logo');
+    logo.innerHTML = LOGO_SVG;
+    const hero = el('div', 'hero');
+    hero.append(logo, el('h1', 'title', 'CHIP RUSH'), el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'));
+    const menu = el('div', 'menu');
+    menu.append(
       play,
-      el('p', 'note', 'VẬN HÀNH: chọn cổng logic cho ra đúng bit trước khi gói bit chạm khe.'),
+      el('p', 'note', 'VẬN HÀNH: cắm đúng cổng logic để con chip cho ra bit mục tiêu, trước khi nó chạm ổ cắm.'),
       sixty,
-      el('p', 'note', `Kỷ lục: Vô tận ${save.runtime.bestEndless} · 60 giây ${save.runtime.best60}`),
+    );
+    start.append(
+      hero,
+      menu,
+      el('p', 'records', `Kỷ lục: Vô tận ${save.runtime.bestEndless} · 60 giây ${save.runtime.best60}`),
       perf,
       el('p', 'version', versionLabel()),
     );
