@@ -76,6 +76,13 @@ Làm rõ khi cài đặt lưới (07/10, **chờ Vũ duyệt**, không đổi lu
 | Thua | Trả lời sai 2 lần, hoặc số lần đo vượt 2 × par |
 | Sao | 3 sao: đo ≤ par; 2 sao: ≤ par + 2; 1 sao: qua màn |
 
+Làm rõ khi cài đặt (08/10, **chờ Vũ duyệt**, không đổi luật đã duyệt):
+- **Thấy miễn phí:** công tắc (đổi tuỳ ý) và đèn ở mọi hàng — bảng chân trị hiện sẵn dòng "thật" cạnh dòng chuẩn. Đo = chạm 1 dây bên trong; đo lại đúng dây đó ở cùng hàng không tính thêm.
+- **Lỗi nghi ngờ** = mọi lỗi cùng mô hình có cùng giá trị đèn ở mọi hàng với lỗi thật.
+- **Lớp tương đương** = các lỗi cho cùng giá trị trên mọi dây **đo được** + đèn, ở mọi hàng. Dây không có ô nào để chạm (cổng nối thẳng cổng, chân công tắc sát cổng) thì không đo được; lỗi chỉ khác nhau ở dây đó được gộp chung lớp và báo lỗi nào trong lớp cũng đúng.
+- **Giới hạn đo** = max(2 × par, 3) — tránh màn par 0 thua ngay khi đo 1 lần.
+- **Mở khoá:** KIỂM THỬ mở khi đã qua THIẾT KẾ d05 (theo mục 4). *Cần Vũ cân nhắc: giám khảo/người vote có thể không chơi tới d05.*
+
 ## 4. Tiến trình, lưu trữ, Daily Chip
 
 - VẬN HÀNH luôn mở. THIẾT KẾ mở d01, qua màn nào mở màn kế. KIỂM THỬ mở sau khi qua d05; màn t mở tuần tự.
@@ -108,10 +115,12 @@ Cài đặt: `src/ai/design-solver.ts`, chạy offline bằng `tools/solve-level
 - Phạm vi hiện tại: lưới ≤ 8 × 10, ≤ 5 cổng (d12), mỗi màn < 5 s.
 
 ### 5.2 Solver KIỂM THỬ
-- Giả thuyết = lớp lỗi sau khi gộp lỗi tương đương (fault collapsing).
-- Par = số lần đo ít nhất trong **trường hợp xấu nhất** để còn 1 lớp: minimax có ghi nhớ khi ≤ 16 lớp và ≤ 64 phép đo; quá ngưỡng hoặc > 60 s → greedy theo information gain, `parOptimal: false`. (Tìm cây quyết định tối ưu tổng quát là NP-đầy đủ — Hyafil & Rivest, 1976.)
-- Validator loại màn có lớp > 3 phần tử.
-- Kiểm chứng: với mọi lỗi, cây quyết định của solver tìm đúng lớp trong ≤ par lần đo; t01 được vét cạn mọi cây để đối chiếu.
+Cài đặt: `src/ai/debug-solver.ts`, chạy offline trong `tools/solve-levels.ts` (ADR-0008).
+- Giả thuyết = các lớp lỗi nghi ngờ (mục 3, làm rõ 08/10).
+- Phép đo = (dây đo được, hàng đầu vào) → 0/1.
+- Par = số lần đo ít nhất trong **trường hợp xấu nhất** để còn 1 lớp: minimax có ghi nhớ theo bitmask khi ≤ 16 lớp (TỐI ƯU, có cắt sớm khi chạm cận ⌈log₂|S|⌉); nhiều hơn → tham lam theo phép đo chia đều nhất, `optimal: false`. (Tìm cây quyết định tối ưu tổng quát là NP-đầy đủ — Hyafil & Rivest, 1976.)
+- Bố trí mạch lên lưới do solver THIẾT KẾ làm (cấm nối thẳng cổng–cổng để mọi net có dây đo được).
+- Kiểm chứng (test): mọi màn — par của solver bằng vét cạn MỌI cây quyết định (cài độc lập, không ghi nhớ); với mọi lớp, cây của solver tìm đúng lớp trong ≤ par lần đo; báo lỗi trong đúng lớp → đúng, lớp khác → sai.
 
 ### 5.3 Độ khó thích nghi (VẬN HÀNH – Vô tận)
 - Mục tiêu: tỉ lệ đúng 75–85% trên 20 gói gần nhất.
@@ -134,5 +143,6 @@ Cài đặt: `src/ai/design-solver.ts`, chạy offline bằng `tools/solve-level
 | 06/10/2026 | — | Khởi tạo | Duyệt luật |
 | 07/10/2026 | VẬN HÀNH | Làm rõ, không đổi luật | Chạm = trả lời ngay; trượt khi chạm khe; mở khóa theo điểm cao nhất; nhịp điều tốc 5 câu; sửa phép kiểm chứng độ khó thích nghi |
 | 07/10/2026 | Định nghĩa P | Làm rõ, không đổi luật | Ghi rõ cách đếm net đầu vào và bước quay vòng khi viết `simulate.ts` |
+| 08/10/2026 | KIỂM THỬ | Làm rõ, chờ duyệt | Quan sát miễn phí (công tắc, đèn), lớp tương đương theo dây đo được, giới hạn đo max(2·par, 3) |
 | 08/10/2026 | Solver THIẾT KẾ | Cài đặt | Thêm cận dưới + PathFinder; định nghĩa "tối ưu" chặt hơn bản đầu (phải chạm cận dưới, không chỉ duyệt hết cách đặt) |
 | 07/10/2026 | Lưới THIẾT KẾ | Làm rõ, chờ duyệt | Dây theo cạnh, cắt nhau cùng lớp = chập, cổng 1 ô có chân theo phía, cách tính Area |

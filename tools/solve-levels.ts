@@ -5,6 +5,10 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { solveDesign } from '../src/ai/design-solver';
 import { gridToNetlist } from '../src/core/circuit/netlist';
 import { DESIGN_LEVELS } from '../src/core/level/design-levels';
+import { DEBUG_LEVELS } from '../src/core/level/debug-levels';
+import { debugSetup } from '../src/core/level/debug-setup';
+import { solveDebug } from '../src/ai/debug-solver';
+import type { SolvedDebugLevel } from '../src/core/level/types';
 import type { SolvedLevel } from '../src/core/level/types';
 import { applySolution, gridFor, passingPpa } from '../src/core/level/validate';
 
@@ -59,3 +63,28 @@ for (const lv of DESIGN_LEVELS) {
 // mỗi màn 1 dòng: diff gọn khi solver đổi lời giải
 const ids = Object.keys(out).sort();
 writeFileSync(OUT, '{\n' + ids.map((id) => `  ${JSON.stringify(id)}: ${JSON.stringify(out[id])}`).join(',\n') + '\n}\n');
+
+// ---------------- KIỂM THỬ: AI bố trí mạch lên lưới + tính par bằng minimax ----------------
+const OUT_D = new URL('../src/core/level/debug-solutions.json', import.meta.url);
+const prevD = JSON.parse(readFileSync(OUT_D, 'utf8')) as Record<string, SolvedDebugLevel>;
+const outD: Record<string, SolvedDebugLevel> = { ...prevD };
+for (const lv of DEBUG_LEVELS) {
+  if (only.length && !only.includes(lv.id)) continue;
+  let r: ReturnType<typeof solveDesign> = null;
+  for (const seed of [1, 2, 3]) {
+    const t = solveDesign(lv.grid, lv.logic, { timeLimitMs: 20_000, beamWidth: 2000, deepCount: 150, orders: 30, seed, noDirect: true });
+    if (t && (!r || t.area < r.area)) r = t;
+    if (t?.exhaustive) break;
+  }
+  if (!r) {
+    console.error(`${lv.id}: AI không bố trí được mạch lên lưới`);
+    process.exitCode = 1;
+    continue;
+  }
+  const setup = debugSetup(lv, r.state);
+  const sol = solveDebug(setup.group.circuit, setup.group.classes, setup.probeNets);
+  outD[lv.id] = { state: r.state, par: sol.par, optimal: sol.optimal, classes: setup.group.classes.length };
+  console.log(`${lv.id}  ${setup.group.classes.length} lớp lỗi nghi ngờ  par ${sol.par} lần đo  ${sol.optimal ? 'TỐI ƯU (minimax duyệt hết)' : 'tham lam'}  bố trí Area ${r.area}`);
+}
+const idsD = Object.keys(outD).sort();
+writeFileSync(OUT_D, '{\n' + idsD.map((id) => `  ${JSON.stringify(id)}: ${JSON.stringify(outD[id])}`).join(',\n') + '\n}\n');

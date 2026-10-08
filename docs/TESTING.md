@@ -46,3 +46,4 @@ Lưu ý: dev server chưa nén/tối ưu như bản build; số đo khung hình 
 ## E2E hiện có
 - `e2e/play-now.spec.ts`: VẬN HÀNH (Vô tận, 60 giây, tạm dừng, kỷ lục).
 - `e2e/design.spec.ts`: THIẾT KẾ d01 (báo lỗi đèn chưa nối → kéo dây → qua màn 3 sao → lưu và mở d02), hoàn tác.
+- `e2e/debug.spec.ts`: KIỂM THỬ t01 (đo 1 dây, đo lại không tính → báo đúng cổng → 3 sao), báo sai 2 lần → thua và hiện lỗi thật.

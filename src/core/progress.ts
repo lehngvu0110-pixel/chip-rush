@@ -93,3 +93,17 @@ export function recordDesign(
 export function designUnlocked(data: SaveData, ids: readonly string[], i: number): boolean {
   return i === 0 || (ids[i - 1] !== undefined && data.design[ids[i - 1] as string] !== undefined);
 }
+
+/** Ghi kết quả qua màn KIỂM THỬ: giữ số sao cao nhất và số lần đo ít nhất. Trả về true nếu tốt hơn trước. */
+export function recordDebug(data: SaveData, id: string, stars: number, probes: number): boolean {
+  const prev = data.debug[id];
+  const better = !prev || stars > prev.stars || probes < prev.probes;
+  data.debug[id] = { stars: Math.max(stars, prev?.stars ?? 0), probes: Math.min(probes, prev?.probes ?? Infinity) };
+  return better;
+}
+
+/** KIỂM THỬ mở sau khi qua màn THIẾT KẾ `gate` (SPEC 4: d05); màn t sau mở khi qua màn trước. */
+export function debugUnlocked(data: SaveData, ids: readonly string[], i: number, gate = 'd05'): boolean {
+  if (data.design[gate] === undefined) return false;
+  return i === 0 || (ids[i - 1] !== undefined && data.debug[ids[i - 1] as string] !== undefined);
+}

@@ -2,6 +2,23 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-08 (3) – Chế độ KIỂM THỬ chơi được (t01–t06) + solver minimax
+**Đã làm**
+- Tách `src/modes/design/board.ts` (lưới + mô phỏng có cài lỗi + vẽ) dùng chung cho THIẾT KẾ và KIỂM THỬ.
+- `src/core/debug/faults.ts`: liệt kê lỗi (đảo cổng, kẹt 0/1), chữ ký đầu ra, lớp tương đương theo dây quan sát được.
+- `src/ai/debug-solver.ts`: cây quyết định minimax (tối ưu ≤ 16 lớp), tham lam khi nhiều hơn; `runTree` để kiểm chứng.
+- 6 màn t01–t06: AI kỹ sư tự bố trí mạch lên lưới, minimax tính par (0–3 lần đo, đều tối ưu).
+- `src/modes/debug/debug-scene.ts`: đo dây (nhãn giá trị trên dây), bảng chân trị chuẩn vs thật (tô ô lệch), báo lỗi (cổng hoặc dây kẹt 0/1), báo sai 2 lần / đo quá giới hạn thì thua và hiện lỗi thật (cả lớp tương đương).
+- Thẻ chế độ KIỂM THỬ, danh sách màn, thẻ kết quả, lưu `save.debug`.
+- 23 unit test (gồm đối chiếu vét cạn mọi cây quyết định) + 2 E2E (tổng 237 unit, 6 E2E).
+
+**Quyết định**
+- ADR-0008: đèn xem miễn phí; lớp tương đương theo dây đo được; giới hạn đo max(2·par, 3).
+
+**Việc tiếp theo**
+- Vũ: duyệt các làm rõ KIỂM THỬ (SPEC mục 3) — đặc biệt quy tắc mở khoá sau d05.
+- Hub "die chip" (22/10 theo kế hoạch), gợi ý THIẾT KẾ, Daily Chip.
+
 ## 2026-10-08 (2) – AI kỹ sư (solver) + d10, d12 + đồ hoạ THIẾT KẾ
 **Đã làm**
 - `src/ai/design-solver.ts`: đặt cổng (duyệt hết / beam search), branch-and-bound với cận dưới, đi dây Dijkstra + PathFinder. `tools/solve-levels.ts` → `solutions.json`.

@@ -26,6 +26,8 @@ export interface SolveOptions {
   orders?: number;
   /** beam search: số cách đặt tốt nhất được đi dây kỹ (nhiều thứ tự + thương lượng tắc nghẽn) */
   deepCount?: number;
+  /** cấm nối thẳng chân ra cổng này vào cổng kia (KIỂM THỬ cần mọi net có dây để đo) */
+  noDirect?: boolean;
   seed?: number;
 }
 
@@ -263,7 +265,7 @@ export class DesignSolver {
         if (h !== undefined) {
           // cổng nối thẳng vào cổng: chỉ được khi net có đúng 1 chân đọc là cổng h, phía đó là chân vào của h
           const side = opposite(place.out[gi] as Side);
-          const only = readers.length === 1 && readers[0]?.kind === 'gate' && readers[0].ref === h;
+          const only = !this.noDirect && readers.length === 1 && readers[0]?.kind === 'gate' && readers[0].ref === h;
           if (!only || usedSide[h]?.has(side)) return null;
           usedSide[h]?.add(side);
           addWire(0, gc, port);
@@ -444,7 +446,7 @@ export class DesignSolver {
         const h = gateAt.get(port);
         if (h !== undefined) {
           const side = opposite(place.out[gi] as Side);
-          const only = net.readers.length === 1 && net.readers[0]?.kind === 'gate' && net.readers[0].ref === h;
+          const only = !this.noDirect && net.readers.length === 1 && net.readers[0]?.kind === 'gate' && net.readers[0].ref === h;
           if (!only || usedBy(h).has(side)) return null;
           sides.push([h, side]);
           wires.push([0, Math.min(gc, port), Math.max(gc, port)]);
@@ -667,7 +669,7 @@ export class DesignSolver {
       }
       const h = place.cell.indexOf(port);
       if (h >= 0 && h < n) {
-        const only = net && net.readers.length === 1 && net.readers[0]?.kind === 'gate' && net.readers[0].ref === h;
+        const only = !this.noDirect && net && net.readers.length === 1 && net.readers[0]?.kind === 'gate' && net.readers[0].ref === h;
         if (!only || place.out[h] === opposite(place.out[gi] as Side)) return false;
       }
     }
@@ -692,7 +694,10 @@ export class DesignSolver {
     return total;
   }
 
+  noDirect = false;
+
   solve(opts: SolveOptions = {}): SolveResult | null {
+    this.noDirect = opts.noDirect ?? false;
     const t0 = Date.now();
     const limit = opts.timeLimitMs ?? 20_000;
     const rand = rng(opts.seed ?? 1);

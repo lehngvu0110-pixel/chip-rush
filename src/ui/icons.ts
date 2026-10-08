@@ -8,6 +8,8 @@ export const ICON_STAR = '<svg viewBox="0 0 24 24" width="26" height="26" aria-h
 
 /** Cổng AND kiểu ký hiệu kỹ thuật (thẻ THIẾT KẾ). */
 export const ICON_GATE = '<svg viewBox="0 0 40 28" width="40" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M2 8h8M2 20h8M30 14h8"/><path d="M10 3h9a11 11 0 0 1 0 22h-9z" fill="currentColor" fill-opacity="0.12"/></svg>';
+/** Que đo (thẻ KIỂM THỬ). */
+export const ICON_PROBE = '<svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 24l7-7"/><path d="M10 12l6 6 9-9-6-6z" fill="currentColor" fill-opacity="0.12"/><circle cx="4" cy="24" r="1.6" fill="currentColor"/></svg>';
 /** Đồng hồ bấm giờ (thẻ 60 giây). */
 export const ICON_TIMER = '<svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="16" r="9" fill="currentColor" fill-opacity="0.12"/><path d="M14 16V11M11 3h6M22 7l2-2"/></svg>';
 

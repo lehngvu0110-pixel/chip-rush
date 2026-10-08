@@ -10,7 +10,8 @@
 | Thư mục | Vai trò | Phụ thuộc được phép |
 | --- | --- | --- |
 | `src/core/circuit` | Kiểu dữ liệu mạch, cổng, lưới 2 lớp, netlist, mô phỏng | không |
-| `src/core/level` | Định dạng JSON màn chơi, validate, nạp | `core/circuit` |
+| `src/core/level` | Màn THIẾT KẾ/KIỂM THỬ, validate, lời giải AI tính sẵn (`solutions.json`, `debug-solutions.json`) | `core/circuit`, `core/debug` |
+| `src/core/debug` | Mô hình lỗi, lớp tương đương (KIỂM THỬ) | `core/circuit` |
 | `src/core/scoring` | PPA, sao, điểm VẬN HÀNH | `core/circuit` |
 | `src/core/progress.ts` | Tiến trình, mở khóa, schema lưu | `core/*` |
 | `src/ai` | Solver THIẾT KẾ, solver KIỂM THỬ, độ khó thích nghi | `core/*` |

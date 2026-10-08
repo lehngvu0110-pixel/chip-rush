@@ -21,11 +21,13 @@ Par do **AI kỹ sư** (`src/ai/design-solver.ts`) tính offline: `npx tsx tools
 | d12 | Cộng đủ | Full adder | 7×7×2 | XOR ×2, AND ×2, OR | 32/3/27/68 | Chưa | Nên có | |
 
 ## KIỂM THỬ
-| Màn | Mô hình lỗi | Số lớp lỗi | Par (lần đo) | Tối ưu? | MVP | Ghi chú chơi thử |
-| --- | --- | --- | --- | --- | --- | --- |
-| t01 | Cổng đảo đầu ra | | | | Có | |
-| t02 | Cổng đảo đầu ra | | | | Có | |
-| t03 | Cổng đảo đầu ra | | | | Có | |
-| t04 | Stuck-at | | | | Nên có | |
-| t05 | Stuck-at | | | | Nên có | |
-| t06 | Stuck-at | | | | Nên có | |
+Bố trí mạch do AI kỹ sư đặt; par = số lần đo ít nhất trong trường hợp xấu nhất (minimax, `src/ai/debug-solver.ts`), ghi trong `src/core/level/debug-solutions.json`.
+
+| Màn | Tên | Mô hình lỗi | Số lớp lỗi nghi ngờ | Par (lần đo) | Tối ưu? | MVP | Ghi chú chơi thử |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| t01 | Chuỗi đảo | Cổng đảo đầu ra | 3 | 2 | Có | Có | |
+| t02 | Đọc bệnh án | Cổng đảo đầu ra | 1 | 0 | Có | Có | |
+| t03 | Chẵn lẻ | Cổng đảo đầu ra | 3 | 2 | Có | Có | |
+| t04 | Dây kẹt | Kẹt (stuck-at) | 2 | 1 | Có | Nên có | |
+| t05 | Bốn nghi phạm | Kẹt (stuck-at) | 4 | 3 | Có | Nên có | |
+| t06 | Cộng đủ bị ốm | Kẹt (stuck-at) | 3 | 2 | Có | Nên có | |

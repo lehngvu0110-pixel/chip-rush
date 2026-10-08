@@ -4,6 +4,7 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Chế độ KIỂM THỬ: 6 màn t01–t06 (đảo cổng, dây kẹt), đo dây, báo lỗi, luật thua, sao theo số lần đo; AI kỹ sư tính số lần đo tối ưu bằng minimax.
 - AI kỹ sư: solver đặt cổng + đi dây (branch-and-bound, cận dưới, PathFinder) tính par; chứng minh tối ưu 7/12 màn; nút xem lời giải AI.
 - Màn d10 (MUX 2:1) và d12 (cộng đủ).
 - Đồ hoạ THIẾT KẾ: dòng điện chạy trên dây, quầng sáng, cổng sáng; sao bật và điểm chạy số ở thẻ kết quả; thẻ chế độ ở màn bắt đầu.

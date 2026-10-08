@@ -8,11 +8,14 @@ import { attachPointer } from './input/pointer';
 import { createSafeStorage } from './platform/storage';
 import { watchVisibility } from './platform/visibility';
 import { installGlobalErrorHandlers, showErrorScreen } from './platform/errors';
-import { designUnlocked, loadSave, recordDesign, recordRuntimeScore, writeSave } from './core/progress';
+import { debugUnlocked, designUnlocked, loadSave, recordDebug, recordDesign, recordRuntimeScore, writeSave } from './core/progress';
+import { DEBUG_LEVELS } from './core/level/debug-levels';
+import type { DebugLevel } from './core/level/types';
+import { DebugScene, type DebugResult } from './modes/debug/debug-scene';
 import { DESIGN_LEVELS } from './core/level/design-levels';
 import type { DesignLevel } from './core/level/types';
 import { DesignScene } from './modes/design/design-scene';
-import { ICON_GATE, ICON_STAR, ICON_TIMER } from './ui/icons';
+import { ICON_GATE, ICON_PROBE, ICON_STAR, ICON_TIMER } from './ui/icons';
 import { vnDateSeed } from './core/util/rng';
 import { FrameStats, QUALITY_WINDOW, decideQuality } from './debug/stats';
 import { createPerfOverlay } from './debug/perf-overlay';
@@ -382,6 +385,84 @@ function boot(root: HTMLElement): void {
     (card.querySelector('.btn-primary') as HTMLButtonElement | null)?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
   };
 
+  // 7c. KIỂM THỬ: danh sách màn → màn chơi → thẻ kết quả
+  const debugIds = DEBUG_LEVELS.map((l) => l.id);
+  const showDebugLevels = (): void => {
+    setScene(new TitleScene());
+    start.hidden = true;
+    resultPanel.hidden = true;
+    pausePanel.hidden = true;
+    hud.hidden = true;
+    levelPanel.replaceChildren();
+    const card = el('div', 'card level-card');
+    card.append(el('p', 'card-title', 'KIỂM THỬ'), el('p', 'note', 'Chip vừa sản xuất có 1 lỗi ẩn. Đo càng ít lần càng nhiều sao; AI kỹ sư biết số lần đo ít nhất.'));
+    const list = el('div', 'level-list');
+    DEBUG_LEVELS.forEach((lv, i) => {
+      const open = debugUnlocked(save, debugIds, i);
+      const rec = save.debug[lv.id];
+      const b = button('level-item', '');
+      b.disabled = !open;
+      const head = el('span', 'level-head');
+      head.append(el('strong', '', `${lv.id.toUpperCase()} · ${lv.name}`), el('small', '', open ? lv.concept : i === 0 ? 'Qua màn THIẾT KẾ D05 để mở' : 'Qua màn trước để mở'));
+      b.append(head, starsEl(rec?.stars ?? 0, `${rec?.stars ?? 0} sao`));
+      b.setAttribute('aria-label', `${lv.id} ${lv.name}${open ? '' : ', chưa mở'}, ${rec?.stars ?? 0} sao`);
+      b.addEventListener('click', () => startDebug(lv));
+      list.append(b);
+    });
+    const back = button('btn-secondary', 'Về màn chính');
+    back.addEventListener('click', showStart);
+    card.append(list, back);
+    levelPanel.append(card);
+    levelPanel.hidden = false;
+  };
+
+  const startDebug = (lv: DebugLevel): void => {
+    void audio.unlock();
+    exposeForTests(null);
+    start.hidden = true;
+    levelPanel.hidden = true;
+    resultPanel.hidden = true;
+    pausePanel.hidden = true;
+    hud.hidden = false;
+    heavyBtn.hidden = true;
+    setScene(new DebugScene(lv, { ui, audio, onEnd: showDebugResult }));
+  };
+
+  const showDebugResult = (lv: DebugLevel, r: DebugResult): void => {
+    if (!(scene instanceof DebugScene) || scene.level.id !== lv.id) return;
+    const improved = r.win && recordDebug(save, lv.id, r.stars, r.probes);
+    if (r.win) persist();
+    resultPanel.replaceChildren();
+    const card = el('div', 'card');
+    card.append(el('h2', 'result-title', r.win ? 'Tìm ra lỗi!' : 'Chưa tìm ra lỗi'));
+    if (r.win) {
+      card.append(starsEl(r.stars, `${r.stars} trên 3 sao`));
+      const n = el('p', 'result-score', String(r.probes));
+      n.setAttribute('aria-label', `Số lần đo ${r.probes}`);
+      card.append(n, el('p', 'note', `lần đo · AI kỹ sư cần ${r.par} lần (trường hợp xấu nhất)`));
+    } else {
+      card.append(el('p', 'note', r.reason ?? ''));
+    }
+    card.append(el('p', 'note', `Lỗi thật: ${r.answer}.${r.wrong ? ` Bạn đã báo sai ${r.wrong} lần.` : ''}`));
+    if (improved) card.append(el('p', 'result-record', 'Kết quả tốt nhất của bạn!'));
+    const idx = debugIds.indexOf(lv.id);
+    const next = DEBUG_LEVELS[idx + 1];
+    if (r.win && next) {
+      const nb = button('btn-primary', 'Màn tiếp');
+      nb.addEventListener('click', () => startDebug(next));
+      card.append(nb);
+    }
+    const again = button(r.win ? '' : 'btn-primary', 'Chơi lại');
+    again.addEventListener('click', () => startDebug(lv));
+    const list = button('btn-secondary', 'Danh sách màn');
+    list.addEventListener('click', showDebugLevels);
+    card.append(again, list);
+    resultPanel.append(card);
+    resultPanel.hidden = false;
+    hud.hidden = true;
+    (card.querySelector('.btn-primary') as HTMLButtonElement | null)?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+  };
+
   const showStart = (): void => {
     setScene(new TitleScene());
     levelPanel.hidden = true;
@@ -416,8 +497,12 @@ function boot(root: HTMLElement): void {
     const totalStars = Object.values(save.design).reduce((a, d) => a + (d?.stars ?? 0), 0);
     const design = modeCard('THIẾT KẾ: tự vẽ mạch', 'Tự vẽ mạch, so tài tối ưu với AI kỹ sư', ICON_GATE, `${totalStars}/${DESIGN_LEVELS.length * 3} sao`);
     design.addEventListener('click', showLevels);
+    const debugStars = Object.values(save.debug).reduce((a, d) => a + (d?.stars ?? 0), 0);
+    const debugOpen = save.design.d05 !== undefined;
+    const debug = modeCard('KIỂM THỬ: tìm lỗi chip', debugOpen ? 'Đo ít lần nhất để tìm cổng hỏng' : 'Qua THIẾT KẾ D05 để mở', ICON_PROBE, `${debugStars}/${DEBUG_LEVELS.length * 3} sao`);
+    debug.addEventListener('click', showDebugLevels);
     const modes = el('div', 'modes');
-    modes.append(design, sixty);
+    modes.append(design, debug, sixty);
     menu.append(play, el('p', 'note', 'VẬN HÀNH: cắm đúng cổng logic để con chip cho ra bit mục tiêu, trước khi nó chạm ổ cắm.'), modes);
     start.append(
       hero,
@@ -456,6 +541,21 @@ function boot(root: HTMLElement): void {
       // vị trí 4 nút cổng (CSS px) để test bấm bằng chạm thật lên canvas
       buttons: () => layoutRuntime(surface.width, surface.height).buttons,
       // màn THIẾT KẾ: id màn, toạ độ tâm ô, đầu vào hiện tại
+      debug: () => {
+        const ds = scene;
+        if (!(ds instanceof DebugScene)) return null;
+        const g = ds.grid;
+        return {
+          level: ds.level.id,
+          probes: ds.probes.length,
+          wrong: ds.wrong,
+          tool: ds.tool,
+          faultCell: g.colRow(ds.faultCell()),
+          gates: g.gates().map((x) => g.colRow(x.cell)),
+          wires: [...new Set([...ds.setup.probeCells.keys()].map((k) => Number(k.split(':')[1])))].map((c) => g.colRow(c)),
+          cell: (c: number, r: number) => ds.cellCenter(c, r),
+        };
+      },
       design: () =>
         scene instanceof DesignScene
           ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r), showAi: () => (scene as DesignScene).showAiSolution() }

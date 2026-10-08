@@ -1,7 +1,8 @@
 // Định dạng màn THIẾT KẾ (docs/ARCHITECTURE.md "Dữ liệu màn chơi").
 // Dữ liệu màn được import vào bundle (có hash) nên không bao giờ lệch phiên bản với code (ADR-0005).
 import type { GridSpec, Side } from '../circuit/grid';
-import type { GateType, Netlist } from '../circuit/types';
+import type { Fault, GateType, Netlist } from '../circuit/types';
+import type { FaultModel } from '../debug/faults';
 
 type CR = [number, number];
 
@@ -49,4 +50,27 @@ export interface SolvedLevel {
   /** đã CHỨNG MINH Area nhỏ nhất với mạch logic này (duyệt hết cách đặt + chạm cận dưới) */
   proven: boolean;
   lowerBound: number | null;
+}
+
+/** Màn KIỂM THỬ (SPEC mục 3): mạch có sẵn + đúng 1 lỗi ẩn. */
+export interface DebugLevel {
+  id: string;
+  name: string;
+  concept: string;
+  intro: string;
+  /** lưới để AI kỹ sư bố trí mạch (bố trí tính offline, lưu trong debug-solutions.json) */
+  grid: import('../circuit/grid').GridSpec;
+  logic: Netlist;
+  model: FaultModel;
+  /** lỗi thật, viết theo tên cổng/net của `logic` */
+  fault: Fault;
+}
+
+/** Kết quả tính offline cho màn KIỂM THỬ. */
+export interface SolvedDebugLevel {
+  state: import('../circuit/grid').GridState;
+  /** số lần đo ít nhất trong trường hợp xấu nhất */
+  par: number;
+  optimal: boolean;
+  classes: number;
 }
