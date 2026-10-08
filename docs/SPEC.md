@@ -37,7 +37,7 @@ Làm rõ khi cài đặt (07/10, không đổi luật):
 
 **Chi phí:** `C = A + w_D·D + w_P·P`, với `w_D = 3`, `w_P = 1` (chỉnh sau khi chơi thử d01–d06).
 
-**Par** = (A, D, P, C) của **một** lời giải tham chiếu có C nhỏ nhất do solver tìm (mục 5.1) → 3 sao luôn đạt được. *(Tạm thời, đến khi có solver: lời giải tham chiếu viết tay; test kiểm tra lời giải đó qua màn với 3 sao.)*
+**Par** = (A, D, P, C) của lời giải tốt nhất do AI kỹ sư tìm (mục 5.1; không bao giờ tệ hơn lời giải mẫu) → 3 sao luôn đạt được. Xem lời giải AI (sau khi qua màn) thì lần qua màn đó không tính kết quả.
 
 **Sao:** mỗi chỉ số ≤ par tương ứng được 1 sao (0–3 sao). **Điểm chia sẻ** = `round(1000 × C_par / C_người_chơi)`; 1000 = ngang AI kỹ sư. Dùng **Gợi ý** (hiện dây tiếp theo của lời giải tham chiếu) thì màn đó tối đa 2 sao.
 
@@ -97,11 +97,15 @@ Làm rõ khi cài đặt lưới (07/10, **chờ Vũ duyệt**, không đổi lu
 Chỉ nói "tối ưu"/"tối thiểu" khi thuật toán đã duyệt hết không gian. Cả ba đều là AI cổ điển (tìm kiếm, thống kê trực tuyến), không phải LLM.
 
 ### 5.1 Solver THIẾT KẾ ("AI kỹ sư")
-- Duyệt cách đặt cổng; với mỗi cách, đi dây từng net bằng A* trên lưới 2 lớp; branch-and-bound theo C.
-- Phạm vi: lưới ≤ 8 × 10, ≤ 4 cổng; chạy offline (`tools/solve-levels`), ≤ 60 s/màn.
-- Ghi vào JSON: `par: {A, D, P, C}`, `parOptimal` (true nếu duyệt hết), `parSource` (`"solver"` | `"human"`).
-- Không tìm ra lời giải → CI đỏ, màn không vào build (tạm dùng lời giải mẫu, `parSource: "human"`).
-- Kiểm chứng: lời giải qua `verify`; par không tệ hơn lời giải mẫu; vét cạn (`tools/audit-solver`) trên màn ≤ 5 × 5, ≤ 2 cổng phải ra cùng C_par; bản dev cảnh báo khi người chơi đạt C < C_par ở màn `parOptimal: true`.
+Cài đặt: `src/ai/design-solver.ts`, chạy offline bằng `tools/solve-levels.ts` (ADR-0007).
+- **Bài toán:** mạch logic cố định (lấy từ lời giải mẫu hoặc trường `logic` của màn) → tìm vị trí + hướng từng cổng và đường đi mọi net trên lưới 2 lớp. Delay và Power chỉ phụ thuộc mạch logic nên tối ưu C ⇔ tối ưu Area.
+- **Đặt cổng:** duyệt hết mọi cách đặt khi ≤ 60 000 tổ hợp (màn ≤ 2 cổng); nhiều hơn thì beam search theo tổng HPWL, loại sớm cách đặt chắc chắn hỏng.
+- **Branch-and-bound:** mỗi cách đặt có cận dưới Area = số cổng + Σ cận dưới từng net (net 2 chân: đường ngắn nhất BFS có vật cản; net nhiều chân: HPWL + 1 nút, vì cây Steiner chữ nhật ≥ HPWL). Cận ≥ kết quả tốt nhất → bỏ.
+- **Đi dây:** cây Steiner xấp xỉ bằng Dijkstra đa nguồn (chi phí = ô mới + via), thử nhiều thứ tự net; bố trí chật dùng đi dây thương lượng tắc nghẽn PathFinder (McMurchie & Ebeling, 1995).
+- **"Tối ưu" (`proven`)** chỉ khi đã duyệt hết cách đặt **và** Area tìm được = cận dưới nhỏ nhất trên mọi cách đặt → không cách nào tốt hơn *với mạch logic này*. Không chứng minh được thì ghi "tốt nhất tìm được".
+- **Kết quả ghi vào** `solutions.json`: `par`, lời giải (`state`), `source` (`solver` | `reference`), `proven`, `lowerBound`. Game tính lại par từ lời giải (không tin số ghi sẵn).
+- **Kiểm chứng (test):** lời giải AI qua màn với 3 sao; par không tệ hơn lời giải mẫu; số ghi sẵn khớp khi tính lại; cận dưới ≤ Area thật trên mọi cách đặt ở d05; 5 màn nhỏ được chứng minh tối ưu với giá trị biết trước.
+- Phạm vi hiện tại: lưới ≤ 8 × 10, ≤ 5 cổng (d12), mỗi màn < 5 s.
 
 ### 5.2 Solver KIỂM THỬ
 - Giả thuyết = lớp lỗi sau khi gộp lỗi tương đương (fault collapsing).
@@ -130,4 +134,5 @@ Chỉ nói "tối ưu"/"tối thiểu" khi thuật toán đã duyệt hết khô
 | 06/10/2026 | — | Khởi tạo | Duyệt luật |
 | 07/10/2026 | VẬN HÀNH | Làm rõ, không đổi luật | Chạm = trả lời ngay; trượt khi chạm khe; mở khóa theo điểm cao nhất; nhịp điều tốc 5 câu; sửa phép kiểm chứng độ khó thích nghi |
 | 07/10/2026 | Định nghĩa P | Làm rõ, không đổi luật | Ghi rõ cách đếm net đầu vào và bước quay vòng khi viết `simulate.ts` |
+| 08/10/2026 | Solver THIẾT KẾ | Cài đặt | Thêm cận dưới + PathFinder; định nghĩa "tối ưu" chặt hơn bản đầu (phải chạm cận dưới, không chỉ duyệt hết cách đặt) |
 | 07/10/2026 | Lưới THIẾT KẾ | Làm rõ, chờ duyệt | Dây theo cạnh, cắt nhau cùng lớp = chập, cổng 1 ô có chân theo phía, cách tính Area |

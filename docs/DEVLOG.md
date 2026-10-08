@@ -2,6 +2,22 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-08 (2) – AI kỹ sư (solver) + d10, d12 + đồ hoạ THIẾT KẾ
+**Đã làm**
+- `src/ai/design-solver.ts`: đặt cổng (duyệt hết / beam search), branch-and-bound với cận dưới, đi dây Dijkstra + PathFinder. `tools/solve-levels.ts` → `solutions.json`.
+- AI thắng lời giải viết tay ở d05, d06, d08, d09, d11 (d11: C 34 → 30); chứng minh tối ưu 7/12 màn (d01–d06, d08).
+- Màn mới d10 (MUX 2:1) và d12 (cộng đủ, 5 cổng) — chỉ khai báo mạch logic, AI tự bố trí.
+- Đồ hoạ: "dòng điện" chạy dọc dây mang bit 1 đúng chiều tín hiệu, quầng sáng dây, cổng sáng khi ra 1; sao bật lần lượt, điểm chạy số; thẻ chế độ ở màn bắt đầu (biểu tượng + tiến độ); nút "Xem cách AI kỹ sư làm".
+- 9 test solver + kiểm tra mọi màn bằng lời giải AI (tổng 214).
+
+**Quyết định**
+- ADR-0007. "Tối ưu" chỉ khi duyệt hết **và** chạm cận dưới (chặt hơn SPEC cũ "duyệt hết" — vì đi dây là heuristic).
+- Xem lời giải AI → lần qua màn đó không tính kết quả.
+
+**Việc tiếp theo**
+- Vũ: chơi d10–d12; xem lời giải AI có dễ hiểu không.
+- Chế độ KIỂM THỬ (t01–t03) + solver minimax (SPEC 5.2).
+
 ## 2026-10-08 – Chế độ THIẾT KẾ chơi được (việc 12–14/10 làm sớm)
 **Đã làm**
 - `src/core/level/`: định dạng màn, 10 màn d01–d09 + d11 (d10, d12 chờ solver), kiểm tra dữ liệu màn, chấm bài (mạch hợp lệ → đúng bảng chân trị → PPA, sao, điểm).

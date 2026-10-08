@@ -6,6 +6,11 @@ const svg = (body: string, size = 22): string =>
 /** Ngôi sao (font không có ký tự ★). */
 export const ICON_STAR = '<svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9z" fill="currentColor"/></svg>';
 
+/** Cổng AND kiểu ký hiệu kỹ thuật (thẻ THIẾT KẾ). */
+export const ICON_GATE = '<svg viewBox="0 0 40 28" width="40" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M2 8h8M2 20h8M30 14h8"/><path d="M10 3h9a11 11 0 0 1 0 22h-9z" fill="currentColor" fill-opacity="0.12"/></svg>';
+/** Đồng hồ bấm giờ (thẻ 60 giây). */
+export const ICON_TIMER = '<svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="16" r="9" fill="currentColor" fill-opacity="0.12"/><path d="M14 16V11M11 3h6M22 7l2-2"/></svg>';
+
 export const ICON_PAUSE = svg('<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>');
 export const ICON_SOUND_ON = svg('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7"/><path d="M19 6a8.5 8.5 0 0 1 0 12"/>');
 export const ICON_SOUND_OFF = svg('<path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/>');

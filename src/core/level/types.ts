@@ -1,7 +1,7 @@
 // Định dạng màn THIẾT KẾ (docs/ARCHITECTURE.md "Dữ liệu màn chơi").
 // Dữ liệu màn được import vào bundle (có hash) nên không bao giờ lệch phiên bản với code (ADR-0005).
 import type { GridSpec, Side } from '../circuit/grid';
-import type { GateType } from '../circuit/types';
+import type { GateType, Netlist } from '../circuit/types';
 
 type CR = [number, number];
 
@@ -30,8 +30,23 @@ export interface DesignLevel {
    */
   table: Record<string, string>;
   /**
-   * Lời giải tham chiếu. Par = PPA của lời giải này nên 3 sao LUÔN đạt được.
-   * Hiện viết tay (parSource "reference"); solver AI kỹ sư (SPEC 5.1) sẽ thay bằng lời giải tốt nhất nó tìm được.
+   * Lời giải mẫu viết tay (tuỳ chọn). Solver đọc mạch logic từ đây; par không bao giờ tệ hơn lời giải này.
    */
-  solution: LevelSolution;
+  solution?: LevelSolution;
+  /**
+   * Mạch logic (netlist) khi KHÔNG có lời giải mẫu: solver tự đặt cổng + đi dây.
+   * `inputs`/`outputs` theo đúng thứ tự chân của lưới.
+   */
+  logic?: Netlist;
+}
+
+/** Kết quả solver ghi sẵn (tools/solve-levels.ts → solutions.json, ADR-0005). */
+export interface SolvedLevel {
+  par: { A: number; D: number; P: number; C: number };
+  state: import('../circuit/grid').GridState;
+  /** "solver" = AI kỹ sư tìm; "reference" = lời giải mẫu tốt hơn/bằng solver */
+  source: 'solver' | 'reference';
+  /** đã CHỨNG MINH Area nhỏ nhất với mạch logic này (duyệt hết cách đặt + chạm cận dưới) */
+  proven: boolean;
+  lowerBound: number | null;
 }

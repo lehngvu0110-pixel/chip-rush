@@ -1,7 +1,7 @@
 // Dữ liệu màn THIẾT KẾ + chấm điểm: mọi màn hợp lệ, lời giải tham chiếu qua màn với 3 sao.
 import { describe, expect, it } from 'vitest';
 import { DESIGN_LEVELS, levelById } from '../src/core/level/design-levels';
-import { applySolution, evaluateDesign, expectedRows, gridFor, levelPar, validateLevel } from '../src/core/level/validate';
+import { aiSolutionGrid, applySolution, evaluateDesign, expectedRows, gridFor, levelPar, referencePpa, solvedLevel, validateLevel } from '../src/core/level/validate';
 import { costOf, shareScore, starsFor } from '../src/core/scoring/design';
 
 describe('dữ liệu màn THIẾT KẾ', () => {
@@ -15,14 +15,27 @@ describe('dữ liệu màn THIẾT KẾ', () => {
     expect(validateLevel(level)).toEqual([]);
   });
 
-  it.each(DESIGN_LEVELS.map((l) => [l.id, l] as const))('%s: lời giải tham chiếu qua màn với 3 sao, điểm 1000', (_id, level) => {
-    const g = gridFor(level);
-    applySolution(g, level.solution);
-    const e = evaluateDesign(level, g);
+  it.each(DESIGN_LEVELS.map((l) => [l.id, l] as const))('%s: lời giải AI kỹ sư qua màn với 3 sao, điểm 1000', (_id, level) => {
+    const g = aiSolutionGrid(level);
+    expect(g).not.toBeNull();
+    const e = evaluateDesign(level, g!);
     expect(e.status).toBe('pass');
     if (e.status !== 'pass') return;
     expect(e.stars).toBe(3);
     expect(e.score).toBe(1000);
+  });
+
+  it.each(DESIGN_LEVELS.filter((l) => l.solution).map((l) => [l.id, l] as const))('%s: lời giải mẫu qua màn và không tốt hơn par', (_id, level) => {
+    const g = gridFor(level);
+    applySolution(g, level.solution!);
+    expect(evaluateDesign(level, g).status).toBe('pass');
+    expect(referencePpa(level)!.C).toBeGreaterThanOrEqual(levelPar(level).C);
+  });
+
+  it.each(DESIGN_LEVELS.map((l) => [l.id, l] as const))('%s: par ghi trong solutions.json khớp khi tính lại', (_id, level) => {
+    const s = solvedLevel(level.id);
+    expect(s).toBeDefined();
+    expect(s!.par).toEqual(levelPar(level));
   });
 
   it('expectedRows theo thứ tự nhị phân, A là bit cao', () => {

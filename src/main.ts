@@ -12,7 +12,7 @@ import { designUnlocked, loadSave, recordDesign, recordRuntimeScore, writeSave }
 import { DESIGN_LEVELS } from './core/level/design-levels';
 import type { DesignLevel } from './core/level/types';
 import { DesignScene } from './modes/design/design-scene';
-import { ICON_STAR } from './ui/icons';
+import { ICON_GATE, ICON_STAR, ICON_TIMER } from './ui/icons';
 import { vnDateSeed } from './core/util/rng';
 import { FrameStats, QUALITY_WINDOW, decideQuality } from './debug/stats';
 import { createPerfOverlay } from './debug/perf-overlay';
@@ -254,10 +254,37 @@ function boot(root: HTMLElement): void {
     span.setAttribute('aria-label', label);
     for (let i = 0; i < 3; i++) {
       const s = el('span', i < n ? 'star on' : 'star');
+      s.style.setProperty('--i', String(i));
       s.innerHTML = ICON_STAR;
       span.append(s);
     }
     return span;
+  };
+
+  /** Số chạy từ 0 lên `to` trong 0,8 s (bỏ qua khi giảm chuyển động). Chỉ đổi chữ, nhãn aria giữ nguyên. */
+  const countUp = (node: HTMLElement, to: number): void => {
+    if (surface.reducedMotion || to <= 0) return;
+    const t0 = performance.now();
+    const tick = (now: number): void => {
+      const k = Math.min(1, (now - t0) / 800);
+      node.textContent = String(Math.round(to * (1 - (1 - k) ** 3)));
+      if (k < 1 && node.isConnected) requestAnimationFrame(tick);
+    };
+    node.textContent = '0';
+    requestAnimationFrame(tick);
+  };
+
+  /** Thẻ chế độ chơi ở màn bắt đầu: biểu tượng + tên + mô tả ngắn + tiến độ. Tên đọc được bằng trình đọc màn hình. */
+  const modeCard = (name: string, desc: string, icon: string, progress: string): HTMLButtonElement => {
+    const b = button('mode-card', '');
+    b.setAttribute('aria-label', name);
+    const ic = el('span', 'mode-icon');
+    ic.innerHTML = icon;
+    const txt = el('span', 'mode-text');
+    const [head, ...rest] = name.split(': ');
+    txt.append(el('strong', '', head ?? name), el('small', '', desc));
+    b.append(ic, txt, el('span', 'mode-progress', progress));
+    return b;
   };
 
   const showLevels = (): void => {
@@ -303,13 +330,16 @@ function boot(root: HTMLElement): void {
 
   const showDesignResult = (lv: DesignLevel, r: { ppa: { A: number; D: number; P: number; C: number }; par: { A: number; D: number; P: number; C: number }; stars: number; score: number }): void => {
     if (!(scene instanceof DesignScene) || scene.level.id !== lv.id) return; // người chơi đã rời màn
-    const improved = recordDesign(save, lv.id, r.ppa, r.stars);
-    persist();
+    // đã xem lời giải AI thì lần qua màn này không tính vào kết quả
+    const counted = !scene.aiShown;
+    const improved = counted && recordDesign(save, lv.id, r.ppa, r.stars);
+    if (counted) persist();
     resultPanel.replaceChildren();
     const card = el('div', 'card');
     card.append(el('h2', 'result-title', 'Qua màn!'), starsEl(r.stars, `${r.stars} trên 3 sao`));
     const score = el('p', 'result-score', String(r.score));
     score.setAttribute('aria-label', `Điểm ${r.score}`);
+    countUp(score, r.score);
     card.append(score, el('p', 'note', r.score > 1000 ? 'Bạn thiết kế tốt hơn AI kỹ sư!' : r.score === 1000 ? 'Ngang AI kỹ sư. 1000 = bằng AI.' : 'AI kỹ sư đạt 1000. Thử tối ưu tiếp?'));
     const tbl = el('table', 'ppa-table');
     const tr = (cells: string[], th = false): void => {
@@ -324,6 +354,7 @@ function boot(root: HTMLElement): void {
     tr(['Chi phí C', String(r.ppa.C), String(r.par.C)]);
     card.append(tbl);
     if (improved) card.append(el('p', 'result-record', 'Kết quả tốt nhất của bạn!'));
+    if (!counted) card.append(el('p', 'note', 'Bạn đã xem lời giải của AI kỹ sư nên lần này không tính vào kết quả. Tự vẽ lại để ghi sao nhé!'));
     const idx = levelIds.indexOf(lv.id);
     const next = DESIGN_LEVELS[idx + 1];
     if (next) {
@@ -336,9 +367,15 @@ function boot(root: HTMLElement): void {
       resultPanel.hidden = true;
       hud.hidden = false;
     });
+    const showAi = button('', 'Xem cách AI kỹ sư làm');
+    showAi.addEventListener('click', () => {
+      resultPanel.hidden = true;
+      hud.hidden = false;
+      if (scene instanceof DesignScene) scene.showAiSolution();
+    });
     const list = button('btn-secondary', 'Danh sách màn');
     list.addEventListener('click', showLevels);
-    card.append(again, list);
+    card.append(again, showAi, list);
     resultPanel.append(card);
     resultPanel.hidden = false;
     hud.hidden = true;
@@ -353,7 +390,7 @@ function boot(root: HTMLElement): void {
     pausePanel.hidden = true;
     start.replaceChildren();
     const play = button('btn-primary', 'CHƠI NGAY');
-    const sixty = button('', 'Thử thách 60 giây');
+    const sixty = modeCard('Thử thách 60 giây', 'Cùng đề cho cả nước mỗi ngày', ICON_TIMER, `Kỷ lục ${save.runtime.best60}`);
     // Màn đo hiệu năng chỉ dành cho nhóm phát triển: chỉ hiện khi URL có ?debug=1
     const perf = button('btn-link', 'Đo hiệu năng (dành cho nhóm phát triển)');
     perf.hidden = !params.has('debug');
@@ -376,14 +413,12 @@ function boot(root: HTMLElement): void {
     const hero = el('div', 'hero');
     hero.append(logo, el('h1', 'title', 'CHIP RUSH'), el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'));
     const menu = el('div', 'menu');
-    const design = button('', 'THIẾT KẾ: tự vẽ mạch');
+    const totalStars = Object.values(save.design).reduce((a, d) => a + (d?.stars ?? 0), 0);
+    const design = modeCard('THIẾT KẾ: tự vẽ mạch', 'Tự vẽ mạch, so tài tối ưu với AI kỹ sư', ICON_GATE, `${totalStars}/${DESIGN_LEVELS.length * 3} sao`);
     design.addEventListener('click', showLevels);
-    menu.append(
-      play,
-      el('p', 'note', 'VẬN HÀNH: cắm đúng cổng logic để con chip cho ra bit mục tiêu, trước khi nó chạm ổ cắm.'),
-      sixty,
-      design,
-    );
+    const modes = el('div', 'modes');
+    modes.append(design, sixty);
+    menu.append(play, el('p', 'note', 'VẬN HÀNH: cắm đúng cổng logic để con chip cho ra bit mục tiêu, trước khi nó chạm ổ cắm.'), modes);
     start.append(
       hero,
       menu,
@@ -423,7 +458,7 @@ function boot(root: HTMLElement): void {
       // màn THIẾT KẾ: id màn, toạ độ tâm ô, đầu vào hiện tại
       design: () =>
         scene instanceof DesignScene
-          ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r) }
+          ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r), showAi: () => (scene as DesignScene).showAiSolution() }
           : null,
     };
   }

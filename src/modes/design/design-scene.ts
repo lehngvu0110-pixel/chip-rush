@@ -6,7 +6,7 @@ import { gridToNetlist, type NetNode } from '../../core/circuit/netlist';
 import { compile, evaluateRow, truthTable, type CompiledCircuit } from '../../core/circuit/simulate';
 import type { Bit, GateType } from '../../core/circuit/types';
 import type { DesignLevel } from '../../core/level/types';
-import { evaluateDesign, expectedRows, gateUsage, gridFor, levelPar, type Evaluation } from '../../core/level/validate';
+import { aiSolutionGrid, evaluateDesign, expectedRows, gateUsage, gridFor, levelPar, type Evaluation } from '../../core/level/validate';
 import { ppaOf } from '../../core/scoring/design';
 import type { GameAudio } from '../../render/audio';
 import type { RenderSurface } from '../../render/canvas';
@@ -64,6 +64,8 @@ export class DesignScene implements Scene {
   // kết quả mô phỏng trực tiếp
   private circuit: CompiledCircuit | null = null;
   private nodeNet = new Map<string, number>(); // "lớp:ô" → chỉ số net
+  /** hướng dòng tín hiệu trên từng đoạn dây: khoá "lớp:ô nhỏ:ô lớn" → true nếu chảy từ ô nhỏ sang ô lớn */
+  private flow = new Map<string, boolean>();
   private netVals: Uint8Array | null = null;
   private actualRows: Bit[][] | null = null;
   /** true = mạch hợp lệ hoàn toàn (không phải mô phỏng tạm khi đang vẽ dở) */
@@ -75,6 +77,8 @@ export class DesignScene implements Scene {
   private problemT = 0;
   private wrongCols: number[] = [];
   private passed = false;
+  /** đã xem lời giải AI trong lượt chơi màn này (qua màn sau đó không tính kết quả) */
+  aiShown = false;
   private time = 0;
   private surf: RenderSurface | null = null;
   private readonly expected: Bit[][];
@@ -262,6 +266,7 @@ export class DesignScene implements Scene {
    *   để người chơi thấy tín hiệu chạy dọc dây ngay khi vẽ thay vì phải nối xong mới thấy.
    */
   private recompute(): void {
+    this.computeFlow();
     const gn = gridToNetlist(this.grid);
     let res = compile(gn.netlist);
     this.strict = res.ok;
@@ -293,6 +298,73 @@ export class DesignScene implements Scene {
     }
     this.actualRows = this.strict ? truthTable(c).map((r) => r.outputs) : null;
     this.evalCurrent();
+  }
+
+  /**
+   * Hướng tín hiệu trên dây (để vẽ "dòng điện" chạy đúng chiều): BFS từ mọi nguồn
+   * (chân công tắc, chân ra của cổng) dọc theo dây và via; cổng là điểm cuối (không đi xuyên qua).
+   */
+  private computeFlow(): void {
+    const g = this.grid;
+    const N = g.size;
+    const GATE = 2 * N; // nút cổng = 2N + ô
+    const adj = new Map<number, number[]>();
+    const link = (a: number, b: number): void => {
+      (adj.get(a) ?? adj.set(a, []).get(a))?.push(b);
+      (adj.get(b) ?? adj.set(b, []).get(b))?.push(a);
+    };
+    const node = (layer: number, cell: number): number => (layer === 0 && g.gateAt(cell) ? GATE + cell : layer * N + cell);
+    for (const w of g.wires()) link(node(w.layer, w.a), node(w.layer, w.b));
+    for (const v of g.vias()) link(v, N + v);
+    const parent = new Map<number, number>();
+    const queue: number[] = [];
+    for (const c of g.inputCells) {
+      parent.set(c, -1);
+      queue.push(c);
+    }
+    for (const gt of g.gates()) {
+      const port = g.neighbor(gt.cell, gt.out);
+      if (port < 0 || !g.hasWire(0, gt.cell, port)) continue;
+      const pn = node(0, port);
+      if (!parent.has(pn)) {
+        parent.set(pn, GATE + gt.cell);
+        queue.push(pn);
+      }
+    }
+    for (let i = 0; i < queue.length; i++) {
+      const u = queue[i] as number;
+      for (const v of adj.get(u) ?? []) {
+        if (parent.has(v) || v >= GATE) continue; // không đi xuyên cổng
+        parent.set(v, u);
+        queue.push(v);
+      }
+    }
+    this.flow.clear();
+    const cellOf = (n: number): number => (n >= GATE ? n - GATE : n % N);
+    const layerOf = (n: number): number => (n >= GATE ? 0 : Math.floor(n / N));
+    for (const [child, par] of parent) {
+      if (par < 0) continue;
+      if (layerOf(child) !== layerOf(par) || cellOf(child) === cellOf(par)) continue; // via
+      const a = cellOf(par);
+      const b = cellOf(child);
+      this.flow.set(`${layerOf(child)}:${Math.min(a, b)}:${Math.max(a, b)}`, a < b);
+    }
+    // dây đi VÀO cổng (chân vào): hướng về phía cổng
+    for (const gt of g.gates()) {
+      for (const sd of g.wireSides(0, gt.cell)) {
+        if (sd === gt.out) continue;
+        const m = g.neighbor(gt.cell, sd);
+        if (parent.has(node(0, m))) this.flow.set(`0:${Math.min(m, gt.cell)}:${Math.max(m, gt.cell)}`, m < gt.cell);
+      }
+    }
+  }
+
+  /** Giá trị bit trên nút (lớp, ô), hoặc null nếu chưa xác định. */
+  private valueAt(layer: number, cell: number): Bit | null {
+    if (!this.netVals) return null;
+    const idx = this.nodeNet.get(`${layer}:${cell}`);
+    if (idx === undefined || this.undriven.has(idx)) return null;
+    return this.netVals[idx] as Bit;
   }
 
   private currentRow(): number {
@@ -623,11 +695,23 @@ export class DesignScene implements Scene {
       if (layer >= g.layers) continue;
       ctx.globalAlpha = layer === this.layer || g.layers === 1 ? 1 : 0.45;
       const lw = layer === 0 ? Math.max(5, cs * 0.16) : Math.max(4, cs * 0.12);
+      const fancy = s.quality === 'high' && !s.reducedMotion;
+      const lit: [number, number, number, number, boolean | undefined][] = [];
       for (const w of g.wires()) {
         if (w.layer !== layer) continue;
         const [x1, y1] = center(w.a);
         const [x2, y2] = center(w.b);
         const col = this.wireColor(layer, w.a, w.b);
+        const on = col === THEME.bit1 || col === '#d6c6ff';
+        if (on && fancy) {
+          // quầng sáng: nét rộng mờ phía dưới (rẻ hơn shadowBlur)
+          ctx.strokeStyle = rgba(layer === 0 ? THEME.bit1 : '#b89cff', 0.22);
+          ctx.lineWidth = lw * 2.8;
+          ctx.beginPath();
+          ctx.moveTo(x1, y1);
+          ctx.lineTo(x2, y2);
+          ctx.stroke();
+        }
         ctx.strokeStyle = col;
         ctx.lineWidth = lw;
         ctx.beginPath();
@@ -640,6 +724,25 @@ export class DesignScene implements Scene {
           ctx.lineWidth = lw * 0.35;
           ctx.stroke();
         }
+        if (on) lit.push([x1, y1, x2, y2, this.flow.get(`${layer}:${Math.min(w.a, w.b)}:${Math.max(w.a, w.b)}`)]);
+      }
+      // "dòng điện": chấm sáng chạy dọc dây mang bit 1, đúng chiều từ nguồn tới đích
+      if (fancy && lit.length > 0) {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(240,253,255,0.95)';
+        ctx.lineWidth = Math.max(2, lw * 0.42);
+        ctx.setLineDash([cs * 0.1, cs * 0.4]);
+        ctx.lineDashOffset = -((this.time * cs * 1.4) % (cs * 0.5));
+        for (const [x1, y1, x2, y2, fwd] of lit) {
+          if (fwd === undefined) continue;
+          // dây lưu theo (ô nhỏ, ô lớn); a = ô nhỏ là (x1,y1) vì wires() trả về a < b
+          const [ax, ay, bx, by] = fwd ? [x1, y1, x2, y2] : [x2, y2, x1, y1];
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+        }
+        ctx.restore();
       }
     }
     ctx.globalAlpha = 1;
@@ -662,11 +765,18 @@ export class DesignScene implements Scene {
     for (const gt of g.gates()) {
       const [x, y] = center(gt.cell);
       const t = cs * 0.8;
+      // cổng đang cho ra 1 thì sáng lên
+      const port = g.neighbor(gt.cell, gt.out);
+      const outV = port >= 0 && g.hasWire(0, gt.cell, port) ? this.valueAt(0, port) : null;
+      if (outV === 1 && !s.reducedMotion) drawGlow(ctx, THEME.bit1, cs * 0.7, x, y, 0.9 + 0.1 * Math.sin(this.time * 4));
       roundRectPath(ctx, x - t / 2, y - t / 2, t, t, 8);
-      ctx.fillStyle = '#141d40';
+      const tile = ctx.createLinearGradient(0, y - t / 2, 0, y + t / 2);
+      tile.addColorStop(0, outV === 1 ? '#1b3156' : '#18224a');
+      tile.addColorStop(1, '#0e1534');
+      ctx.fillStyle = tile;
       ctx.fill();
-      ctx.strokeStyle = rgba(THEME.bit1, 0.6);
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = outV === 1 ? THEME.bit1 : rgba(THEME.bit1, 0.55);
+      ctx.lineWidth = outV === 1 ? 2 : 1.5;
       ctx.stroke();
       ctx.save();
       ctx.translate(x, y);
@@ -735,6 +845,19 @@ export class DesignScene implements Scene {
       ctx.lineWidth = 2.5;
       ctx.stroke();
     }
+  }
+
+  /** Nạp lời giải của AI kỹ sư lên lưới (sau khi qua màn). Hoàn tác để quay lại mạch của mình. */
+  showAiSolution(): void {
+    const ai = aiSolutionGrid(this.level);
+    if (!ai) return;
+    this.aiShown = true;
+    this.pushUndo();
+    this.grid.load(ai.state());
+    this.changed();
+    this.passed = true;
+    const par = levelPar(this.level);
+    this.say(`Lời giải của AI kỹ sư: chi phí ${par.C}. Bấm Hoàn tác để quay lại mạch của bạn.`, 'good', 8);
   }
 
   /** Cho test tự động: toạ độ tâm ô (CSS px). */

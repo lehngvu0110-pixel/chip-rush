@@ -4,7 +4,15 @@ import { diagnose, type Problem } from '../circuit/netlist';
 import { compareTruthTable, inputBit, truthTable, type TruthComparison } from '../circuit/simulate';
 import type { Bit, GateType, TruthRow } from '../circuit/types';
 import { ppaOf, shareScore, starsFor, type PPA } from '../scoring/design';
-import type { DesignLevel, LevelSolution } from './types';
+import type { DesignLevel, LevelSolution, SolvedLevel } from './types';
+import solvedJson from './solutions.json';
+
+const SOLVED = solvedJson as unknown as Record<string, SolvedLevel>;
+
+/** Lời giải của AI kỹ sư cho màn (đã tính offline), nếu có. */
+export function solvedLevel(id: string): SolvedLevel | undefined {
+  return SOLVED[id];
+}
 
 /** Bảng chân trị mong muốn dạng TruthRow (cùng thứ tự với truthTable()). */
 export function expectedRows(level: DesignLevel): TruthRow[] {
@@ -45,17 +53,52 @@ export type Evaluation =
 
 const parCache = new Map<string, PPA>();
 
-/** Par = PPA của lời giải tham chiếu (ném lỗi nếu lời giải sai — lỗi dữ liệu màn, test bắt được). */
+/** PPA của một trạng thái lưới (ném lỗi nếu mạch sai — lỗi dữ liệu màn, test bắt được). */
+function ppaOfState(level: DesignLevel, g: Grid, what: string): PPA {
+  const d = diagnose(g);
+  if (!d.ok) throw new Error(`${what} màn ${level.id} không hợp lệ: ${d.problems.map((p) => p.message).join('; ')}`);
+  const cmp = compareTruthTable(truthTable(d.circuit), expectedRows(level));
+  if (!cmp.pass) throw new Error(`${what} màn ${level.id} sai bảng chân trị`);
+  return ppaOf(g, d.circuit);
+}
+
+/** Lưới có qua màn không (không cần par): trả về PPA nếu qua, null nếu không. Dùng trong tools. */
+export function passingPpa(level: DesignLevel, g: Grid): PPA | null {
+  try {
+    return ppaOfState(level, g, 'Lưới');
+  } catch {
+    return null;
+  }
+}
+
+/** PPA của lời giải mẫu viết tay (null nếu màn không có). */
+export function referencePpa(level: DesignLevel): PPA | null {
+  if (!level.solution) return null;
+  const g = gridFor(level);
+  applySolution(g, level.solution);
+  return ppaOfState(level, g, 'Lời giải mẫu');
+}
+
+/** Lưới chứa lời giải của AI kỹ sư (ưu tiên lời giải solver đã lưu, không có thì lời giải mẫu). */
+export function aiSolutionGrid(level: DesignLevel): Grid | null {
+  const solved = SOLVED[level.id];
+  if (solved) return gridFor(level, solved.state);
+  if (!level.solution) return null;
+  const g = gridFor(level);
+  applySolution(g, level.solution);
+  return g;
+}
+
+/**
+ * Par = PPA lời giải của AI kỹ sư (SPEC 5.1). Tính lại từ lời giải đã lưu (không tin con số ghi sẵn),
+ * nên 3 sao luôn đạt được. Ném lỗi nếu màn không có lời giải nào.
+ */
 export function levelPar(level: DesignLevel): PPA {
   const hit = parCache.get(level.id);
   if (hit) return hit;
-  const g = gridFor(level);
-  applySolution(g, level.solution);
-  const d = diagnose(g);
-  if (!d.ok) throw new Error(`Lời giải tham chiếu màn ${level.id} không hợp lệ: ${d.problems.map((p) => p.message).join('; ')}`);
-  const cmp = compareTruthTable(truthTable(d.circuit), expectedRows(level));
-  if (!cmp.pass) throw new Error(`Lời giải tham chiếu màn ${level.id} sai bảng chân trị`);
-  const par = ppaOf(g, d.circuit);
+  const g = aiSolutionGrid(level);
+  if (!g) throw new Error(`Màn ${level.id} chưa có lời giải (chạy npx tsx tools/solve-levels.ts)`);
+  const par = ppaOfState(level, g, SOLVED[level.id] ? 'Lời giải AI' : 'Lời giải mẫu');
   parCache.set(level.id, par);
   return par;
 }
@@ -96,12 +139,15 @@ export function validateLevel(level: DesignLevel): string[] {
   }
   for (const id of Object.keys(level.table)) if (!outIds.includes(id)) errs.push(`bảng chân trị có đèn lạ ${id}`);
   if (level.grid.cols > 8 || level.grid.rows > 10) errs.push('lưới vượt 8 × 10 (ô sẽ nhỏ hơn 44 px trên màn 360 px)');
+  if (!level.solution && !level.logic) errs.push('màn phải có lời giải mẫu hoặc mạch logic');
   try {
-    const g = gridFor(level);
-    applySolution(g, level.solution);
+    const g = aiSolutionGrid(level);
+    if (!g) throw new Error('chưa có lời giải AI (chạy tools/solve-levels.ts)');
     const usage = gateUsage(g);
     for (const [t, n] of Object.entries(usage)) if ((n ?? 0) > (level.gatesAllowed[t as GateType] ?? 0)) errs.push(`lời giải dùng quá số cổng ${t}`);
-    levelPar(level);
+    const par = levelPar(level);
+    const ref = referencePpa(level);
+    if (ref && par.C > ref.C) errs.push(`par (${par.C}) tệ hơn lời giải mẫu (${ref.C})`);
   } catch (e) {
     errs.push((e as Error).message);
   }

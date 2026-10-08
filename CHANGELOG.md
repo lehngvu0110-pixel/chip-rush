@@ -4,6 +4,9 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- AI kỹ sư: solver đặt cổng + đi dây (branch-and-bound, cận dưới, PathFinder) tính par; chứng minh tối ưu 7/12 màn; nút xem lời giải AI.
+- Màn d10 (MUX 2:1) và d12 (cộng đủ).
+- Đồ hoạ THIẾT KẾ: dòng điện chạy trên dây, quầng sáng, cổng sáng; sao bật và điểm chạy số ở thẻ kết quả; thẻ chế độ ở màn bắt đầu.
 - Chế độ THIẾT KẾ chơi được: 10 màn (d01–d09, d11), vẽ dây bằng kéo ngón tay, cổng, via, 2 lớp, hoàn tác, mô phỏng trực tiếp, bảng chân trị, chấm PPA và sao so với AI kỹ sư, lưu tiến độ.
 - Đồ hoạ "bo mạch neon": nền PCB có xung điện, con chip cắm vào ổ cắm cổng, ký hiệu cổng logic chuẩn trên nút, hạt sáng/vòng sóng khi đúng, rung + viền đỏ khi sai, LED mạng, thanh chuỗi đúng, logo mới, màn bắt đầu/kết quả dạng thẻ.
 - Lõi lưới 2 lớp cho THIẾT KẾ: đi dây, via, đặt/xoay cổng, chuyển sang netlist, báo lỗi theo ô (chập, dây hở, đèn chưa nối, sai số chân, vòng lặp), tính Area.
