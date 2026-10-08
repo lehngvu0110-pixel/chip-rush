@@ -15,6 +15,7 @@ import { DebugScene, type DebugResult } from './modes/debug/debug-scene';
 import { DESIGN_LEVELS } from './core/level/design-levels';
 import type { DesignLevel } from './core/level/types';
 import { DesignScene } from './modes/design/design-scene';
+import { currentStreak, dailyFor, recordDaily, shortDate, vnDateKey } from './core/level/daily';
 import { ICON_GEAR, ICON_STAR } from './ui/icons';
 import { gameUrl, shareResult } from './platform/share';
 import { makeShareFile, type ShareCardData } from './render/share-card';
@@ -419,6 +420,77 @@ function boot(root: HTMLElement): void {
     (card.querySelector('.btn-primary') as HTMLButtonElement | null)?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
   };
 
+  // 7b'. Daily Chip: mỗi ngày (giờ VN) một đề THIẾT KẾ, chuỗi ngày liên tiếp (SPEC mục 4)
+  // ?e2e&date=YYYY-MM-DD để test giả ngày (chỉ khi chạy test)
+  const todayKey = (): string => {
+    const forced = params.has('e2e') ? params.get('date') : null;
+    return forced && /^\d{4}-\d{2}-\d{2}$/.test(forced) ? forced : vnDateKey();
+  };
+  const startDaily = (): void => {
+    const key = todayKey();
+    const lv = dailyFor(key);
+    void audio.unlock();
+    exposeForTests(null);
+    start.hidden = true;
+    levelPanel.hidden = true;
+    resultPanel.hidden = true;
+    pausePanel.hidden = true;
+    hud.hidden = false;
+    heavyBtn.hidden = true;
+    setScene(new DesignScene(lv, { ui, audio, heading: `CHIP HÔM NAY · ${shortDate(key)}`, onPass: (l, r) => showDailyResult(key, l, r) }));
+  };
+
+  const showDailyResult = (key: string, lv: DesignLevel, r: { ppa: { A: number; D: number; P: number; C: number }; par: { A: number; D: number; P: number; C: number }; stars: number; score: number }): void => {
+    if (!(scene instanceof DesignScene) || scene.level.id !== lv.id) return;
+    const counted = !scene.aiShown;
+    const rec = counted ? recordDaily(save, key, r.stars, r.score) : null;
+    if (counted) persist();
+    const streak = currentStreak(save, key);
+    resultPanel.replaceChildren();
+    const card = el('div', 'card');
+    card.append(el('h2', 'result-title', `Chip ngày ${shortDate(key)} xong!`), starsEl(r.stars, `${r.stars} trên 3 sao`));
+    const score = el('p', 'result-score', String(r.score));
+    score.setAttribute('aria-label', `Điểm ${r.score}`);
+    countUp(score, r.score);
+    card.append(score, el('p', 'note', `Chi phí ${r.ppa.C} · AI kỹ sư ${r.par.C} (1000 điểm = ngang AI)`));
+    if (streak > 0) {
+      const st = el('p', 'streak', `Chuỗi ${streak} ngày`);
+      st.setAttribute('aria-label', `Chuỗi ${streak} ngày liên tiếp`);
+      card.append(st);
+    }
+    if (rec?.firstToday) card.append(el('p', 'note', 'Đề mới lúc 0 giờ (giờ Việt Nam). Quay lại ngày mai để giữ chuỗi!'));
+    else if (rec?.improved) card.append(el('p', 'result-record', 'Kết quả tốt nhất hôm nay!'));
+    if (counted && scene.hinted) card.append(el('p', 'note', 'Đã dùng gợi ý nên tối đa 2 sao.'));
+    if (!counted) card.append(el('p', 'note', 'Bạn đã xem lời giải của AI kỹ sư nên lần này không tính.'));
+    const starTxt = '★'.repeat(r.stars) + '☆'.repeat(3 - r.stars);
+    if (counted) {
+      card.append(
+        shareButton(
+          { mode: 'CHIP HÔM NAY', title: `Ngày ${shortDate(key)} · ${lv.concept}`, big: String(r.score), bigLabel: 'điểm (1000 = ngang AI kỹ sư)', stars: r.stars, lines: [`Chi phí ${r.ppa.C} · AI kỹ sư ${r.par.C}`, streak > 1 ? `Chuỗi ${streak} ngày liên tiếp` : 'Mỗi ngày một con chip mới'], badge: r.score > 1000 ? 'Vượt AI kỹ sư!' : undefined },
+          `CHIP RUSH · Chip ngày ${shortDate(key)}: ${starTxt} ${r.score} điểm${streak > 1 ? ` · chuỗi ${streak} ngày` : ''}. Đề hôm nay giống nhau cho mọi người — bạn được bao nhiêu?`,
+        ),
+      );
+    }
+    const again = button('', 'Tối ưu tiếp');
+    again.addEventListener('click', () => {
+      resultPanel.hidden = true;
+      hud.hidden = false;
+    });
+    const showAi = button('', 'Xem cách AI kỹ sư làm');
+    showAi.addEventListener('click', () => {
+      resultPanel.hidden = true;
+      hud.hidden = false;
+      if (scene instanceof DesignScene) scene.showAiSolution();
+    });
+    const home = button('btn-primary', 'Về màn chính');
+    home.addEventListener('click', showStart);
+    card.append(home, again, showAi);
+    resultPanel.append(card);
+    resultPanel.hidden = false;
+    hud.hidden = true;
+    home.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+  };
+
   // 7c. KIỂM THỬ: danh sách màn → màn chơi → thẻ kết quả
   const debugIds = DEBUG_LEVELS.map((l) => l.id);
   const showDebugLevels = (): void => {
@@ -633,6 +705,25 @@ function boot(root: HTMLElement): void {
     blockBtn('runtime', 'VẬN HÀNH: chơi vô tận', () => startRuntime('endless'));
     const actions = el('div', 'start-actions');
     actions.append(play, sixty);
+    // Daily Chip: trạng thái hôm nay + chuỗi ngày
+    const key = todayKey();
+    const doneToday = save.daily.history[key];
+    const streakNow = currentStreak(save, key);
+    const daily = button('btn-daily', '');
+    const dHead = el('strong', '', `CHIP HÔM NAY · ${shortDate(key)}`);
+    const dSub = el(
+      'small',
+      '',
+      doneToday
+        ? `Đã xong ${'★'.repeat(doneToday.stars)}${'☆'.repeat(3 - doneToday.stars)} · chuỗi ${streakNow} ngày`
+        : streakNow > 0
+          ? `Làm đề hôm nay để giữ chuỗi ${streakNow} ngày!`
+          : 'Mỗi ngày một con chip mới, ai cũng cùng đề',
+    );
+    daily.append(dHead, dSub);
+    daily.setAttribute('aria-label', `Chip hôm nay, ngày ${shortDate(key)}${doneToday ? `, đã xong ${doneToday.stars} sao` : ''}, chuỗi ${streakNow} ngày`);
+    daily.classList.toggle('done', !!doneToday);
+    daily.addEventListener('click', startDaily);
     const gear = button('btn-icon gear', '');
     gear.innerHTML = ICON_GEAR;
     gear.setAttribute('aria-label', 'Cài đặt');
@@ -641,6 +732,7 @@ function boot(root: HTMLElement): void {
     start.append(
       hero,
       slot,
+      daily,
       actions,
       el('p', 'note', 'Chạm vào một khối của con chip để chọn công đoạn. CHƠI NGAY = VẬN HÀNH: cắm đúng cổng logic trước khi chip chạm ổ cắm.'),
       el('p', 'records', `Kỷ lục: Vô tận ${save.runtime.bestEndless} · 60 giây ${save.runtime.best60}`),
@@ -704,7 +796,7 @@ function boot(root: HTMLElement): void {
       },
       design: () =>
         scene instanceof DesignScene
-          ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, tut: scene.tutStep, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r), showAi: () => (scene as DesignScene).showAiSolution() }
+          ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, tut: scene.tutStep, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r), showAi: () => (scene as DesignScene).showAiSolution(), applyAi: () => (scene as DesignScene).loadAiForTest() }
           : null,
     };
   }

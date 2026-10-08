@@ -2,6 +2,25 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-12 – Daily Chip ("Chip hôm nay")
+**Đã làm**
+- `tools/gen-daily.ts`: sinh 28 đề THIẾT KẾ có seed cố định.
+  - Mạch ngẫu nhiên 1–3 cổng trên 2–3 công tắc; lưới 5–7 ô có vật cản; thử lưới 1 lớp trước, không đi dây được thì cho thêm lớp 2.
+  - Loại đề: đèn hằng số, đèn bằng/đảo của một công tắc, 2 đèn giống nhau, cổng thừa (bỏ đi vẫn đúng), trùng bảng chân trị.
+  - AI kỹ sư phải giải được mới nhận đề → `src/core/level/daily.json` (2,8 KB gzip). 4/28 đề được chứng minh tối ưu.
+- `src/core/level/daily.ts`: ngày theo giờ VN (UTC+7), đề quay vòng (26/10 = đề 1), chuỗi ngày, lịch sử 40 ngày. `registerSolved` trong `validate.ts` để par/Gợi ý/lời giải AI dùng chung cho đề Daily.
+- Màn chính: nút "CHIP HÔM NAY · dd/mm" (trạng thái: chưa làm / giữ chuỗi N ngày / đã xong ★). Thẻ kết quả: sao, điểm, chuỗi ngày, chia sẻ (ảnh + chữ có ★).
+- Màn thấp (≤ 740 px): ẩn dòng giải thích, panel cuộn được thay vì bị cắt; tiêu đề nhỏ lại ở màn ≤ 340 px.
+- 64 unit test mới (mọi đề hợp lệ, AI 3 sao, Gợi ý từ lưới trống qua màn, lịch đổi đúng 00:00 VN, chuỗi ngày, đọc dữ liệu lưu cũ) + 1 E2E (chuỗi 1 → 2 → mất khi bỏ 1 ngày). Tổng 345 unit, 11 E2E; JS 51 KB gzip.
+
+**Quyết định**
+- Làm Daily sớm (SPEC ghi "sau khi nộp") vì không cần máy chủ và giúp người vote có lý do quay lại; trước 26/10 đề vẫn quay vòng.
+- Dữ liệu lưu thêm `daily.history` nhưng vẫn `version: 1` (trường mới có giá trị mặc định, dữ liệu cũ đọc được — có test).
+- Bộ sinh: tầng 2 công tắc chỉ có 5 bảng 1 cổng và 10 bảng 2 cổng khác nhau → dùng hết thì tự chuyển sang tầng 3 công tắc, 3 cổng.
+
+**Việc tiếp theo**
+- Vũ: chơi thử vài đề Daily, báo đề nào quá dễ/khó; duyệt mục "làm rõ 12/10" trong SPEC 4.
+
 ## 2026-10-11 – Hướng dẫn lần đầu (d01, t01) + ảnh/logo/mô tả nộp bài
 **Đã làm**
 - `src/core/tutorial.ts` (logic thuần, test được):

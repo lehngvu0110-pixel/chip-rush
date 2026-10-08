@@ -8,6 +8,13 @@ import type { DesignLevel, LevelSolution, SolvedLevel } from './types';
 import solvedJson from './solutions.json';
 
 const SOLVED = solvedJson as unknown as Record<string, SolvedLevel>;
+const parCache = new Map<string, PPA>();
+
+/** Đăng ký lời giải tính sẵn cho màn ngoài solutions.json (Daily Chip, tools/gen-daily.ts). */
+export function registerSolved(id: string, solved: SolvedLevel): void {
+  SOLVED[id] = solved;
+  parCache.delete(id);
+}
 
 /** Lời giải của AI kỹ sư cho màn (đã tính offline), nếu có. */
 export function solvedLevel(id: string): SolvedLevel | undefined {
@@ -50,8 +57,6 @@ export type Evaluation =
   | { status: 'invalid'; problems: Problem[] }
   | { status: 'wrong'; comparison: TruthComparison; actual: TruthRow[] }
   | { status: 'pass'; ppa: PPA; par: PPA; stars: number; score: number; actual: TruthRow[] };
-
-const parCache = new Map<string, PPA>();
 
 /** PPA của một trạng thái lưới (ném lỗi nếu mạch sai — lỗi dữ liệu màn, test bắt được). */
 function ppaOfState(level: DesignLevel, g: Grid, what: string): PPA {

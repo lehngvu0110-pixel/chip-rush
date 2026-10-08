@@ -4,6 +4,7 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Chip hôm nay (Daily Chip): 28 đề THIẾT KẾ sinh + giải trước, đổi đề 00:00 giờ Việt Nam, chuỗi ngày, chia sẻ.
 - Hướng dẫn lần đầu, không trừ sao: d01 (đường chấm + ngón tay ảo + 3 bước), t01 (AI chỉ dây nên đo và giải thích kết quả đo).
 - Ảnh nộp bài: logo PNG, 4 ảnh in-game, ảnh bìa (`docs/submission/`, công cụ `tools/submission-assets.mjs`).
 - Chia sẻ kết quả ở cả 3 chế độ: ảnh 1080×1350 + lời mời kèm link (Web Share, dự phòng sao chép).

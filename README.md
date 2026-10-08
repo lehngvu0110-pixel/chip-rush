@@ -4,7 +4,7 @@ Game web về vi mạch, chơi trên điện thoại: **Thiết kế** một con
 
 Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 
-> Trạng thái: chơi được cả 3 chế độ (12 màn THIẾT KẾ, 6 màn KIỂM THỬ, VẬN HÀNH Vô tận + 60 giây). Đang hoàn thiện và đo hiệu năng trên máy thật trước khi nộp 26/10/2026.
+> Trạng thái: chơi được cả 3 chế độ (12 màn THIẾT KẾ, 6 màn KIỂM THỬ, VẬN HÀNH Vô tận + 60 giây) và **Chip hôm nay** (28 đề quay vòng theo ngày, chuỗi ngày). Đang hoàn thiện và đo hiệu năng trên máy thật trước khi nộp 26/10/2026.
 
 ![CHIP RUSH](docs/submission/anh-bia-1920x1080.png)
 
@@ -18,6 +18,8 @@ Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 | VẬN HÀNH | Arcade: chọn cổng AND/OR/XOR/NAND trước khi gói bit chạm đáy | Cổng logic |
 | THIẾT KẾ | Giải đố: vẽ dây, đặt cổng, làm LED sáng đúng mọi trường hợp | Routing, bảng chân trị, via, bộ cộng, PPA |
 | KIỂM THỬ | Suy luận: đo các điểm trên mạch để tìm cổng hỏng hoặc dây kẹt | Probing, fault model (gate-invert, stuck-at), lớp lỗi tương đương |
+
+Thêm **Chip hôm nay**: mỗi ngày (giờ Việt Nam) một đề THIẾT KẾ giống nhau cho mọi người, giữ chuỗi ngày và chia sẻ điểm.
 
 Luật chi tiết: [`docs/SPEC.md`](docs/SPEC.md).
 

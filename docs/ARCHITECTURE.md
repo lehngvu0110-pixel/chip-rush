@@ -10,7 +10,7 @@
 | Thư mục | Vai trò | Phụ thuộc được phép |
 | --- | --- | --- |
 | `src/core/circuit` | Kiểu dữ liệu mạch, cổng, lưới 2 lớp, netlist, mô phỏng | không |
-| `src/core/level` | Màn THIẾT KẾ/KIỂM THỬ, validate, lời giải AI tính sẵn (`solutions.json`, `debug-solutions.json`) | `core/circuit`, `core/debug` |
+| `src/core/level` | Màn THIẾT KẾ/KIỂM THỬ, Daily Chip (`daily.ts` + `daily.json`), validate, lời giải AI tính sẵn (`solutions.json`, `debug-solutions.json`) | `core/circuit`, `core/debug` |
 | `src/core/debug` | Mô hình lỗi, lớp tương đương (KIỂM THỬ) | `core/circuit` |
 | `src/core/scoring` | PPA, sao, điểm VẬN HÀNH | `core/circuit` |
 | `src/core/progress.ts` | Tiến trình, mở khóa, schema lưu | `core/*` |
@@ -20,7 +20,7 @@
 | `src/input` | Pointer events → thao tác trên lưới | DOM |
 | `src/ui` | Hub, HUD, kết quả, tutorial, cài đặt | mọi tầng dưới |
 | `src/modes/*` | Scene từng chế độ | mọi tầng dưới |
-| `tools/` | Script Node: giải màn, audit, kiểm tra màn, kiểm tra dung lượng, subset font | `core/*`, `ai/*` |
+| `tools/` | Script Node: giải màn (`solve-levels.ts`), sinh + giải đề Daily (`gen-daily.ts`), ảnh nộp bài, kiểm tra dung lượng, subset font | `core/*`, `ai/*` |
 
 ## Vòng lặp game
 - Một `requestAnimationFrame` duy nhất trong `main.ts` gọi `scene.update(dt)` rồi `scene.render()`.

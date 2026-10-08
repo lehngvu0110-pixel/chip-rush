@@ -10,7 +10,8 @@ export interface SaveData {
   design: Record<string, { stars: number; best: { A: number; D: number; P: number }; hinted: boolean }>;
   debug: Record<string, { stars: number; probes: number }>;
   runtime: { bestEndless: number; best60: number };
-  daily: { lastDate: string | null; streak: number };
+  /** Daily Chip: ngày qua đề gần nhất (giờ VN), chuỗi ngày liên tiếp, kết quả tốt nhất từng ngày */
+  daily: { lastDate: string | null; streak: number; history: Record<string, { stars: number; score: number }> };
   settings: { muted: boolean; reducedMotion: boolean };
 }
 
@@ -20,7 +21,7 @@ export function defaultSave(): SaveData {
     design: {},
     debug: {},
     runtime: { bestEndless: 0, best60: 0 },
-    daily: { lastDate: null, streak: 0 },
+    daily: { lastDate: null, streak: 0, history: {} },
     settings: { muted: false, reducedMotion: false },
   };
 }
@@ -50,7 +51,13 @@ export function loadSave(storage: SafeStorage): LoadResult {
   const dl = isObj(raw.daily) ? raw.daily : {};
   d.runtime = { bestEndless: num(rt.bestEndless, 0), best60: num(rt.best60, 0) };
   d.settings = { muted: bool(st.muted, false), reducedMotion: bool(st.reducedMotion, false) };
-  d.daily = { lastDate: typeof dl.lastDate === 'string' ? dl.lastDate : null, streak: num(dl.streak, 0) };
+  const hist: SaveData['daily']['history'] = {};
+  if (isObj(dl.history)) {
+    for (const [k, v] of Object.entries(dl.history)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(k) && isObj(v)) hist[k] = { stars: num(v.stars, 0), score: num(v.score, 0) };
+    }
+  }
+  d.daily = { lastDate: typeof dl.lastDate === 'string' ? dl.lastDate : null, streak: num(dl.streak, 0), history: hist };
   if (isObj(raw.design)) d.design = raw.design as SaveData['design'];
   if (isObj(raw.debug)) d.debug = raw.debug as SaveData['debug'];
   return { data: d, wasReset: false };

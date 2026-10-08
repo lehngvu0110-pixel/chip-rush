@@ -93,11 +93,16 @@ Làm rõ khi cài đặt (08/10, **chờ Vũ duyệt**, không đổi luật đ�
     design: { [id]: { stars, best: { A, D, P }, hinted } },
     debug:  { [id]: { stars, probes } },
     runtime: { bestEndless, best60 },
-    daily: { lastDate, streak },
+    daily: { lastDate, streak, history: { [YYYY-MM-DD]: { stars, score } } },  // history thêm 12/10, giữ 40 ngày
     settings: { muted, reducedMotion } }
   ```
   Sai `version` → thử chuyển đổi; không được → reset và báo người chơi. Lưu trữ lỗi → chạy bằng bộ nhớ RAM, báo "Tiến độ không lưu được trên trình duyệt này".
 - **Daily Chip** (sau khi nộp): 1 màn THIẾT KẾ/ngày theo giờ Việt Nam (UTC+7), đổi đề 00:00. 28 đề cho 26/10–22/11 sinh + giải trước bằng `tools/`, đóng vào build. Phần thưởng: streak + lưới kết quả để chia sẻ.
+  Làm rõ khi cài đặt (12/10, **chờ Vũ duyệt**):
+  - Làm sớm, có sẵn từ bây giờ: trước 26/10 đề vẫn quay vòng theo cùng công thức (26/10 = đề 1), nên giám khảo/người chơi thử lúc nào cũng có đề.
+  - Đề sinh ngẫu nhiên có seed (`tools/gen-daily.ts`): 1–3 cổng trên 2–3 công tắc, lưới 5–7 ô, 0–3 vật cản. Loại đề có đèn hằng số, đèn bằng/đảo của một công tắc, 2 đèn giống nhau, cổng thừa, hoặc trùng bảng chân trị. Mỗi đề phải được AI kỹ sư giải thì mới nhận → luôn có lời giải và par 3 sao.
+  - Cổng được dùng = đúng số cổng của mạch sinh ra (người chơi biết "nguyên liệu", phải tự nghĩ cách ghép).
+  - Chuỗi: qua đề lần đầu trong ngày mới cộng; lần cuối là hôm qua → +1, xa hơn → về 1; bỏ lỡ 1 ngày thì chuỗi hiện 0. Xem lời giải AI thì không tính. Gợi ý vẫn tính chuỗi nhưng tối đa 2 sao như màn thường.
 
 ## 5. AI & solver
 

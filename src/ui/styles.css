@@ -104,7 +104,7 @@ html, body {
 .logo { width: 46px; height: 46px; filter: drop-shadow(0 0 12px rgba(56, 232, 255, 0.55)); animation: float 4s ease-in-out infinite; }
 .logo svg { display: block; width: 46px; height: 46px; }
 /* die chip (màn hình chính): canvas vẽ phía dưới, các nút trong suốt nằm đúng vị trí 3 khối */
-.die-slot { position: relative; width: min(360px, calc(100vw - 32px), calc(100vh - 360px)); aspect-ratio: 1; min-width: 240px; flex: none; }
+.die-slot { position: relative; width: min(360px, calc(100vw - 32px), calc(100vh - 420px)); aspect-ratio: 1; min-width: 240px; flex: none; }
 .btn.die-btn {
   position: absolute;
   min-width: 0;
@@ -448,3 +448,40 @@ html, body {
 @keyframes tut-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 176, 32, 0); } 50% { box-shadow: 0 0 0 4px rgba(255, 176, 32, 0.85), 0 0 22px rgba(255, 176, 32, 0.6); } }
 .btn.tut-pulse { animation: tut-glow 1.2s ease-in-out infinite; }
 .reduce-motion .btn.tut-pulse { animation: none; box-shadow: 0 0 0 3px rgba(255, 176, 32, 0.9); }
+
+/* Daily Chip: nút "CHIP HÔM NAY" ở màn chính + chuỗi ngày ở thẻ kết quả */
+.btn.btn-daily {
+  width: min(360px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 9px 16px;
+  text-align: left;
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 176, 32, 0.75);
+  background: linear-gradient(135deg, rgba(64, 42, 6, 0.9), rgba(16, 14, 30, 0.92));
+  box-shadow: 0 0 18px rgba(255, 176, 32, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.btn-daily strong { color: #ffd27a; font-size: 16px; letter-spacing: 0.04em; }
+.btn-daily small { color: var(--text-dim); font-size: 13px; font-weight: 400; }
+.btn.btn-daily.done { border-color: rgba(56, 232, 255, 0.45); box-shadow: none; background: linear-gradient(135deg, rgba(22, 34, 74, 0.92), rgba(10, 15, 36, 0.92)); }
+.btn-daily.done strong { color: var(--accent); }
+.streak {
+  margin: 0;
+  padding: 4px 14px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffd27a, #ffb020);
+  color: #2a1a00;
+  font-weight: 700;
+}
+.start-panel { justify-content: safe center; overflow-y: auto; }
+.start-panel > * { flex: none; }
+/* màn thấp (iPhone SE 667 px, Android có thanh điều hướng): bỏ dòng giải thích, khít khoảng cách */
+@media (max-height: 740px) {
+  .start-panel { gap: 10px; }
+  .start-panel > .note { display: none; }
+}
+@media (max-width: 340px) {
+  .title { font-size: 32px; }
+}

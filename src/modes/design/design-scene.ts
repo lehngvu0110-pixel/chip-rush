@@ -32,6 +32,8 @@ export interface DesignSceneDeps {
   onPass: (level: DesignLevel, result: PassResult) => void;
   /** hướng dẫn lần đầu (đường chấm + ngón tay ảo), không trừ sao */
   tutorial?: boolean;
+  /** dòng nhỏ phía trên tên màn (mặc định "THIẾT KẾ · D01"; Daily Chip: "CHIP HÔM NAY · 26/10") */
+  heading?: string;
 }
 
 const UNDO_MAX = 60;
@@ -461,7 +463,7 @@ export class DesignScene implements Scene {
     ctx.textAlign = 'left';
     ctx.font = `700 11px ${THEME.font}`;
     ctx.fillStyle = THEME.textDim;
-    ctx.fillText(`THIẾT KẾ · ${this.level.id.toUpperCase()}`, 16, 22);
+    ctx.fillText(this.deps.heading ?? `THIẾT KẾ · ${this.level.id.toUpperCase()}`, 16, 22);
     ctx.font = `700 19px ${THEME.font}`;
     ctx.fillStyle = THEME.text;
     ctx.fillText(this.level.name, 16, 46, s.width - 140);
@@ -604,6 +606,14 @@ export class DesignScene implements Scene {
     this.passed = true;
     const par = levelPar(this.level);
     this.say(`Lời giải của AI kỹ sư: chi phí ${par.C}. Bấm Hoàn tác để quay lại mạch của bạn.`, 'good', 8);
+  }
+
+  /** CHỈ cho test tự động (?e2e): nạp lời giải AI như người chơi tự vẽ (không đánh dấu đã xem lời giải). */
+  loadAiForTest(): void {
+    const ai = aiSolutionGrid(this.level);
+    if (!ai) return;
+    this.grid.load(ai.state());
+    this.changed();
   }
 
   /** Cho test tự động: toạ độ tâm ô (CSS px). */
