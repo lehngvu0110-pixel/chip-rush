@@ -2,6 +2,17 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-09 – Màn hình chính "die chip" + Gợi ý THIẾT KẾ
+**Đã làm**
+- `src/modes/hub/hub-scene.ts`: màn hình chính là một die chip nhìn từ trên xuống, 3 khối THIẾT KẾ / KIỂM THỬ / VẬN HÀNH (hoạ tiết riêng: hàng ô chuẩn, lưới điểm đo, làn bit), thanh tiến độ, khoá, xung dữ liệu chạy trên bus giữa các khối. Nút DOM trong suốt đè đúng vị trí khối (trình đọc màn hình + test bấm được).
+- `src/core/level/hint.ts`: Gợi ý = bước kế tiếp của lời giải AI (cổng trước, rồi dây/via lan từ công tắc). Bấm lần 1 chỉ cảnh báo "tối đa 2 sao", lần 2 hiện bóng mờ cam + tự chọn công cụ phù hợp. Ghi `hinted` vào tiến độ.
+- 15 test gợi ý: làm theo gợi ý liên tục từ lưới trống luôn qua màn ở cả 12 màn (tổng 252 unit).
+- Sửa: nút khối die bị nền `.btn` che mờ (CSS specificity).
+
+**Việc tiếp theo**
+- Vũ: duyệt các mục "chờ duyệt" (lưới THIẾT KẾ, KIỂM THỬ, mở khoá KIỂM THỬ sau d05).
+- Chia sẻ kết quả (Web Share + dự phòng sao chép), âm thanh từng chế độ, đo hiệu năng lại trên 3 máy.
+
 ## 2026-10-08 (3) – Chế độ KIỂM THỬ chơi được (t01–t06) + solver minimax
 **Đã làm**
 - Tách `src/modes/design/board.ts` (lưới + mô phỏng có cài lỗi + vẽ) dùng chung cho THIẾT KẾ và KIỂM THỬ.

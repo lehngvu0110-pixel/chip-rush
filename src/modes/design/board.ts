@@ -10,6 +10,7 @@ import { roundRectPath } from '../../render/draw';
 import { drawGlow } from '../../render/fx';
 import { drawGateSymbol } from '../../render/gate-symbol';
 import { THEME } from '../../render/theme';
+import type { Hint } from '../../core/level/hint';
 
 export const LAYER_COL = ['#3d7fd6', '#a07cff'] as const; // lớp 1: xanh đồng; lớp 2: tím
 const BIT0 = '#26355f';
@@ -35,6 +36,8 @@ export interface BoardDrawOptions {
   marks?: { cell: number; text: string; color: string }[];
   /** ô được chọn (viền cam) */
   selected?: number[];
+  /** bóng mờ gợi ý (THIẾT KẾ) */
+  ghost?: Hint | null;
 }
 
 export class Board {
@@ -395,6 +398,49 @@ export class Board {
       ctx.strokeStyle = THEME.bit1;
       ctx.lineWidth = 2.5;
       ctx.stroke();
+    }
+    // bóng mờ gợi ý: nét đứt màu cam, nhấp nháy nhẹ
+    if (o.ghost) {
+      const gh = o.ghost;
+      const a = 0.55 + 0.45 * Math.sin(o.time * 6);
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = THEME.accent;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 5]);
+      const box = (cell: number): void => {
+        const [x, y] = center(cell);
+        roundRectPath(ctx, x - cs / 2 + 3, y - cs / 2 + 3, cs - 6, cs - 6, 9);
+        ctx.stroke();
+      };
+      if (gh.kind === 'wire') {
+        box(gh.a);
+        box(gh.b);
+        const [x1, y1] = center(gh.a);
+        const [x2, y2] = center(gh.b);
+        ctx.setLineDash([]);
+        ctx.lineWidth = Math.max(4, cs * 0.14);
+        ctx.strokeStyle = rgba(THEME.accent, 0.8);
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      } else if (gh.kind === 'via') {
+        box(gh.cell);
+        const [x, y] = center(gh.cell);
+        ctx.beginPath();
+        ctx.arc(x, y, cs * 0.17, 0, Math.PI * 2);
+        ctx.stroke();
+      } else {
+        box(gh.cell);
+        const [x, y] = center(gh.cell);
+        const t = cs * 0.8;
+        ctx.setLineDash([]);
+        ctx.translate(x, y);
+        ctx.rotate((gh.out * Math.PI) / 2);
+        drawGateSymbol(ctx, gh.type, -t * 0.44, -t * 0.3, t * 0.88, t * 0.6, { stroke: THEME.accent, lineWidth: 2 });
+      }
+      ctx.restore();
     }
     // nhãn đo (KIỂM THỬ): giá trị đã đo trên dây
     for (const m of o.marks ?? []) {

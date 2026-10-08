@@ -15,7 +15,8 @@ import { DebugScene, type DebugResult } from './modes/debug/debug-scene';
 import { DESIGN_LEVELS } from './core/level/design-levels';
 import type { DesignLevel } from './core/level/types';
 import { DesignScene } from './modes/design/design-scene';
-import { ICON_GATE, ICON_PROBE, ICON_STAR, ICON_TIMER } from './ui/icons';
+import { ICON_STAR } from './ui/icons';
+import { DIE_BLOCKS, HubScene, type BlockId } from './modes/hub/hub-scene';
 import { vnDateSeed } from './core/util/rng';
 import { FrameStats, QUALITY_WINDOW, decideQuality } from './debug/stats';
 import { createPerfOverlay } from './debug/perf-overlay';
@@ -277,19 +278,6 @@ function boot(root: HTMLElement): void {
     requestAnimationFrame(tick);
   };
 
-  /** Thẻ chế độ chơi ở màn bắt đầu: biểu tượng + tên + mô tả ngắn + tiến độ. Tên đọc được bằng trình đọc màn hình. */
-  const modeCard = (name: string, desc: string, icon: string, progress: string): HTMLButtonElement => {
-    const b = button('mode-card', '');
-    b.setAttribute('aria-label', name);
-    const ic = el('span', 'mode-icon');
-    ic.innerHTML = icon;
-    const txt = el('span', 'mode-text');
-    const [head, ...rest] = name.split(': ');
-    txt.append(el('strong', '', head ?? name), el('small', '', desc));
-    b.append(ic, txt, el('span', 'mode-progress', progress));
-    return b;
-  };
-
   const showLevels = (): void => {
     setScene(new TitleScene());
     start.hidden = true;
@@ -335,7 +323,7 @@ function boot(root: HTMLElement): void {
     if (!(scene instanceof DesignScene) || scene.level.id !== lv.id) return; // người chơi đã rời màn
     // đã xem lời giải AI thì lần qua màn này không tính vào kết quả
     const counted = !scene.aiShown;
-    const improved = counted && recordDesign(save, lv.id, r.ppa, r.stars);
+    const improved = counted && recordDesign(save, lv.id, r.ppa, r.stars, scene.hinted);
     if (counted) persist();
     resultPanel.replaceChildren();
     const card = el('div', 'card');
@@ -357,6 +345,7 @@ function boot(root: HTMLElement): void {
     tr(['Chi phí C', String(r.ppa.C), String(r.par.C)]);
     card.append(tbl);
     if (improved) card.append(el('p', 'result-record', 'Kết quả tốt nhất của bạn!'));
+    if (counted && scene.hinted) card.append(el('p', 'note', 'Đã dùng gợi ý nên màn này tối đa 2 sao. Chơi lại không gợi ý để lấy đủ 3 sao!'));
     if (!counted) card.append(el('p', 'note', 'Bạn đã xem lời giải của AI kỹ sư nên lần này không tính vào kết quả. Tự vẽ lại để ghi sao nhé!'));
     const idx = levelIds.indexOf(lv.id);
     const next = DESIGN_LEVELS[idx + 1];
@@ -464,14 +453,13 @@ function boot(root: HTMLElement): void {
   };
 
   const showStart = (): void => {
-    setScene(new TitleScene());
     levelPanel.hidden = true;
     hud.hidden = true;
     resultPanel.hidden = true;
     pausePanel.hidden = true;
     start.replaceChildren();
     const play = button('btn-primary', 'CHƠI NGAY');
-    const sixty = modeCard('Thử thách 60 giây', 'Cùng đề cho cả nước mỗi ngày', ICON_TIMER, `Kỷ lục ${save.runtime.best60}`);
+    const sixty = button('btn-secondary sixty', 'Thử thách 60 giây');
     // Màn đo hiệu năng chỉ dành cho nhóm phát triển: chỉ hiện khi URL có ?debug=1
     const perf = button('btn-link', 'Đo hiệu năng (dành cho nhóm phát triển)');
     perf.hidden = !params.has('debug');
@@ -492,26 +480,48 @@ function boot(root: HTMLElement): void {
     const logo = el('div', 'logo');
     logo.innerHTML = LOGO_SVG;
     const hero = el('div', 'hero');
-    hero.append(logo, el('h1', 'title', 'CHIP RUSH'), el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'));
-    const menu = el('div', 'menu');
-    const totalStars = Object.values(save.design).reduce((a, d) => a + (d?.stars ?? 0), 0);
-    const design = modeCard('THIẾT KẾ: tự vẽ mạch', 'Tự vẽ mạch, so tài tối ưu với AI kỹ sư', ICON_GATE, `${totalStars}/${DESIGN_LEVELS.length * 3} sao`);
-    design.addEventListener('click', showLevels);
-    const debugStars = Object.values(save.debug).reduce((a, d) => a + (d?.stars ?? 0), 0);
-    const debugOpen = save.design.d05 !== undefined;
-    const debug = modeCard('KIỂM THỬ: tìm lỗi chip', debugOpen ? 'Đo ít lần nhất để tìm cổng hỏng' : 'Qua THIẾT KẾ D05 để mở', ICON_PROBE, `${debugStars}/${DEBUG_LEVELS.length * 3} sao`);
-    debug.addEventListener('click', showDebugLevels);
-    const modes = el('div', 'modes');
-    modes.append(design, debug, sixty);
-    menu.append(play, el('p', 'note', 'VẬN HÀNH: cắm đúng cổng logic để con chip cho ra bit mục tiêu, trước khi nó chạm ổ cắm.'), modes);
+    const titleRow = el('div', 'title-row');
+    titleRow.append(logo, el('h1', 'title', 'CHIP RUSH'));
+    hero.append(titleRow, el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'));
+
+    // Die chip: 3 khối vẽ bằng canvas (HubScene), nút DOM trong suốt đặt đúng vị trí từng khối
+    const stats = {
+      designStars: Object.values(save.design).reduce((a, d) => a + (d?.stars ?? 0), 0),
+      designMax: DESIGN_LEVELS.length * 3,
+      debugStars: Object.values(save.debug).reduce((a, d) => a + (d?.stars ?? 0), 0),
+      debugMax: DEBUG_LEVELS.length * 3,
+      debugOpen: save.design.d05 !== undefined,
+      bestEndless: save.runtime.bestEndless,
+      best60: save.runtime.best60,
+    };
+    const slot = el('div', 'die-slot');
+    const blockBtn = (id: BlockId, name: string, onClick: () => void): void => {
+      const b = DIE_BLOCKS[id];
+      const btn = button('die-btn', '');
+      btn.setAttribute('aria-label', name);
+      btn.style.left = `${b.x * 100}%`;
+      btn.style.top = `${b.y * 100}%`;
+      btn.style.width = `${b.w * 100}%`;
+      btn.style.height = `${b.h * 100}%`;
+      btn.addEventListener('click', onClick);
+      slot.append(btn);
+    };
+    blockBtn('design', 'THIẾT KẾ: tự vẽ mạch', showLevels);
+    blockBtn('debug', 'KIỂM THỬ: tìm lỗi chip', showDebugLevels);
+    blockBtn('runtime', 'VẬN HÀNH: chơi vô tận', () => startRuntime('endless'));
+    const actions = el('div', 'start-actions');
+    actions.append(play, sixty);
     start.append(
       hero,
-      menu,
+      slot,
+      actions,
+      el('p', 'note', 'Chạm vào một khối của con chip để chọn công đoạn. CHƠI NGAY = VẬN HÀNH: cắm đúng cổng logic trước khi chip chạm ổ cắm.'),
       el('p', 'records', `Kỷ lục: Vô tận ${save.runtime.bestEndless} · 60 giây ${save.runtime.best60}`),
       perf,
       el('p', 'version', versionLabel()),
     );
     start.hidden = false;
+    setScene(new HubScene(slot, stats));
   };
 
   // Móc cho test tự động (Playwright) đọc trạng thái — chỉ khi URL có ?e2e hoặc ?debug.

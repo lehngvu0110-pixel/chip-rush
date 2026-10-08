@@ -96,12 +96,30 @@ html, body {
 
 /* --- Màn bắt đầu: nền là canvas bo mạch (TitleScene), chữ nằm trên một quầng tối cho dễ đọc --- */
 .start-panel {
-  background: radial-gradient(ellipse 70% 55% at 50% 48%, rgba(5, 8, 18, 0.82) 0%, rgba(5, 8, 18, 0.55) 55%, rgba(5, 8, 18, 0) 100%);
-  gap: 22px;
+  background: radial-gradient(ellipse 80% 40% at 50% 12%, rgba(5, 8, 18, 0.75) 0%, rgba(5, 8, 18, 0) 100%);
+  gap: 14px;
 }
-.hero { display: flex; flex-direction: column; align-items: center; gap: 6px; }
-.logo { width: 96px; height: 96px; filter: drop-shadow(0 0 16px rgba(56, 232, 255, 0.55)); animation: float 4s ease-in-out infinite; }
-.logo svg { display: block; }
+.hero { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.title-row { display: flex; align-items: center; gap: 10px; }
+.logo { width: 46px; height: 46px; filter: drop-shadow(0 0 12px rgba(56, 232, 255, 0.55)); animation: float 4s ease-in-out infinite; }
+.logo svg { display: block; width: 46px; height: 46px; }
+/* die chip (màn hình chính): canvas vẽ phía dưới, các nút trong suốt nằm đúng vị trí 3 khối */
+.die-slot { position: relative; width: min(360px, calc(100vw - 32px), calc(100vh - 360px)); aspect-ratio: 1; min-width: 240px; flex: none; }
+.btn.die-btn {
+  position: absolute;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+.btn.die-btn:active { background: rgba(255, 255, 255, 0.08); transform: none; }
+.btn.die-btn:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+.start-actions { display: flex; gap: 10px; width: min(360px, 100%); }
+.start-actions .btn-primary { flex: 1.4; padding: 12px 10px; }
+.start-actions .sixty { flex: 1; padding: 10px 8px; font-size: 15px; }
 .menu { display: flex; flex-direction: column; align-items: center; gap: 12px; width: min(360px, 100%); }
 .modes { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .start-panel .mode-card { min-width: 0; }
@@ -135,7 +153,7 @@ html, body {
 .mode-progress { color: #ffd27a; font-size: 13px; font-weight: 700; white-space: nowrap; }
 
 .title {
-  font-size: 46px;
+  font-size: 40px;
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1.1;
@@ -346,7 +364,7 @@ html, body {
   border-top: 1px solid var(--line);
 }
 .design-row { display: flex; gap: 6px; justify-content: center; align-items: center; min-height: 48px; }
-.design-row .btn { flex: 1 1 0; max-width: 140px; padding: 8px 6px; font-size: 15px; border-radius: 12px; }
+.design-row .btn { flex: 1 1 0; max-width: 140px; padding: 8px 4px; font-size: 14px; border-radius: 12px; min-width: 0; }
 .design-row .tool.active { background: rgba(56, 232, 255, 0.18); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .design-row .tool.layer { border-color: #3d7fd6; color: #9cc4ff; }
 .design-row .tool.layer.layer2 { border-color: #a07cff; color: #d6c6ff; background: rgba(160, 124, 255, 0.15); }

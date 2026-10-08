@@ -17,6 +17,7 @@ import { THEME } from '../../render/theme';
 import type { GamePointer } from '../../input/pointer';
 import type { Scene } from '../../scene';
 import { Board } from './board';
+import { nextHint, type Hint } from '../../core/level/hint';
 import { cellAtPoint, layoutDesign, stepCells, tableColAtPoint, type DesignLayout } from './layout';
 
 export type Tool = 'wire' | 'gate' | 'via' | 'erase';
@@ -64,6 +65,10 @@ export class DesignScene implements Scene {
   private passed = false;
   /** đã xem lời giải AI trong lượt chơi màn này (qua màn sau đó không tính kết quả) */
   aiShown = false;
+  /** đã dùng Gợi ý trong lượt chơi màn này → tối đa 2 sao (SPEC 2) */
+  hinted = false;
+  private hintArmed = false;
+  private ghost: { hint: Hint; t: number } | null = null;
   private time = 0;
   private surf: RenderSurface | null = null;
   private readonly expected: Bit[][];
@@ -153,7 +158,9 @@ export class DesignScene implements Scene {
     });
     const check = btn('KIỂM TRA', 'btn-primary check');
     check.addEventListener('click', () => this.check());
-    actions.append(this.undoBtn, clear, check);
+    const hintBtn = btn('Gợi ý');
+    hintBtn.addEventListener('click', () => this.useHint());
+    actions.append(this.undoBtn, clear, hintBtn, check);
     this.bar.append(tools, actions);
     this.syncToolbar();
   }
@@ -256,7 +263,7 @@ export class DesignScene implements Scene {
   }
 
   private check(): void {
-    const e = evaluateDesign(this.level, this.grid);
+    const e = evaluateDesign(this.level, this.grid, this.hinted);
     if (e.status === 'invalid') {
       this.problemNodes = e.problems.flatMap((p) => p.nodes);
       this.problemT = 3;
@@ -400,6 +407,7 @@ export class DesignScene implements Scene {
     this.particles.update(dt);
     if (this.surf) this.pcb.update(dt, this.surf);
     if (this.problemT > 0) this.problemT = Math.max(0, this.problemT - dt);
+    if (this.ghost && (this.ghost.t -= dt) <= 0) this.ghost = null;
   }
 
   render(s: RenderSurface): void {
@@ -424,7 +432,7 @@ export class DesignScene implements Scene {
     ctx.fillText(this.level.name, 16, 46, s.width - 140);
 
     this.drawTable(s);
-    this.board.draw(s, L.grid, { time: this.time, layer: this.layer, tool: this.tool, drag: this.drag, problemNodes: this.problemNodes, problemT: this.problemT, passed: this.passed });
+    this.board.draw(s, L.grid, { time: this.time, layer: this.layer, tool: this.tool, drag: this.drag, problemNodes: this.problemNodes, problemT: this.problemT, passed: this.passed, ghost: this.ghost?.hint ?? null });
     this.particles.draw(ctx);
 
     // dòng PPA (trực tiếp) + mục tiêu của AI kỹ sư
@@ -498,6 +506,47 @@ export class DesignScene implements Scene {
         ctx.fillStyle = isOut ? (v ? THEME.accent : rgba(THEME.accent, 0.45)) : v ? THEME.text : THEME.textDim;
         ctx.fillText(String(v), cx, y);
       }
+    }
+  }
+
+  /**
+   * Gợi ý: lần bấm đầu chỉ cảnh báo (dùng gợi ý → tối đa 2 sao), lần sau mới hiện bước kế tiếp
+   * của lời giải AI kỹ sư dưới dạng bóng mờ màu cam, và tự chuyển sang công cụ phù hợp.
+   */
+  private useHint(): void {
+    if (!this.hinted && !this.hintArmed) {
+      this.hintArmed = true;
+      this.say('Dùng gợi ý thì màn này tối đa 2 sao. Bấm Gợi ý lần nữa để xem bước tiếp theo.', 'info', 5);
+      return;
+    }
+    const ai = aiSolutionGrid(this.level);
+    if (!ai) return;
+    const h = nextHint(this.grid, ai.state());
+    this.hinted = true;
+    if (!h) {
+      this.say('Mạch của bạn đã có đủ các phần của lời giải AI. Bấm KIỂM TRA (hoặc xoá phần thừa).', 'good', 5);
+      return;
+    }
+    this.ghost = { hint: h, t: 8 };
+    this.deps.audio.play('tick');
+    if (h.kind === 'gate') {
+      this.gateType = h.type;
+      this.setTool('gate');
+      const dir = ['phải', 'dưới', 'trái', 'trên'][h.out];
+      this.say(
+        h.replace
+          ? `Gợi ý: ô sáng cam cần cổng ${h.type}, chân ra hướng ${dir}. Chạm cổng cũ để xoay, hoặc tẩy rồi đặt lại.`
+          : `Gợi ý: đặt cổng ${h.type} vào ô sáng cam, rồi chạm lại để xoay chân ra hướng ${dir}.`,
+        'good',
+        7,
+      );
+    } else if (h.kind === 'via') {
+      this.setTool('via');
+      this.say('Gợi ý: đặt via vào ô sáng cam để nối lớp 1 với lớp 2.', 'good', 6);
+    } else {
+      this.layer = h.layer;
+      this.setTool('wire');
+      this.say(`Gợi ý: nối dây giữa 2 ô sáng cam (lớp ${h.layer + 1}).`, 'good', 6);
     }
   }
 
