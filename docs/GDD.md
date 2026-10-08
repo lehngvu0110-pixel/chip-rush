@@ -23,6 +23,10 @@ Màn hình chính là một **die chip** nhìn từ trên xuống, chia 3 khối
 | Màn d11–d12 | "Mình vừa tự ráp mạch cộng như trong CPU" — khoảnh khắc muốn chia sẻ |
 | Sau mỗi màn | Muốn thử lại để đạt 3 sao / vượt AI kỹ sư |
 
+### Hướng dẫn lần đầu (không trừ sao, tự tắt sau khi qua màn lần đầu)
+- **d01:** đường chấm cam từ công tắc A tới đèn Y + "ngón tay ảo" chạy theo; chữ đổi theo 3 bước: kéo đoạn đầu → kéo tiếp → chạm công tắc thử 0/1 rồi bấm KIỂM TRA (nút nhấp nháy). Bật "Giảm chuyển động" thì không có ngón tay chạy, chỉ còn đường chấm.
+- **t01:** AI kỹ sư chỉ dây nên đo tiếp (viền cam) và cột đầu vào cần đặt; sau mỗi lần đo giải thích "khớp mạch chuẩn → lỗi ở phía sau / lệch → lỗi ở phía trước"; còn 1 khả năng thì nút Báo lỗi nhấp nháy. AI không nói thẳng đáp án.
+
 ## Phong cách hình ảnh
 - Nền tím than (#0b1020) như die silicon dưới kính hiển vi; dây phát sáng cyan (#38e8ff) khi mang bit 1, tối khi bit 0; điểm nhấn cam (#ffb020).
 - Toàn bộ vẽ bằng code (Canvas 2D), không dùng ảnh ngoài.

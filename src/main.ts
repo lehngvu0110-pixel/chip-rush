@@ -347,7 +347,8 @@ function boot(root: HTMLElement): void {
     pausePanel.hidden = true;
     hud.hidden = false;
     heavyBtn.hidden = true;
-    setScene(new DesignScene(lv, { ui, audio, onPass: showDesignResult }));
+    // hướng dẫn lần đầu ở màn đầu tiên, tới khi qua màn lần đầu (không trừ sao)
+    setScene(new DesignScene(lv, { ui, audio, onPass: showDesignResult, tutorial: lv.id === 'd01' && !save.design[lv.id] }));
   };
 
   const showDesignResult = (lv: DesignLevel, r: { ppa: { A: number; D: number; P: number; C: number }; par: { A: number; D: number; P: number; C: number }; stars: number; score: number }): void => {
@@ -458,7 +459,7 @@ function boot(root: HTMLElement): void {
     pausePanel.hidden = true;
     hud.hidden = false;
     heavyBtn.hidden = true;
-    setScene(new DebugScene(lv, { ui, audio, onEnd: showDebugResult }));
+    setScene(new DebugScene(lv, { ui, audio, onEnd: showDebugResult, tutorial: lv.id === 't01' && !save.debug[lv.id] }));
   };
 
   const showDebugResult = (lv: DebugLevel, r: DebugResult): void => {
@@ -690,11 +691,20 @@ function boot(root: HTMLElement): void {
           gates: g.gates().map((x) => g.colRow(x.cell)),
           wires: [...new Set([...ds.setup.probeCells.keys()].map((k) => Number(k.split(':')[1])))].map((c) => g.colRow(c)),
           cell: (c: number, r: number) => ds.cellCenter(c, r),
+          // hướng dẫn lần đầu: hàng đầu vào cần đặt + các ô dây nên đo tiếp
+          coach: ds.coach
+            ? {
+                remaining: ds.coach.remaining,
+                row: ds.coach.next?.row ?? null,
+                currentRow: ds.board.currentRow(),
+                cells: [...ds.setup.probeCells].filter(([, n]) => n === ds.coach?.next?.net).map(([k]) => g.colRow(Number(k.split(':')[1]))),
+              }
+            : null,
         };
       },
       design: () =>
         scene instanceof DesignScene
-          ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r), showAi: () => (scene as DesignScene).showAiSolution() }
+          ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, tut: scene.tutStep, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r), showAi: () => (scene as DesignScene).showAiSolution() }
           : null,
     };
   }

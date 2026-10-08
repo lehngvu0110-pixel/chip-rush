@@ -38,6 +38,8 @@ export interface BoardDrawOptions {
   selected?: number[];
   /** bóng mờ gợi ý (THIẾT KẾ) */
   ghost?: Hint | null;
+  /** hướng dẫn lần đầu: đường chấm cần vẽ, "ngón tay" chạy theo chuỗi ô, ô cần chạm */
+  guide?: { wires: { layer: number; a: number; b: number }[]; finger: number[] | null; cells: number[] } | null;
 }
 
 export class Board {
@@ -399,6 +401,7 @@ export class Board {
       ctx.lineWidth = 2.5;
       ctx.stroke();
     }
+    if (o.guide) this.drawGuide(ctx, o.guide, o.time, center, cs);
     // bóng mờ gợi ý: nét đứt màu cam, nhấp nháy nhẹ
     if (o.ghost) {
       const gh = o.ghost;
@@ -466,5 +469,69 @@ export class Board {
       ctx.lineWidth = 3;
       ctx.stroke();
     }
+  }
+
+  /** Hướng dẫn lần đầu: đường chấm cam (bước còn thiếu) + ngón tay ảo kéo dọc đường + ô cần chạm. */
+  private drawGuide(
+    ctx: CanvasRenderingContext2D,
+    gd: NonNullable<BoardDrawOptions['guide']>,
+    time: number,
+    center: (cell: number) => [number, number],
+    cs: number,
+  ): void {
+    ctx.save();
+    ctx.lineCap = 'round';
+    ctx.setLineDash([cs * 0.12, cs * 0.14]);
+    ctx.lineDashOffset = -time * cs * 0.6; // chấm chạy theo chiều cần kéo
+    ctx.lineWidth = Math.max(3, cs * 0.1);
+    ctx.strokeStyle = rgba(THEME.accent, 0.75);
+    for (const w of gd.wires) {
+      const [x1, y1] = center(w.a);
+      const [x2, y2] = center(w.b);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    // ô cần chạm: viền cam thở
+    const a = 0.55 + 0.45 * Math.sin(time * 5);
+    for (const cell of gd.cells) {
+      const [x, y] = center(cell);
+      roundRectPath(ctx, x - cs / 2 + 2, y - cs / 2 + 2, cs - 4, cs - 4, 10);
+      ctx.strokeStyle = rgba(THEME.accent, a);
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+    // ngón tay ảo: đi hết chuỗi trong 2 s, nghỉ 0,8 s rồi lặp
+    const pts = gd.finger;
+    if (pts && pts.length >= 2) {
+      const PERIOD = 2.8;
+      const MOVE = 2;
+      const ph = time % PERIOD;
+      const u = Math.min(1, ph / MOVE);
+      const seg = u * (pts.length - 1);
+      const i = Math.min(pts.length - 2, Math.floor(seg));
+      const f = seg - i;
+      const [xa, ya] = center(pts[i] as number);
+      const [xb, yb] = center(pts[i + 1] as number);
+      const x = xa + (xb - xa) * f;
+      const y = ya + (yb - ya) * f;
+      const fade = ph < 0.2 ? ph / 0.2 : ph > MOVE ? Math.max(0, 1 - (ph - MOVE) / 0.5) : 1;
+      const r = cs * 0.22;
+      ctx.globalAlpha = fade;
+      ctx.beginPath();
+      ctx.arc(x, y, r * 1.6, 0, Math.PI * 2);
+      ctx.fillStyle = rgba(THEME.accent, 0.18);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fillStyle = rgba('#ffffff', 0.85);
+      ctx.fill();
+      ctx.strokeStyle = THEME.accent;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+    }
+    ctx.restore();
   }
 }

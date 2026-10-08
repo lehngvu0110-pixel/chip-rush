@@ -2,6 +2,37 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-11 – Hướng dẫn lần đầu (d01, t01) + ảnh/logo/mô tả nộp bài
+**Đã làm**
+- `src/core/tutorial.ts` (logic thuần, test được):
+  - `designGuide` = các bước còn thiếu so với lời giải AI, theo đúng thứ tự Gợi ý; `guidePolyline` = chuỗi ô cho "ngón tay ảo".
+  - `debugCoach` = lọc các lớp lỗi còn khớp với những gì người chơi ĐÃ đo, rồi chạy lại minimax để chọn phép đo tiếp theo tối ưu.
+- d01 (lần đầu, tới khi qua màn): đường chấm cam chạy từ A tới Y + ngón tay ảo; chữ đổi theo 3 bước; nút KIỂM TRA nhấp nháy khi nối xong. Không trừ sao. Bật "Giảm chuyển động" thì không có ngón tay chạy.
+- t01 (lần đầu): viền cam ở dây nên đo và ở cột đầu vào cần đặt. Sau mỗi lần đo có giải thích "khớp mạch chuẩn → lỗi phía sau / lệch → lỗi phía trước". Khi còn 1 khả năng thì nút Báo lỗi nhấp nháy; AI không nói thẳng đáp án.
+- Ảnh nộp bài trong `docs/submission/`:
+  - 4 ảnh chơi thật (khung Pixel 7).
+  - Logo PNG 512/1024 và bản nền trong suốt.
+  - Ảnh bìa 1920×1080.
+  - Tạo lại được bằng `tools/submission-assets.mjs`.
+- `docs/SUBMISSION.md`: mô tả dài + bản rút gọn ~500 ký tự, link GitHub/Pages.
+- README cập nhật trạng thái 3 chế độ và mô tả AI đúng với code: branch-and-bound + cận dưới + PathFinder, minimax, Thompson sampling.
+- 22 unit test hướng dẫn, trong đó:
+  - Làm hết bước hướng dẫn ở cả 12 màn THIẾT KẾ thì qua màn 3 sao.
+  - Làm theo huấn luyện viên ở cả 6 màn KIỂM THỬ thì báo đúng lỗi với số lần đo ≤ par.
+- 2 E2E hướng dẫn. Tổng 281 unit, 10 E2E xanh; JS 46,5 KB gzip.
+
+**Quyết định**
+- "Lần đầu" = chưa có kết quả qua màn trong tiến độ (không thêm trường lưu mới). Xoá tiến độ thì hướng dẫn hiện lại.
+- Huấn luyện viên t01 tính lại minimax theo lượt đo THẬT của người chơi chứ không đi theo cây cố định, nên người chơi đo "lệch kịch bản" vẫn được chỉ tiếp đúng.
+- Bỏ câu về mục tiêu nhân lực bán dẫn quốc gia khỏi mô tả nộp bài, để tránh mọi nội dung có thể bị coi là chính trị (điều IV.3).
+
+**Việc tiếp theo**
+- Vũ:
+  - Điền MSSV vào README và SUBMISSION.
+  - Xem lại câu chữ mô tả dài.
+  - Đo hiệu năng trên 3 máy thật.
+  - Duyệt các mục "chờ duyệt" trong SPEC.
+
 ## 2026-10-10 – Chia sẻ kết quả, âm thanh từng chế độ, Cài đặt
 **Đã làm**
 - `src/render/share-card.ts`: ảnh chia sẻ 1080×1350 (logo, chế độ, màn, sao, điểm lớn, PPA, link game) vẽ bằng Canvas, tạo sẵn khi thẻ kết quả mở để không mất "user gesture" trên iOS.

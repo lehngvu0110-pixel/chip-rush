@@ -4,6 +4,8 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Hướng dẫn lần đầu, không trừ sao: d01 (đường chấm + ngón tay ảo + 3 bước), t01 (AI chỉ dây nên đo và giải thích kết quả đo).
+- Ảnh nộp bài: logo PNG, 4 ảnh in-game, ảnh bìa (`docs/submission/`, công cụ `tools/submission-assets.mjs`).
 - Chia sẻ kết quả ở cả 3 chế độ: ảnh 1080×1350 + lời mời kèm link (Web Share, dự phòng sao chép).
 - Âm thanh riêng cho đặt cổng, đo dây, thắng, thua, mở khoá cổng.
 - Bảng Cài đặt: âm thanh, giảm chuyển động, giới thiệu, xoá tiến độ (bấm 2 lần).

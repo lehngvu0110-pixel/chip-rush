@@ -16,8 +16,9 @@ import { PcbBackdrop } from '../../render/pcb';
 import { THEME } from '../../render/theme';
 import type { GamePointer } from '../../input/pointer';
 import type { Scene } from '../../scene';
-import { Board } from './board';
+import { Board, type BoardDrawOptions } from './board';
 import { nextHint, type Hint } from '../../core/level/hint';
+import { designGuide, guidePolyline } from '../../core/tutorial';
 import { cellAtPoint, layoutDesign, stepCells, tableColAtPoint, type DesignLayout } from './layout';
 
 export type Tool = 'wire' | 'gate' | 'via' | 'erase';
@@ -29,6 +30,8 @@ export interface DesignSceneDeps {
   audio: GameAudio;
   /** gọi khi qua màn (main hiện thẻ kết quả + lưu tiến độ) */
   onPass: (level: DesignLevel, result: PassResult) => void;
+  /** hướng dẫn lần đầu (đường chấm + ngón tay ảo), không trừ sao */
+  tutorial?: boolean;
 }
 
 const UNDO_MAX = 60;
@@ -69,6 +72,10 @@ export class DesignScene implements Scene {
   hinted = false;
   private hintArmed = false;
   private ghost: { hint: Hint; t: number } | null = null;
+  /** hướng dẫn lần đầu: bước còn thiếu và giai đoạn (vẽ đoạn đầu → vẽ tiếp → bấm KIỂM TRA) */
+  private guide: Hint[] = [];
+  tutStep: 'draw' | 'more' | 'check' | null = null;
+  private checkBtn!: HTMLButtonElement;
   private time = 0;
   private surf: RenderSurface | null = null;
   private readonly expected: Bit[][];
@@ -157,6 +164,7 @@ export class DesignScene implements Scene {
       this.changed();
     });
     const check = btn('KIỂM TRA', 'btn-primary check');
+    this.checkBtn = check;
     check.addEventListener('click', () => this.check());
     const hintBtn = btn('Gợi ý');
     hintBtn.addEventListener('click', () => this.useHint());
@@ -224,7 +232,30 @@ export class DesignScene implements Scene {
     this.hideMsg();
     window.addEventListener('keydown', this.onKey);
     this.surf = s;
-    this.say(this.level.intro, 'info', 7);
+    if (this.deps.tutorial) {
+      this.tutStep = 'draw';
+      this.updateTutorial();
+    } else this.say(this.level.intro, 'info', 7);
+  }
+
+  /** Cập nhật hướng dẫn lần đầu sau mỗi thay đổi lưới. Chữ hiện lâu (60 s) vì người mới đọc chậm. */
+  private updateTutorial(): void {
+    if (!this.tutStep) return;
+    const ai = aiSolutionGrid(this.level);
+    this.guide = ai ? designGuide(this.grid, ai.state()) : [];
+    const pin = (k: 'in' | 'out'): string => (k === 'in' ? this.level.grid.inputs[0]?.id : this.level.grid.outputs[0]?.id) ?? '';
+    const drawn = this.grid.wires().length > 0;
+    const next: typeof this.tutStep = this.guide.length === 0 ? 'check' : drawn ? 'more' : 'draw';
+    if (next === this.tutStep && this.msg.hidden === false) return; // giữ nguyên chữ đang hiện
+    this.tutStep = next;
+    this.checkBtn.classList.toggle('tut-pulse', next === 'check');
+    if (next === 'draw') {
+      this.say(`Hướng dẫn: đặt ngón tay lên công tắc ${pin('in')} rồi KÉO theo đường chấm cam tới đèn ${pin('out')}. (Hướng dẫn không trừ sao.)`, 'info', 60);
+    } else if (next === 'more') {
+      this.say(`Tốt lắm! Kéo tiếp theo đường chấm cho tới đèn ${pin('out')}. Lỡ tay thì bấm Hoàn tác.`, 'good', 60);
+    } else {
+      this.say(`Đã nối xong! Chạm công tắc ${pin('in')} để thử 0/1 và xem đèn ${pin('out')} đổi theo, rồi bấm KIỂM TRA.`, 'good', 60);
+    }
   }
 
   exit(): void {
@@ -260,6 +291,7 @@ export class DesignScene implements Scene {
     this.wrongCols = [];
     this.recompute();
     this.syncToolbar();
+    this.updateTutorial();
   }
 
   private check(): void {
@@ -280,6 +312,9 @@ export class DesignScene implements Scene {
     }
     this.passed = true;
     this.hideMsg();
+    this.tutStep = null;
+    this.guide = [];
+    this.checkBtn.classList.remove('tut-pulse');
     this.deps.audio.play('win');
     const L = this.layout;
     if (this.surf && !this.surf.reducedMotion) {
@@ -432,7 +467,7 @@ export class DesignScene implements Scene {
     ctx.fillText(this.level.name, 16, 46, s.width - 140);
 
     this.drawTable(s);
-    this.board.draw(s, L.grid, { time: this.time, layer: this.layer, tool: this.tool, drag: this.drag, problemNodes: this.problemNodes, problemT: this.problemT, passed: this.passed, ghost: this.ghost?.hint ?? null });
+    this.board.draw(s, L.grid, { time: this.time, layer: this.layer, tool: this.tool, drag: this.drag, problemNodes: this.problemNodes, problemT: this.problemT, passed: this.passed, ghost: this.ghost?.hint ?? null, guide: this.guideDraw() });
     this.particles.draw(ctx);
 
     // dòng PPA (trực tiếp) + mục tiêu của AI kỹ sư
@@ -548,6 +583,14 @@ export class DesignScene implements Scene {
       this.setTool('wire');
       this.say(`Gợi ý: nối dây giữa 2 ô sáng cam (lớp ${h.layer + 1}).`, 'good', 6);
     }
+  }
+
+  private guideDraw(): NonNullable<BoardDrawOptions['guide']> | null {
+    if (!this.tutStep || this.guide.length === 0) return null;
+    const wires = this.guide.flatMap((g) => (g.kind === 'wire' ? [{ layer: g.layer, a: g.a, b: g.b }] : []));
+    // ngón tay chỉ hiện trước khi người chơi vẽ đoạn đầu tiên (đã hiểu thao tác thì thôi)
+    const finger = this.tutStep === 'draw' && !this.surf?.reducedMotion ? guidePolyline(this.guide) : null;
+    return { wires, finger, cells: [] };
   }
 
   /** Nạp lời giải của AI kỹ sư lên lưới (sau khi qua màn). Hoàn tác để quay lại mạch của mình. */

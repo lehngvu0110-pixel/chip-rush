@@ -15,6 +15,7 @@ import { THEME } from '../../render/theme';
 import type { GamePointer } from '../../input/pointer';
 import type { Scene } from '../../scene';
 import { Board } from '../design/board';
+import { debugCoach, goldenValue, type CoachStep } from '../../core/tutorial';
 import { cellAtPoint, layoutDesign, tableColAtPoint, type DesignLayout } from '../design/layout';
 
 export type DebugTool = 'probe' | 'report';
@@ -35,6 +36,8 @@ export interface DebugSceneDeps {
   ui: HTMLElement;
   audio: GameAudio;
   onEnd: (level: DebugLevel, r: DebugResult) => void;
+  /** hướng dẫn lần đầu: AI chỉ dây nên đo tiếp và giải thích kết quả đo (không trừ sao) */
+  tutorial?: boolean;
 }
 
 interface Probe {
@@ -82,6 +85,8 @@ export class DebugScene implements Scene {
   private readonly toolBtns = new Map<DebugTool, HTMLButtonElement>();
   private readonly answerBtns: HTMLButtonElement[] = [];
   private msgTimer = 0;
+  /** hướng dẫn lần đầu (null = tắt) */
+  coach: CoachStep | null = null;
 
   constructor(
     readonly level: DebugLevel,
@@ -140,6 +145,7 @@ export class DebugScene implements Scene {
     this.tool = t;
     this.hideMsg();
     this.sync();
+    this.toolBtns.get('report')?.classList.toggle('tut-pulse', this.coach?.next === null && t !== 'report' && !this.ended);
   }
 
   private sync(): void {
@@ -168,7 +174,8 @@ export class DebugScene implements Scene {
   enter(s: RenderSurface): void {
     this.surf = s;
     this.deps.ui.append(this.bar, this.strip);
-    this.say(this.level.intro, 'info', 8);
+    if (this.deps.tutorial) this.updateCoach(`${this.level.intro} `);
+    else this.say(this.level.intro, 'info', 8);
   }
 
   exit(): void {
@@ -195,6 +202,7 @@ export class DebugScene implements Scene {
       this.board.inputs = this.board.inputs.map((_, i) => ((col >> (n - 1 - i)) & 1) as Bit);
       this.board.evalCurrent();
       this.deps.audio.play('tick');
+      if (this.coach) this.updateCoach();
       return;
     }
     const at = cellAtPoint(L, p.x, p.y);
@@ -207,6 +215,7 @@ export class DebugScene implements Scene {
       this.board.inputs[i] = (this.board.inputs[i] ? 0 : 1) as Bit;
       this.board.evalCurrent();
       this.deps.audio.play('tick');
+      if (this.coach) this.updateCoach();
       return;
     }
     if (this.tool === 'probe') return this.probeAt(cell, pin?.kind === 'out');
@@ -239,7 +248,41 @@ export class DebugScene implements Scene {
       this.finish(false, `Đã đo ${this.probes.length} lần, quá giới hạn ${this.limit}.`);
       return;
     }
+    if (this.coach) {
+      // giải thích bằng cách so với mạch chuẩn — đây chính là suy luận "chia đôi" mà AI kỹ sư dùng
+      const w = goldenValue(this.setup, net, row);
+      const why =
+        v === w
+          ? `Dây = ${v}, mạch chuẩn cũng = ${w} → lỗi nằm phía SAU dây này. `
+          : `Dây = ${v} nhưng mạch chuẩn = ${w} → lỗi nằm phía TRƯỚC dây này. `;
+      this.updateCoach(why);
+      return;
+    }
     this.say(`Đo lần ${this.probes.length}: dây = ${v} khi ${this.rowLabel(row)}.`, 'info', 4);
+  }
+
+  /**
+   * Hướng dẫn lần đầu: tính lại phép đo tối ưu tiếp theo trên các lớp lỗi còn khớp với kết quả đo,
+   * rồi nói người chơi làm gì (đổi hàng đầu vào → đo dây viền cam → báo lỗi).
+   */
+  private updateCoach(prefix = ''): void {
+    if (this.ended) return;
+    const c = debugCoach(this.setup, this.probes);
+    this.coach = c;
+    const reportBtn = this.toolBtns.get('report');
+    reportBtn?.classList.toggle('tut-pulse', c.next === null && this.tool !== 'report');
+    if (c.next === null) {
+      const what = this.level.model === 'gate-invert' ? 'cổng' : 'dây';
+      this.say(`${prefix}Chỉ còn 1 khả năng! Chọn "Báo lỗi", chạm ${what} bạn nghĩ là hỏng rồi bấm nút BÁO.`, 'good', 60);
+      return;
+    }
+    const left = `Còn ${c.remaining} chỗ nghi hỏng.`;
+    if (this.board.currentRow() !== c.next.row) {
+      this.say(`${prefix}${left} Chạm cột ${this.rowLabel(c.next.row)} (viền cam) trong bảng để đặt đầu vào trước khi đo.`, 'info', 60);
+    } else {
+      if (this.tool !== 'probe') this.setTool('probe');
+      this.say(`${prefix}${left} Chạm dây viền cam để đo (AI chọn dây chia đôi số chỗ nghi).`, 'info', 60);
+    }
   }
 
   private selectAt(cell: number): void {
@@ -321,6 +364,7 @@ export class DebugScene implements Scene {
   private finish(win: boolean, reason?: string): void {
     this.ended = true;
     this.sync();
+    this.toolBtns.get('report')?.classList.remove('tut-pulse');
     this.reveal = this.faultNodes();
     if (win && this.surf && !this.surf.reducedMotion) {
       const G = this.layout.grid;
@@ -384,6 +428,7 @@ export class DebugScene implements Scene {
       passed: false,
       marks,
       selected: this.selected ? [this.selected.cell] : [],
+      guide: this.coachGuide(),
     });
     this.particles.draw(ctx);
 
@@ -391,6 +436,19 @@ export class DebugScene implements Scene {
     ctx.font = `13px ${THEME.font}`;
     ctx.fillStyle = this.probes.length > this.setup.par ? THEME.accent : THEME.textDim;
     ctx.fillText(`Đã đo ${this.probes.length} / tối đa ${this.limit}   ·   Báo sai ${this.wrong}/2   ·   AI kỹ sư cần ${this.setup.par} lần đo`, s.width / 2, L.ppaY, s.width - 24);
+  }
+
+  /** Ô dây cần đo tiếp (khi đã đặt đúng hàng đầu vào). */
+  private coachGuide(): { wires: never[]; finger: null; cells: number[] } | null {
+    const m = this.coach?.next;
+    if (!m || this.ended || this.board.currentRow() !== m.row) return null;
+    const cells: number[] = [];
+    for (const [key, net] of this.setup.probeCells) {
+      if (net !== m.net) continue;
+      const cell = Number(key.split(':')[1]);
+      if (!cells.includes(cell)) cells.push(cell);
+    }
+    return { wires: [], finger: null, cells };
   }
 
   /** Bảng chân trị: mỗi cột 1 hàng đầu vào; mỗi đèn có 2 dòng — CHUẨN (cam) và THẬT (đèn đang hiện). */
@@ -409,6 +467,13 @@ export class DebugScene implements Scene {
     roundRectPath(ctx, T.x + T.labelW + cur * T.colW + 2, T.y - 2, T.colW - 4, T.rows * T.rowH + 4, 6);
     ctx.fillStyle = rgba(THEME.bit1, 0.12);
     ctx.fill();
+    const want = this.coach?.next;
+    if (want && !this.ended && want.row !== cur) {
+      roundRectPath(ctx, T.x + T.labelW + want.row * T.colW + 2, T.y - 2, T.colW - 4, T.rows * T.rowH + 4, 6);
+      ctx.strokeStyle = rgba(THEME.accent, 0.55 + 0.45 * Math.sin(this.time * 5));
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
     const actual = this.board.actualRows ?? [];
     const lines: { label: string; color: string; value: (k: number) => number | null; bad?: (k: number) => boolean }[] = [];
     lv.inputs.forEach((p, i) => lines.push({ label: p.id, color: THEME.textDim, value: (k) => (k >> (nIn - 1 - i)) & 1 }));

@@ -4,26 +4,29 @@ Game web về vi mạch, chơi trên điện thoại: **Thiết kế** một con
 
 Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 
-> Trạng thái: đang phát triển (v0.1.0). Đã chơi được: VẬN HÀNH. Đang làm: THIẾT KẾ, KIỂM THỬ. Bản nộp dự kiến 26/10/2026.
+> Trạng thái: chơi được cả 3 chế độ (12 màn THIẾT KẾ, 6 màn KIỂM THỬ, VẬN HÀNH Vô tận + 60 giây). Đang hoàn thiện và đo hiệu năng trên máy thật trước khi nộp 26/10/2026.
+
+![CHIP RUSH](docs/submission/anh-bia-1920x1080.png)
 
 ## Chơi thử
-- Bản mới nhất: _(link GitHub Pages sẽ cập nhật sau khi bật Pages)_
+- Bản mới nhất: **https://lehngvu0110-pixel.github.io/chip-rush/** (mở trên điện thoại cho trải nghiệm đúng nhất)
+- Thêm `?debug=1` vào cuối link để hiện bảng đo hiệu năng (FPS, thời gian khung hình).
 
 ## Ba chế độ
 | Chế độ | Kiểu chơi | Khái niệm vi mạch |
 | --- | --- | --- |
 | VẬN HÀNH | Arcade: chọn cổng AND/OR/XOR/NAND trước khi gói bit chạm đáy | Cổng logic |
 | THIẾT KẾ | Giải đố: vẽ dây, đặt cổng, làm LED sáng đúng mọi trường hợp | Routing, bảng chân trị, via, bộ cộng, PPA |
-| KIỂM THỬ | Suy luận: đo các điểm trên mạch để tìm cổng hỏng | Probing, stuck-at fault |
+| KIỂM THỬ | Suy luận: đo các điểm trên mạch để tìm cổng hỏng hoặc dây kẹt | Probing, fault model (gate-invert, stuck-at), lớp lỗi tương đương |
 
 Luật chi tiết: [`docs/SPEC.md`](docs/SPEC.md).
 
 ## AI trong game và trong quá trình làm game
-- **Trong game** (AI cổ điển, chạy ngay trên trình duyệt hoặc tính trước offline, không gọi API):
-  - Solver THIẾT KẾ: A* + branch-and-bound tìm lời giải chi phí thấp nhất làm "par".
-  - Solver KIỂM THỬ: minimax / information gain tìm số lần đo ít nhất.
-  - Độ khó thích nghi: Thompson sampling theo cổng người chơi hay sai.
-  - Giới hạn của từng thuật toán và cách kiểm chứng: [`docs/SPEC.md` mục 5](docs/SPEC.md).
+- **Trong game** — "AI kỹ sư", AI cổ điển (tìm kiếm + suy luận), không gọi API, không học từ dữ liệu người chơi:
+  - **THIẾT KẾ** (`src/ai/design-solver.ts`): đặt cổng bằng vét cạn/beam search, cắt nhánh bằng **branch-and-bound** với cận dưới (BFS cho net 2 chân, nửa chu vi hộp bao cho net nhiều chân), đi dây bằng Dijkstra-Steiner và **PathFinder** (negotiated congestion — thuật toán đi dây FPGA kinh điển). Tính trước offline (`tools/solve-levels.ts`) thành "par"; **chứng minh tối ưu 7/12 màn** (vét cạn và Area bằng cận dưới), các màn còn lại người chơi có thể vượt AI.
+  - **KIỂM THỬ** (`src/ai/debug-solver.ts`): cây quyết định **minimax** trên tập lớp lỗi (bitmask + ghi nhớ) → số lần đo ít nhất trong trường hợp xấu nhất; tối ưu ở cả 6 màn, đối chiếu bằng vét cạn mọi cây trong test. Màn hướng dẫn t01 dùng chính solver này để chỉ dây nên đo tiếp.
+  - **VẬN HÀNH** (`src/ai/adaptive.ts`): **Thompson sampling** (Beta-Bernoulli) chọn loại gói người chơi hay sai, trộn 30% ngẫu nhiên.
+  - Giới hạn và cách kiểm chứng từng thuật toán: [`docs/SPEC.md` mục 5](docs/SPEC.md); quyết định thiết kế: [ADR-0007](docs/adr/0007-solver-thiet-ke.md), [ADR-0008](docs/adr/0008-kiem-thu-minimax.md).
 - **Trong quá trình phát triển:** dùng trợ lý AI để lên kế hoạch, viết code, viết tài liệu. Toàn bộ được ghi lại ở [`docs/ai-log/`](docs/ai-log/).
 
 ## Chạy trên máy
@@ -50,6 +53,7 @@ npm run e2e        # test đầu-cuối trên bản build
 | [docs/COMPLIANCE.md](docs/COMPLIANCE.md) | Đối chiếu điều lệ cuộc thi |
 | [docs/ASSETS.md](docs/ASSETS.md) | Nguồn gốc và giấy phép mọi tài nguyên |
 | [docs/DEVLOG.md](docs/DEVLOG.md) | Nhật ký phát triển |
+| [docs/SUBMISSION.md](docs/SUBMISSION.md) | Nội dung nộp bài, ảnh logo/in-game ở `docs/submission/` |
 | [CHANGELOG.md](CHANGELOG.md) | Thay đổi theo phiên bản |
 
 ## Quyền riêng tư
