@@ -196,6 +196,7 @@ export class RuntimeScene implements Scene {
           this.hintExpected = { text: `${ev.type === 'miss' ? 'Chậm quá! ' : ''}Gói vừa rồi cần: ${ev.expected.join(' / ')}`, t: 1.4 };
           break;
         case 'unlock':
+          this.audio.play('unlock');
           this.banner = { text: `Mở khóa ${ev.gate}: ${GATE_HINT[ev.gate] ?? ''}`, t: 2.5, color: THEME.accent };
           this.unlockGlow = { gate: ev.gate, t: 1.6 };
           break;

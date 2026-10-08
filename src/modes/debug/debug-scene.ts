@@ -229,7 +229,7 @@ export class DebugScene implements Scene {
       return;
     }
     this.probes.push({ net, row, value: v, cell });
-    this.deps.audio.play('tick');
+    this.deps.audio.play('probe');
     if (this.surf && !this.surf.reducedMotion) {
       const G = this.layout.grid;
       const [c, r] = this.grid.colRow(cell);
@@ -270,7 +270,7 @@ export class DebugScene implements Scene {
       answer = { kind: 'stuck-at', net: name, value: value ?? 0 };
     }
     if (isCorrectAnswer(this.setup, answer)) {
-      this.deps.audio.play('ting');
+      this.deps.audio.play('win');
       this.finish(true);
       return;
     }
@@ -340,6 +340,7 @@ export class DebugScene implements Scene {
       reason,
       answer: this.describeFault(),
     };
+    if (!win) this.deps.audio.play('lose');
     if (!win) this.say(`${reason ?? ''} Lỗi thật: ${result.answer} (tô màu trên mạch).`, 'bad', 6);
     window.setTimeout(() => this.deps.onEnd(this.level, result), win ? 800 : 1800);
   }

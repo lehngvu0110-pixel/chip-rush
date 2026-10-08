@@ -4,6 +4,9 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Chia sẻ kết quả ở cả 3 chế độ: ảnh 1080×1350 + lời mời kèm link (Web Share, dự phòng sao chép).
+- Âm thanh riêng cho đặt cổng, đo dây, thắng, thua, mở khoá cổng.
+- Bảng Cài đặt: âm thanh, giảm chuyển động, giới thiệu, xoá tiến độ (bấm 2 lần).
 - Màn hình chính dạng die chip với 3 khối THIẾT KẾ / KIỂM THỬ / VẬN HÀNH (tiến độ, khoá, xung dữ liệu).
 - Gợi ý ở THIẾT KẾ (bước kế tiếp của lời giải AI, tối đa 2 sao).
 - Chế độ KIỂM THỬ: 6 màn t01–t06 (đảo cổng, dây kẹt), đo dây, báo lỗi, luật thua, sao theo số lần đo; AI kỹ sư tính số lần đo tối ưu bằng minimax.

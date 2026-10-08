@@ -2,6 +2,21 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-10 – Chia sẻ kết quả, âm thanh từng chế độ, Cài đặt
+**Đã làm**
+- `src/render/share-card.ts`: ảnh chia sẻ 1080×1350 (logo, chế độ, màn, sao, điểm lớn, PPA, link game) vẽ bằng Canvas, tạo sẵn khi thẻ kết quả mở để không mất "user gesture" trên iOS.
+- `src/platform/share.ts`: chia sẻ theo bậc — Web Share kèm ảnh → Web Share chỉ chữ → sao chép lời mời vào clipboard → hộp thoại hiện chữ để tự chép. Nút "Chia sẻ kết quả" có ở cả 3 thẻ kết quả (THIẾT KẾ chỉ khi kết quả được tính, tức không xem lời giải AI).
+- Âm thanh tổng hợp (Web Audio, không dùng file): đặt cổng, đo dây, thắng, thua, mở khoá cổng mới.
+- Bảng Cài đặt (nút bánh răng ở màn chính): Âm thanh, Giảm chuyển động (mặc định theo hệ điều hành), giới thiệu + link mã nguồn, "Xoá toàn bộ tiến độ" phải bấm 2 lần và giữ lại cài đặt.
+- 7 unit test chia sẻ (đủ các nhánh dự phòng, huỷ chia sẻ không báo lỗi) + 2 E2E (Cài đặt, chia sẻ khi không có Web Share). Tổng 259 unit, 8 E2E xanh; JS 44 KB gzip.
+
+**Quyết định**
+- Ảnh chia sẻ chỉ chứa điểm + link, không chứa tên người chơi hay dữ liệu cá nhân.
+- Người dùng bấm "Huỷ" ở bảng chia sẻ hệ thống thì im lặng, không coi là lỗi.
+
+**Việc tiếp theo**
+- Hướng dẫn lần đầu (d01, t01), ảnh/logo nộp bài, README.
+
 ## 2026-10-09 – Màn hình chính "die chip" + Gợi ý THIẾT KẾ
 **Đã làm**
 - `src/modes/hub/hub-scene.ts`: màn hình chính là một die chip nhìn từ trên xuống, 3 khối THIẾT KẾ / KIỂM THỬ / VẬN HÀNH (hoạ tiết riêng: hàng ô chuẩn, lưới điểm đo, làn bit), thanh tiến độ, khoá, xung dữ liệu chạy trên bus giữa các khối. Nút DOM trong suốt đè đúng vị trí khối (trình đọc màn hình + test bấm được).

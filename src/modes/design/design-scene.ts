@@ -280,7 +280,7 @@ export class DesignScene implements Scene {
     }
     this.passed = true;
     this.hideMsg();
-    this.deps.audio.play('ting');
+    this.deps.audio.play('win');
     const L = this.layout;
     if (this.surf && !this.surf.reducedMotion) {
       for (const cell of this.grid.outputCells) {
@@ -313,7 +313,7 @@ export class DesignScene implements Scene {
         const snap = this.grid.state();
         if (this.grid.toggleVia(cell)) {
           this.pushUndo(snap);
-          this.deps.audio.play('tick');
+          this.deps.audio.play('place');
           this.changed();
         } else if (this.grid.pins.has(cell) || this.grid.gateAt(cell) || this.grid.blocked.has(cell)) {
           this.say('Via chỉ đặt được ở ô trống (không phải chân, cổng hay vật cản).', 'bad', 3);
@@ -386,7 +386,7 @@ export class DesignScene implements Scene {
       this.pushUndo();
       this.grid.removeGate(cell);
       this.grid.placeGate(cell, g.type, ((g.out + 1) % 4) as Side);
-      this.deps.audio.play('tick');
+      this.deps.audio.play('place');
       this.changed();
       return;
     }
@@ -397,7 +397,7 @@ export class DesignScene implements Scene {
     if (!this.grid.canPlaceGate(cell)) return this.say('Cổng chỉ đặt được ở ô trống.', 'bad', 3);
     this.pushUndo();
     this.grid.placeGate(cell, t, 0);
-    this.deps.audio.play('tick');
+    this.deps.audio.play('place');
     this.changed();
   }
 

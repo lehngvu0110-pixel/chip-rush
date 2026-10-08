@@ -8,14 +8,16 @@ import { attachPointer } from './input/pointer';
 import { createSafeStorage } from './platform/storage';
 import { watchVisibility } from './platform/visibility';
 import { installGlobalErrorHandlers, showErrorScreen } from './platform/errors';
-import { debugUnlocked, designUnlocked, loadSave, recordDebug, recordDesign, recordRuntimeScore, writeSave } from './core/progress';
+import { debugUnlocked, defaultSave, designUnlocked, loadSave, recordDebug, recordDesign, recordRuntimeScore, writeSave } from './core/progress';
 import { DEBUG_LEVELS } from './core/level/debug-levels';
 import type { DebugLevel } from './core/level/types';
 import { DebugScene, type DebugResult } from './modes/debug/debug-scene';
 import { DESIGN_LEVELS } from './core/level/design-levels';
 import type { DesignLevel } from './core/level/types';
 import { DesignScene } from './modes/design/design-scene';
-import { ICON_STAR } from './ui/icons';
+import { ICON_GEAR, ICON_STAR } from './ui/icons';
+import { gameUrl, shareResult } from './platform/share';
+import { makeShareFile, type ShareCardData } from './render/share-card';
 import { DIE_BLOCKS, HubScene, type BlockId } from './modes/hub/hub-scene';
 import { vnDateSeed } from './core/util/rng';
 import { FrameStats, QUALITY_WINDOW, decideQuality } from './debug/stats';
@@ -74,7 +76,13 @@ function boot(root: HTMLElement): void {
 
   // 3. Canvas, âm thanh, vòng lặp
   const surface = createSurface(stage);
-  surface.reducedMotion ||= save.settings.reducedMotion;
+  // giảm chuyển động = cài đặt hệ điều hành HOẶC cài đặt trong game
+  const systemReduced = surface.reducedMotion;
+  const applyMotion = (): void => {
+    surface.reducedMotion = systemReduced || save.settings.reducedMotion;
+    document.documentElement.classList.toggle('reduce-motion', surface.reducedMotion);
+  };
+  applyMotion();
   const audio = createAudio(undefined, save.settings.muted);
   const stats = new FrameStats();
   let scene: Scene | null = null;
@@ -191,6 +199,7 @@ function boot(root: HTMLElement): void {
 
   const showResult = (r: RuntimeResult): void => {
     const isRecord = recordRuntimeScore(save, r.mode, r.score);
+    audio.play(isRecord && r.score > 0 ? 'win' : 'lose');
     persist();
     const best = r.mode === 'endless' ? save.runtime.bestEndless : save.runtime.best60;
     resultPanel.replaceChildren();
@@ -220,7 +229,12 @@ function boot(root: HTMLElement): void {
     const home = button('btn-secondary', 'Về màn chính');
     again.addEventListener('click', () => startRuntime(lastMode));
     home.addEventListener('click', showStart);
-    card.append(again, home);
+    const modeName = r.mode === 'endless' ? 'Vô tận' : 'Thử thách 60 giây';
+    const share = shareButton(
+      { mode: 'VẬN HÀNH', title: modeName, big: String(r.score), bigLabel: 'điểm', lines: [`Độ chính xác ${Math.round(r.accuracy * 100)}%`, `Chuỗi đúng dài nhất ${r.bestCombo}`], badge: isRecord && r.score > 0 ? 'Kỷ lục mới!' : undefined },
+      `Mình đạt ${r.score} điểm ở chế độ VẬN HÀNH (${modeName}) của CHIP RUSH — game về vi mạch. Ai vượt được không?`,
+    );
+    card.append(again, share, home);
     resultPanel.hidden = false;
     hud.hidden = true;
     // Đưa focus vào nút chính cho người dùng bàn phím/trình đọc màn hình, không vẽ viền focus khi chạm
@@ -263,6 +277,23 @@ function boot(root: HTMLElement): void {
       span.append(s);
     }
     return span;
+  };
+
+  /**
+   * Nút Chia sẻ: ảnh thẻ được tạo SẴN ngay khi hiện thẻ kết quả (iOS chỉ cho share() trong thao tác chạm,
+   * không chờ được việc vẽ ảnh). Chưa kịp có ảnh thì vẫn chia sẻ chữ + link.
+   */
+  const shareButton = (data: Omit<ShareCardData, 'url'>, text: string): HTMLButtonElement => {
+    const b = button('btn-share', 'Chia sẻ kết quả');
+    let file: File | null = null;
+    void makeShareFile({ ...data, url: gameUrl() }).then((f) => (file = f));
+    b.addEventListener('click', () => {
+      void shareResult({ title: 'CHIP RUSH', text, url: gameUrl(), file }).then((out) => {
+        if (out === 'copied') toast('Đã sao chép lời mời kèm link — dán vào Zalo/Messenger nhé!');
+        else if (out === 'unavailable') window.prompt('Sao chép lời mời này để gửi bạn bè:', `${text} ${gameUrl()}`);
+      });
+    });
+    return b;
   };
 
   /** Số chạy từ 0 lên `to` trong 0,8 s (bỏ qua khi giảm chuyển động). Chỉ đổi chữ, nhãn aria giữ nguyên. */
@@ -367,6 +398,19 @@ function boot(root: HTMLElement): void {
     });
     const list = button('btn-secondary', 'Danh sách màn');
     list.addEventListener('click', showLevels);
+    const shareD = shareButton(
+      {
+        mode: 'THIẾT KẾ',
+        title: `${lv.id.toUpperCase()} · ${lv.name}`,
+        big: String(r.score),
+        bigLabel: 'điểm (1000 = ngang AI kỹ sư)',
+        stars: r.stars,
+        lines: [`Chi phí ${r.ppa.C} · AI kỹ sư ${r.par.C}`, `Area ${r.ppa.A} · Delay ${r.ppa.D} · Power ${r.ppa.P}`],
+        badge: r.score > 1000 ? 'Vượt AI kỹ sư!' : undefined,
+      },
+      `Mình thiết kế mạch "${lv.name}" (${lv.id.toUpperCase()}) đạt ${r.score} điểm, ${r.stars} sao trong CHIP RUSH${r.score > 1000 ? ' — vượt cả AI kỹ sư!' : ''}. Bạn thử vượt mình xem:`,
+    );
+    if (counted) card.append(shareD);
     card.append(again, showAi, list);
     resultPanel.append(card);
     resultPanel.hidden = false;
@@ -445,11 +489,88 @@ function boot(root: HTMLElement): void {
     again.addEventListener('click', () => startDebug(lv));
     const list = button('btn-secondary', 'Danh sách màn');
     list.addEventListener('click', showDebugLevels);
+    if (r.win) {
+      card.append(
+        shareButton(
+          { mode: 'KIỂM THỬ', title: `${lv.id.toUpperCase()} · ${lv.name}`, big: String(r.probes), bigLabel: 'lần đo để tìm ra lỗi', stars: r.stars, lines: [`AI kỹ sư cần ${r.par} lần (trường hợp xấu nhất)`, `Lỗi: ${r.answer}`], badge: r.probes < r.par ? 'Ít hơn AI kỹ sư!' : undefined },
+          `Mình tìm ra lỗi chip ở màn ${lv.id.toUpperCase()} "${lv.name}" chỉ với ${r.probes} lần đo (AI kỹ sư cần ${r.par}) trong CHIP RUSH. Thử sức nhé:`,
+        ),
+      );
+    }
     card.append(again, list);
     resultPanel.append(card);
     resultPanel.hidden = false;
     hud.hidden = true;
     (card.querySelector('.btn-primary') as HTMLButtonElement | null)?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+  };
+
+  // 7d. Cài đặt + giới thiệu (nút bánh răng ở màn hình chính)
+  const REPO_URL = 'https://github.com/lehngvu0110-pixel/chip-rush';
+  const showSettings = (): void => {
+    levelPanel.replaceChildren();
+    const card = el('div', 'card level-card');
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-label', 'Cài đặt');
+    card.append(el('p', 'card-title', 'Cài đặt'));
+    const toggle = (label: string, get: () => boolean, set: (v: boolean) => void): HTMLButtonElement => {
+      const b = button('setting', '');
+      const sync = (): void => {
+        b.textContent = `${label}: ${get() ? 'Bật' : 'Tắt'}`;
+        b.setAttribute('aria-pressed', String(get()));
+      };
+      b.addEventListener('click', () => {
+        set(!get());
+        sync();
+        persist();
+      });
+      sync();
+      return b;
+    };
+    card.append(
+      toggle('Âm thanh', () => !save.settings.muted, (v) => {
+        save.settings.muted = !v;
+        audio.muted = !v;
+        syncMute();
+        if (v) void audio.unlock().then(() => audio.play('ting'));
+      }),
+      toggle('Giảm chuyển động', () => save.settings.reducedMotion, (v) => {
+        save.settings.reducedMotion = v;
+        applyMotion();
+      }),
+    );
+    if (systemReduced) card.append(el('p', 'note', 'Máy bạn đang bật "giảm chuyển động" trong cài đặt hệ thống, game luôn tôn trọng cài đặt đó.'));
+    const about = el('div', 'about');
+    about.append(
+      el('p', 'note', 'CHIP RUSH: thiết kế, kiểm thử và vận hành một con chip. Dự thi Phần thi Công nghệ – Road to Predator League 2027.'),
+      el('p', 'note', '"AI kỹ sư" là thuật toán tìm kiếm (branch-and-bound, PathFinder, minimax) tính trước và chạy ngay trên máy bạn; game không gửi dữ liệu đi đâu.'),
+    );
+    const link = el('a', 'repo-link', 'Mã nguồn trên GitHub');
+    link.href = REPO_URL;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    about.append(link, el('p', 'version', versionLabel()));
+    card.append(about);
+    let armed = false;
+    const reset = button('btn-danger', 'Xoá toàn bộ tiến độ');
+    reset.addEventListener('click', () => {
+      if (!armed) {
+        armed = true;
+        reset.textContent = 'Bấm lần nữa để XOÁ HẾT (không hoàn tác)';
+        return;
+      }
+      const keep = save.settings;
+      Object.assign(save, defaultSave(), { settings: keep });
+      persist();
+      toast('Đã xoá toàn bộ tiến độ.');
+      showStart();
+    });
+    const close = button('btn-primary', 'Xong');
+    close.addEventListener('click', showStart);
+    card.append(reset, close);
+    levelPanel.append(card);
+    start.hidden = true;
+    levelPanel.hidden = false;
+    close.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
   };
 
   const showStart = (): void => {
@@ -511,6 +632,11 @@ function boot(root: HTMLElement): void {
     blockBtn('runtime', 'VẬN HÀNH: chơi vô tận', () => startRuntime('endless'));
     const actions = el('div', 'start-actions');
     actions.append(play, sixty);
+    const gear = button('btn-icon gear', '');
+    gear.innerHTML = ICON_GEAR;
+    gear.setAttribute('aria-label', 'Cài đặt');
+    gear.addEventListener('click', showSettings);
+    start.append(gear);
     start.append(
       hero,
       slot,

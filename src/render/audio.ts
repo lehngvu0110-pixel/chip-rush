@@ -3,7 +3,7 @@
 // bên trong handler của lần chạm đầu (nút CHƠI NGAY). Lưu ý: gạt im lặng trên iPhone có thể tắt
 // Web Audio, nên game không bao giờ truyền thông tin chỉ bằng âm thanh.
 
-export type SoundName = 'tick' | 'ting' | 'error';
+export type SoundName = 'tick' | 'ting' | 'error' | 'place' | 'probe' | 'win' | 'lose' | 'unlock';
 
 /** Phần nhỏ của AudioContext mà game dùng — để test được bằng đối tượng giả. */
 export interface MiniAudioContext {
@@ -48,6 +48,35 @@ const SOUNDS: Record<SoundName, Note[]> = {
     { wave: 'sine', freq: 1320, at: 0.08, dur: 0.18 },
   ],
   error: [{ wave: 'triangle', freq: 160, at: 0, dur: 0.2 }],
+  // đặt cổng/via: tiếng "cạch" trầm
+  place: [
+    { wave: 'square', freq: 320, at: 0, dur: 0.04 },
+    { wave: 'triangle', freq: 210, at: 0.03, dur: 0.07 },
+  ],
+  // que đo chạm dây: "bíp" cao ngắn
+  probe: [
+    { wave: 'sine', freq: 1500, at: 0, dur: 0.05 },
+    { wave: 'sine', freq: 2000, at: 0.05, dur: 0.06 },
+  ],
+  // qua màn: hợp âm rải Đô trưởng (C5 E5 G5 C6)
+  win: [
+    { wave: 'sine', freq: 523, at: 0, dur: 0.14 },
+    { wave: 'sine', freq: 659, at: 0.09, dur: 0.14 },
+    { wave: 'sine', freq: 784, at: 0.18, dur: 0.16 },
+    { wave: 'sine', freq: 1046, at: 0.28, dur: 0.3 },
+  ],
+  // thua: đi xuống
+  lose: [
+    { wave: 'triangle', freq: 330, at: 0, dur: 0.16 },
+    { wave: 'triangle', freq: 247, at: 0.14, dur: 0.16 },
+    { wave: 'triangle', freq: 165, at: 0.28, dur: 0.3 },
+  ],
+  // mở khoá cổng mới
+  unlock: [
+    { wave: 'sine', freq: 660, at: 0, dur: 0.08 },
+    { wave: 'sine', freq: 880, at: 0.07, dur: 0.08 },
+    { wave: 'sine', freq: 1320, at: 0.14, dur: 0.16 },
+  ],
 };
 
 const VOLUME = 0.15;

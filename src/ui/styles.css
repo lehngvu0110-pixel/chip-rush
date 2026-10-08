@@ -242,6 +242,7 @@ html, body {
   animation: rise 0.28s ease-out;
 }
 .card .btn { width: 100%; max-width: 260px; }
+.btn-share { border-color: rgba(255, 176, 32, 0.7); color: #ffd27a; }
 .card-title { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
 
 @keyframes rise { from { opacity: 0; transform: translateY(14px) scale(0.98); } to { opacity: 1; transform: none; } }
@@ -433,3 +434,13 @@ html, body {
 .ppa-table th:first-child, .ppa-table td:first-child { text-align: left; color: var(--text-dim); }
 .ppa-table th { color: var(--text-dim); font-weight: 700; }
 .ppa-table tr:last-child td { color: var(--text); font-weight: 700; }
+
+/* --- Cài đặt --- */
+.start-panel .gear { position: absolute; top: calc(env(safe-area-inset-top) + 8px); right: calc(env(safe-area-inset-right) + 8px); }
+.setting { width: 100%; max-width: 260px; }
+.setting[aria-pressed='true'] { border-color: var(--accent); background: rgba(56, 232, 255, 0.12); }
+.about { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0; border-top: 1px solid #1d2647; border-bottom: 1px solid #1d2647; }
+.repo-link { color: var(--accent); font-size: 14px; }
+.btn-danger { border-color: #ff6b9a; color: #ffd0de; }
+/* "giảm chuyển động" bật trong game */
+.reduce-motion .logo, .reduce-motion .card, .reduce-motion .result-record, .reduce-motion .card > .stars .star.on { animation: none !important; }
