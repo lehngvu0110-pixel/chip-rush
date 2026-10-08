@@ -42,3 +42,7 @@ Lưu ý: dev server chưa nén/tối ưu như bản build; số đo khung hình 
 ## Lỗi đã biết
 | Mã | Mức | Mô tả | Cách né | Trạng thái |
 | --- | --- | --- | --- | --- |
+
+## E2E hiện có
+- `e2e/play-now.spec.ts`: VẬN HÀNH (Vô tận, 60 giây, tạm dừng, kỷ lục).
+- `e2e/design.spec.ts`: THIẾT KẾ d01 (báo lỗi đèn chưa nối → kéo dây → qua màn 3 sao → lưu và mở d02), hoàn tác.

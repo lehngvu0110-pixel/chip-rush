@@ -37,7 +37,7 @@ Làm rõ khi cài đặt (07/10, không đổi luật):
 
 **Chi phí:** `C = A + w_D·D + w_P·P`, với `w_D = 3`, `w_P = 1` (chỉnh sau khi chơi thử d01–d06).
 
-**Par** = (A, D, P, C) của **một** lời giải tham chiếu có C nhỏ nhất do solver tìm (mục 5.1) → 3 sao luôn đạt được.
+**Par** = (A, D, P, C) của **một** lời giải tham chiếu có C nhỏ nhất do solver tìm (mục 5.1) → 3 sao luôn đạt được. *(Tạm thời, đến khi có solver: lời giải tham chiếu viết tay; test kiểm tra lời giải đó qua màn với 3 sao.)*
 
 **Sao:** mỗi chỉ số ≤ par tương ứng được 1 sao (0–3 sao). **Điểm chia sẻ** = `round(1000 × C_par / C_người_chơi)`; 1000 = ngang AI kỹ sư. Dùng **Gợi ý** (hiện dây tiếp theo của lời giải tham chiếu) thì màn đó tối đa 2 sao.
 

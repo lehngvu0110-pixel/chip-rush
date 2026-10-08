@@ -69,3 +69,27 @@ export function recordRuntimeScore(data: SaveData, mode: 'endless' | 'sixty', sc
   }
   return false;
 }
+
+/** Ghi kết quả qua màn THIẾT KẾ; giữ số sao cao nhất và PPA có chi phí thấp nhất. Trả về true nếu tốt hơn trước. */
+export function recordDesign(
+  data: SaveData,
+  id: string,
+  ppa: { A: number; D: number; P: number; C: number },
+  stars: number,
+  hinted = false,
+): boolean {
+  const prev = data.design[id];
+  const prevC = prev ? prev.best.A + 3 * prev.best.D + prev.best.P : Infinity;
+  const better = !prev || ppa.C < prevC || stars > prev.stars;
+  data.design[id] = {
+    stars: Math.max(stars, prev?.stars ?? 0),
+    best: ppa.C < prevC ? { A: ppa.A, D: ppa.D, P: ppa.P } : (prev?.best ?? { A: ppa.A, D: ppa.D, P: ppa.P }),
+    hinted: (prev?.hinted ?? false) || hinted,
+  };
+  return better;
+}
+
+/** Màn thứ i mở khi i = 0 hoặc màn trước đã qua. */
+export function designUnlocked(data: SaveData, ids: readonly string[], i: number): boolean {
+  return i === 0 || (ids[i - 1] !== undefined && data.design[ids[i - 1] as string] !== undefined);
+}

@@ -2,6 +2,22 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-08 – Chế độ THIẾT KẾ chơi được (việc 12–14/10 làm sớm)
+**Đã làm**
+- `src/core/level/`: định dạng màn, 10 màn d01–d09 + d11 (d10, d12 chờ solver), kiểm tra dữ liệu màn, chấm bài (mạch hợp lệ → đúng bảng chân trị → PPA, sao, điểm).
+- `src/core/scoring/design.ts`: C = A + 3D + P, sao, điểm chia sẻ 1000 × C_par / C.
+- `src/modes/design/`: scene THIẾT KẾ — kéo ngón tay vẽ dây (tự chèn ô khi lướt nhanh), đặt/xoay cổng, via, tẩy, đổi lớp, hoàn tác (Ctrl+Z), xoá hết; mô phỏng trực tiếp (dây sáng theo bit, kể cả khi đang vẽ dở); bảng chân trị ngang có dấu đúng/sai từng cột, chạm cột để đặt công tắc; tô đỏ ô lỗi; dòng PPA trực tiếp so với AI kỹ sư.
+- Danh sách màn (khoá/mở, sao), thẻ kết quả (bảng Bạn vs AI kỹ sư), lưu tiến độ `save.design`.
+- 35 unit test mới (tổng 179) + 2 E2E mới (qua d01 bằng kéo thật, hoàn tác).
+
+**Quyết định**
+- Par tạm = PPA lời giải viết tay (ghi rõ trong SPEC, LEVELS: "Tối ưu? = Chưa") cho tới khi có solver.
+- Thanh công cụ 2 hàng + 1 dải gợi ý/thông báo để lưới đủ lớn: test bảo đảm ô ≥ 44 px trên Redmi Note 8 và iPhone 11.
+
+**Việc tiếp theo**
+- Vũ: chơi thử d01–d11 trên điện thoại, ghi chỗ khó hiểu vào cột "Ghi chú chơi thử" của LEVELS.md; duyệt mô hình lưới (SPEC mục 2).
+- Solver AI kỹ sư (SPEC 5.1) → par thật + d10, d12.
+
 ## 2026-10-07 (4) – Đồ hoạ bo mạch neon + lưới 2 lớp (việc 10–11/10 làm sớm)
 **Đã làm**
 - Sửa CI: `vite preview` bind `127.0.0.1` (trên runner, `localhost` có thể ra IPv6 nên Playwright chờ mãi). CI xanh, GitHub Pages chạy.

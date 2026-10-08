@@ -8,7 +8,11 @@ import { attachPointer } from './input/pointer';
 import { createSafeStorage } from './platform/storage';
 import { watchVisibility } from './platform/visibility';
 import { installGlobalErrorHandlers, showErrorScreen } from './platform/errors';
-import { loadSave, recordRuntimeScore, writeSave } from './core/progress';
+import { designUnlocked, loadSave, recordDesign, recordRuntimeScore, writeSave } from './core/progress';
+import { DESIGN_LEVELS } from './core/level/design-levels';
+import type { DesignLevel } from './core/level/types';
+import { DesignScene } from './modes/design/design-scene';
+import { ICON_STAR } from './ui/icons';
 import { vnDateSeed } from './core/util/rng';
 import { FrameStats, QUALITY_WINDOW, decideQuality } from './debug/stats';
 import { createPerfOverlay } from './debug/perf-overlay';
@@ -240,8 +244,110 @@ function boot(root: HTMLElement): void {
     setScene(new RuntimeScene(game, audio, showResult));
   };
 
+  // 7b. THIẾT KẾ: danh sách màn → màn chơi → thẻ kết quả
+  const levelPanel = el('div', 'panel level-panel');
+  levelPanel.hidden = true;
+  ui.append(levelPanel);
+  const levelIds = DESIGN_LEVELS.map((l) => l.id);
+  const starsEl = (n: number, label: string): HTMLSpanElement => {
+    const span = el('span', 'stars');
+    span.setAttribute('aria-label', label);
+    for (let i = 0; i < 3; i++) {
+      const s = el('span', i < n ? 'star on' : 'star');
+      s.innerHTML = ICON_STAR;
+      span.append(s);
+    }
+    return span;
+  };
+
+  const showLevels = (): void => {
+    setScene(new TitleScene());
+    start.hidden = true;
+    resultPanel.hidden = true;
+    pausePanel.hidden = true;
+    hud.hidden = true;
+    levelPanel.replaceChildren();
+    const card = el('div', 'card level-card');
+    card.append(el('p', 'card-title', 'THIẾT KẾ'), el('p', 'note', 'Vẽ mạch đúng bảng chân trị. Chi phí càng thấp càng nhiều sao; thử vượt AI kỹ sư!'));
+    const list = el('div', 'level-list');
+    DESIGN_LEVELS.forEach((lv, i) => {
+      const open = designUnlocked(save, levelIds, i);
+      const rec = save.design[lv.id];
+      const b = button('level-item', '');
+      b.disabled = !open;
+      const head = el('span', 'level-head');
+      head.append(el('strong', '', `${lv.id.toUpperCase()} · ${lv.name}`), el('small', '', open ? lv.concept : 'Qua màn trước để mở'));
+      b.append(head, starsEl(rec?.stars ?? 0, `${rec?.stars ?? 0} sao`));
+      b.setAttribute('aria-label', `${lv.id} ${lv.name}${open ? '' : ', chưa mở'}, ${rec?.stars ?? 0} sao`);
+      b.addEventListener('click', () => startDesign(lv));
+      list.append(b);
+    });
+    const back = button('btn-secondary', 'Về màn chính');
+    back.addEventListener('click', showStart);
+    card.append(list, back);
+    levelPanel.append(card);
+    levelPanel.hidden = false;
+  };
+
+  const startDesign = (lv: DesignLevel): void => {
+    void audio.unlock();
+    exposeForTests(null);
+    start.hidden = true;
+    levelPanel.hidden = true;
+    resultPanel.hidden = true;
+    pausePanel.hidden = true;
+    hud.hidden = false;
+    heavyBtn.hidden = true;
+    setScene(new DesignScene(lv, { ui, audio, onPass: showDesignResult }));
+  };
+
+  const showDesignResult = (lv: DesignLevel, r: { ppa: { A: number; D: number; P: number; C: number }; par: { A: number; D: number; P: number; C: number }; stars: number; score: number }): void => {
+    if (!(scene instanceof DesignScene) || scene.level.id !== lv.id) return; // người chơi đã rời màn
+    const improved = recordDesign(save, lv.id, r.ppa, r.stars);
+    persist();
+    resultPanel.replaceChildren();
+    const card = el('div', 'card');
+    card.append(el('h2', 'result-title', 'Qua màn!'), starsEl(r.stars, `${r.stars} trên 3 sao`));
+    const score = el('p', 'result-score', String(r.score));
+    score.setAttribute('aria-label', `Điểm ${r.score}`);
+    card.append(score, el('p', 'note', r.score > 1000 ? 'Bạn thiết kế tốt hơn AI kỹ sư!' : r.score === 1000 ? 'Ngang AI kỹ sư. 1000 = bằng AI.' : 'AI kỹ sư đạt 1000. Thử tối ưu tiếp?'));
+    const tbl = el('table', 'ppa-table');
+    const tr = (cells: string[], th = false): void => {
+      const row = el('tr', '');
+      for (const c of cells) row.append(el(th ? 'th' : 'td', '', c));
+      tbl.append(row);
+    };
+    tr(['', 'Bạn', 'AI kỹ sư'], true);
+    tr(['Area (ô)', String(r.ppa.A), String(r.par.A)]);
+    tr(['Delay (tầng cổng)', String(r.ppa.D), String(r.par.D)]);
+    tr(['Power (lần đổi bit)', String(r.ppa.P), String(r.par.P)]);
+    tr(['Chi phí C', String(r.ppa.C), String(r.par.C)]);
+    card.append(tbl);
+    if (improved) card.append(el('p', 'result-record', 'Kết quả tốt nhất của bạn!'));
+    const idx = levelIds.indexOf(lv.id);
+    const next = DESIGN_LEVELS[idx + 1];
+    if (next) {
+      const nb = button('btn-primary', 'Màn tiếp');
+      nb.addEventListener('click', () => startDesign(next));
+      card.append(nb);
+    }
+    const again = button('', 'Tối ưu tiếp');
+    again.addEventListener('click', () => {
+      resultPanel.hidden = true;
+      hud.hidden = false;
+    });
+    const list = button('btn-secondary', 'Danh sách màn');
+    list.addEventListener('click', showLevels);
+    card.append(again, list);
+    resultPanel.append(card);
+    resultPanel.hidden = false;
+    hud.hidden = true;
+    (card.querySelector('.btn-primary') as HTMLButtonElement | null)?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+  };
+
   const showStart = (): void => {
     setScene(new TitleScene());
+    levelPanel.hidden = true;
     hud.hidden = true;
     resultPanel.hidden = true;
     pausePanel.hidden = true;
@@ -270,10 +376,13 @@ function boot(root: HTMLElement): void {
     const hero = el('div', 'hero');
     hero.append(logo, el('h1', 'title', 'CHIP RUSH'), el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'));
     const menu = el('div', 'menu');
+    const design = button('', 'THIẾT KẾ: tự vẽ mạch');
+    design.addEventListener('click', showLevels);
     menu.append(
       play,
       el('p', 'note', 'VẬN HÀNH: cắm đúng cổng logic để con chip cho ra bit mục tiêu, trước khi nó chạm ổ cắm.'),
       sixty,
+      design,
     );
     start.append(
       hero,
@@ -286,24 +395,36 @@ function boot(root: HTMLElement): void {
   };
 
   // Móc cho test tự động (Playwright) đọc trạng thái — chỉ khi URL có ?e2e hoặc ?debug.
-  function exposeForTests(game: RuntimeGame): void {
-    if (!params.has('e2e') && !params.has('debug')) return;
+  let testGame: RuntimeGame | null = null;
+  function exposeForTests(game: RuntimeGame | null): void {
+    testGame = game;
+  }
+  if (params.has('e2e') || params.has('debug')) {
     (window as unknown as { __CHIPRUSH__: unknown }).__CHIPRUSH__ = {
-      runtime: () => ({
-        mode: game.mode,
-        score: game.score,
-        lives: game.lives,
-        combo: game.combo,
-        ended: game.ended,
-        paused: game.paused,
-        unlocked: [...game.unlocked],
-        validGates: [...game.packet.validGates],
-        packet: { a: game.packet.a, b: game.packet.b, target: game.packet.target },
-        fall: game.fall,
-        timeLeft: game.timeLeft,
-      }),
+      runtime: () => {
+        const game = testGame;
+        if (!game) return null;
+        return {
+          mode: game.mode,
+          score: game.score,
+          lives: game.lives,
+          combo: game.combo,
+          ended: game.ended,
+          paused: game.paused,
+          unlocked: [...game.unlocked],
+          validGates: [...game.packet.validGates],
+          packet: { a: game.packet.a, b: game.packet.b, target: game.packet.target },
+          fall: game.fall,
+          timeLeft: game.timeLeft,
+        };
+      },
       // vị trí 4 nút cổng (CSS px) để test bấm bằng chạm thật lên canvas
       buttons: () => layoutRuntime(surface.width, surface.height).buttons,
+      // màn THIẾT KẾ: id màn, toạ độ tâm ô, đầu vào hiện tại
+      design: () =>
+        scene instanceof DesignScene
+          ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r) }
+          : null,
     };
   }
 
