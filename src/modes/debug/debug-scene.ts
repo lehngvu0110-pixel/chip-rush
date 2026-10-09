@@ -17,6 +17,8 @@ import type { Scene } from '../../scene';
 import { Board } from '../design/board';
 import { aiProbeSteps, debugCoach, goldenValue, type AiStep, type CoachStep } from '../../core/tutorial';
 import { cellAtPoint, layoutDesign, tableColAtPoint, type DesignLayout } from '../design/layout';
+import { KEYBOARD_HELP, gridKeyAction, isControlFocused, moveCursor } from '../../input/grid-keys';
+import { drawKbCursor } from '../design/design-scene';
 
 export type DebugTool = 'probe' | 'report';
 
@@ -85,6 +87,31 @@ export class DebugScene implements Scene {
   private readonly toolBtns = new Map<DebugTool, HTMLButtonElement>();
   private readonly answerBtns: HTMLButtonElement[] = [];
   private msgTimer = 0;
+  /** con trỏ bàn phím (cột, hàng); null = chưa dùng bàn phím */
+  kbCursor: [number, number] | null = null;
+  private srLive!: HTMLSpanElement;
+  private readonly onKey = (e: KeyboardEvent): void => {
+    const act = gridKeyAction(e, isControlFocused(document));
+    if (!act || this.ended) return;
+    e.preventDefault();
+    const G = this.level.grid;
+    if (!this.kbCursor) {
+      const first = this.grid.inputCells[0];
+      this.kbCursor = first !== undefined ? this.grid.colRow(first) : [0, 0];
+      this.say(`${KEYBOARD_HELP}.`, 'info', 6);
+    } else if (act.kind === 'move') {
+      this.kbCursor = moveCursor(this.kbCursor, act.dc, act.dr, G.cols, G.rows);
+    } else {
+      const p = this.cellCenter(this.kbCursor[0], this.kbCursor[1]);
+      this.onPointer({ phase: 'down', x: p.x, y: p.y, id: -7, timeStamp: performance.now() });
+    }
+    const [c, r] = this.kbCursor;
+    const cell = this.grid.cellAt(c, r);
+    const pin = this.grid.pins.get(cell);
+    const gate = this.grid.gateAt(cell);
+    const what = pin ? (pin.kind === 'in' ? `công tắc ${pin.id}` : `đèn ${pin.id}`) : gate ? `cổng ${gate.type}` : this.netOfCell(cell, this.setup.probeCells) !== undefined ? 'dây (đo được)' : 'ô trống';
+    this.srLive.textContent = `Cột ${c + 1}, hàng ${r + 1}: ${what}`;
+  };
   /** hướng dẫn lần đầu (null = tắt) */
   coach: CoachStep | null = null;
   /** phát lại cách AI kỹ sư đo (sau khi xong màn) */
@@ -111,7 +138,9 @@ export class DebugScene implements Scene {
     this.hint = h('span', 'design-hint');
     this.ctxBox = h('div', 'design-ctx');
     this.ctxBox.append(this.hint);
-    this.strip.append(this.ctxBox, this.msg);
+    this.srLive = h('span', 'sr-only');
+    this.srLive.setAttribute('aria-live', 'polite');
+    this.strip.append(this.ctxBox, this.msg, this.srLive);
     const tools = h('div', 'design-row');
     for (const [t, label] of [['probe', 'Đo'], ['report', 'Báo lỗi']] as const) {
       const b = h('button', 'btn tool', label);
@@ -176,11 +205,13 @@ export class DebugScene implements Scene {
   enter(s: RenderSurface): void {
     this.surf = s;
     this.deps.ui.append(this.bar, this.strip);
+    window.addEventListener('keydown', this.onKey);
     if (this.deps.tutorial) this.updateCoach(`${this.level.intro} `);
     else this.say(this.level.intro, 'info', 8);
   }
 
   exit(): void {
+    window.removeEventListener('keydown', this.onKey);
     window.clearTimeout(this.msgTimer);
     this.bar.remove();
     this.strip.remove();
@@ -461,6 +492,7 @@ export class DebugScene implements Scene {
       guide: this.coachGuide(),
     });
     this.particles.draw(ctx);
+    if (this.kbCursor && !this.ended) drawKbCursor(ctx, G, this.kbCursor, this.time);
 
     ctx.textAlign = 'center';
     ctx.font = `13px ${THEME.font}`;
@@ -520,7 +552,7 @@ export class DebugScene implements Scene {
     });
     ctx.textAlign = 'center';
     for (const [i, ln] of lines.entries()) {
-      const y = T.y + i * T.rowH + 15;
+      const y = T.y + i * T.rowH + T.rowH - 4;
       ctx.font = `700 ${ln.label.length > 3 ? 10 : 12}px ${THEME.font}`;
       ctx.fillStyle = ln.color;
       ctx.fillText(ln.label, T.x + T.labelW / 2, y);

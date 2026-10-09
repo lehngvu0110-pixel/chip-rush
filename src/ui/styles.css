@@ -49,6 +49,8 @@ html, body {
   position: fixed;
   inset: 0;
   overflow: hidden;
+  /* không zoom khi chạm đúp (vẫn cho zoom 2 ngón ở phần chữ/nút) */
+  touch-action: manipulation;
 }
 
 /* Canvas phủ kín màn hình; touch-action none để trình duyệt không cuộn/zoom khi vẽ dây */
@@ -493,3 +495,29 @@ html, body {
 .ai-sec p { margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--text); }
 .ai-sec .ai-limit { margin-top: 6px; color: #ffd27a; font-size: 13px; }
 .ai-body .repo-link { align-self: center; }
+/* Điện thoại xoay ngang: nhắc xoay dọc (máy tính/tablet không bị ảnh hưởng vì có pointer mịn hoặc màn cao) */
+.rotate-hint { display: none; }
+@media (orientation: landscape) and (max-height: 500px) and (pointer: coarse) {
+  .rotate-hint {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    background: #070b18;
+    color: var(--accent);
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .rotate-hint p { margin: 0; color: var(--text); }
+}
+/* Màn lớn (máy tính, tablet): die chip to hơn cho dễ nhìn */
+@media (min-width: 900px) and (min-height: 820px) {
+  .die-slot { width: min(440px, calc(100vh - 440px)); }
+}
+/* chỉ dành cho trình đọc màn hình */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

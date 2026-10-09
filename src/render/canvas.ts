@@ -46,6 +46,9 @@ export function createSurface(host: HTMLElement): RenderSurface & { resize(): vo
   backdrop.setAttribute('aria-hidden', 'true');
   const canvas = document.createElement('canvas');
   canvas.className = 'game-canvas';
+  // Nội dung vẽ trên canvas không đọc được bằng trình đọc màn hình; mọi thao tác chính đều có nút DOM tương ứng
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', 'Bàn chơi CHIP RUSH');
   host.prepend(backdrop, canvas);
   // alpha: true vì canvas chính trong suốt để thấy lớp nền bên dưới
   const ctx = canvas.getContext('2d');

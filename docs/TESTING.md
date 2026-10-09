@@ -43,7 +43,12 @@ Lưu ý: dev server chưa nén/tối ưu như bản build; số đo khung hình 
 | Mã | Mức | Mô tả | Cách né | Trạng thái |
 | --- | --- | --- | --- | --- |
 
+## Khả năng truy cập (accessibility)
+- `e2e/access.spec.ts` chạy **axe-core** (devDependency, không vào bản build) với bộ luật WCAG 2.0/2.1 A + AA + best-practice trên màn chính, Cài đặt, trang AI, danh sách màn, màn THIẾT KẾ, thẻ kết quả → 0 lỗi (14/10).
+- Giới hạn: axe chỉ kiểm phần DOM. Nội dung vẽ trên canvas (lưới, bảng chân trị) không đọc được bằng trình đọc màn hình; bù lại bằng vùng `aria-live` mô tả ô con trỏ bàn phím đang đứng, và mọi thao tác có phím tương ứng. Chưa thử với VoiceOver/TalkBack thật.
+
 ## E2E hiện có
+- `e2e/access.spec.ts`: axe (WCAG AA); chơi d01 và đo t01 chỉ bằng bàn phím; điện thoại xoay ngang → nhắc xoay dọc; laptop 1366×640 → bảng chân trị bên trái, ô ≥ 44 px.
 - `e2e/play-now.spec.ts`: VẬN HÀNH (Vô tận, 60 giây, tạm dừng, kỷ lục).
 - `e2e/design.spec.ts`: THIẾT KẾ d01 (báo lỗi đèn chưa nối → kéo dây → qua màn 3 sao → lưu và mở d02), hoàn tác.
 - `e2e/debug.spec.ts`: KIỂM THỬ t01 (đo 1 dây, đo lại không tính → báo đúng cổng → 3 sao), báo sai 2 lần → thua và hiện lỗi thật.

@@ -21,6 +21,7 @@ import { nextHint, type Hint } from '../../core/level/hint';
 import { designGuide, guidePolyline } from '../../core/tutorial';
 import { designClaim, type DesignClaim } from '../../core/level/ai-info';
 import { cellAtPoint, layoutDesign, stepCells, tableColAtPoint, type DesignLayout } from './layout';
+import { KEYBOARD_HELP, gridKeyAction, isControlFocused, moveCursor } from '../../input/grid-keys';
 
 export type Tool = 'wire' | 'gate' | 'via' | 'erase';
 type PassResult = Extract<Evaluation, { status: 'pass' }>;
@@ -51,6 +52,18 @@ function h<K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: st
   e.className = cls;
   if (text !== undefined) e.textContent = text;
   return e;
+}
+
+/** Viền trắng nét đứt quanh ô con trỏ bàn phím (dùng chung cho KIỂM THỬ). */
+export function drawKbCursor(ctx: CanvasRenderingContext2D, G: { x: number; y: number; cell: number }, cur: [number, number], time: number): void {
+  ctx.save();
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2.5;
+  ctx.setLineDash([6, 4]);
+  ctx.lineDashOffset = -time * 20;
+  roundRectPath(ctx, G.x + cur[0] * G.cell + 2, G.y + cur[1] * G.cell + 2, G.cell - 4, G.cell - 4, 8);
+  ctx.stroke();
+  ctx.restore();
 }
 
 export class DesignScene implements Scene {
@@ -94,11 +107,36 @@ export class DesignScene implements Scene {
   private layerBtn: HTMLButtonElement | null = null;
   private undoBtn!: HTMLButtonElement;
   private msgTimer = 0;
+  /** con trỏ bàn phím (cột, hàng); null = chưa dùng bàn phím */
+  kbCursor: [number, number] | null = null;
+  /** vùng đọc cho trình đọc màn hình (ẩn khỏi mắt): mô tả ô con trỏ đang đứng */
+  private readonly srLive: HTMLSpanElement;
   private readonly onKey = (e: KeyboardEvent): void => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       this.doUndo();
+      return;
     }
+    const act = gridKeyAction(e, isControlFocused(document));
+    if (!act) return;
+    e.preventDefault();
+    const G = this.level.grid;
+    if (!this.kbCursor) {
+      const first = this.grid.inputCells[0];
+      this.kbCursor = first !== undefined ? this.grid.colRow(first) : [0, 0];
+      this.say(`${KEYBOARD_HELP}, Shift + mũi tên để kéo dây.`, 'info', 6);
+      if (act.kind === 'move' && !act.draw) return this.announceCell();
+    }
+    const cur = this.kbCursor;
+    if (act.kind === 'tap') {
+      this.fakeTouch(cur, cur);
+    } else {
+      const next = moveCursor(cur, act.dc, act.dr, G.cols, G.rows);
+      // Shift + mũi tên: kéo từ ô hiện tại sang ô kế bên (vẽ dây / tẩy), như kéo ngón tay
+      if (act.draw && (this.tool === 'wire' || this.tool === 'erase')) this.fakeTouch(cur, next);
+      this.kbCursor = next;
+    }
+    this.announceCell();
   };
 
   constructor(
@@ -115,7 +153,9 @@ export class DesignScene implements Scene {
     this.msg = h('div', 'design-msg');
     this.msg.setAttribute('role', 'status');
     this.ctxRow = h('div', 'design-ctx');
-    this.strip.append(this.ctxRow, this.msg);
+    this.srLive = h('span', 'sr-only');
+    this.srLive.setAttribute('aria-live', 'polite');
+    this.strip.append(this.ctxRow, this.msg, this.srLive);
     this.buildToolbar();
     this.recompute();
   }
@@ -475,6 +515,7 @@ export class DesignScene implements Scene {
     this.drawTable(s);
     this.board.draw(s, L.grid, { time: this.time, layer: this.layer, tool: this.tool, drag: this.drag, problemNodes: this.problemNodes, problemT: this.problemT, passed: this.passed, ghost: this.ghost?.hint ?? null, guide: this.guideDraw() });
     this.particles.draw(ctx);
+    if (this.kbCursor) drawKbCursor(ctx, L.grid, this.kbCursor, this.time);
 
     // dòng PPA (trực tiếp) + mục tiêu của AI kỹ sư
     ctx.textAlign = 'center';
@@ -507,7 +548,7 @@ export class DesignScene implements Scene {
     ctx.fill();
     ctx.textAlign = 'center';
     for (const [i, lab] of labels.entries()) {
-      const y = T.y + i * T.rowH + 15;
+      const y = T.y + i * T.rowH + T.rowH - 4;
       const isOut = i >= lv.inputs.length && i < lv.inputs.length + lv.outputs.length;
       ctx.font = `700 12px ${THEME.font}`;
       ctx.fillStyle = isOut ? THEME.accent : THEME.textDim;
@@ -617,6 +658,32 @@ export class DesignScene implements Scene {
     if (!ai) return;
     this.grid.load(ai.state());
     this.changed();
+  }
+
+  /** Chạm giả từ ô `from` (kéo tới ô `to` nếu khác) — dùng chung đường xử lý với ngón tay. */
+  private fakeTouch(from: [number, number], to: [number, number]): void {
+    const a = this.cellCenter(from[0], from[1]);
+    const b = this.cellCenter(to[0], to[1]);
+    const t = performance.now();
+    this.onPointer({ phase: 'down', x: a.x, y: a.y, id: -7, timeStamp: t });
+    if (from[0] !== to[0] || from[1] !== to[1]) this.onPointer({ phase: 'move', x: b.x, y: b.y, id: -7, timeStamp: t });
+    this.onPointer({ phase: 'up', x: b.x, y: b.y, id: -7, timeStamp: t });
+  }
+
+  /** Mô tả ô con trỏ cho trình đọc màn hình. */
+  private announceCell(): void {
+    const cur = this.kbCursor;
+    if (!cur) return;
+    const g = this.grid;
+    const cell = g.cellAt(cur[0], cur[1]);
+    const pin = g.pins.get(cell);
+    let what = 'ô trống';
+    if (pin?.kind === 'in') what = `công tắc ${pin.id} = ${this.inputs[g.inputCells.indexOf(cell)]}`;
+    else if (pin) what = `đèn ${pin.id}`;
+    else if (g.blocked.has(cell)) what = 'vật cản';
+    else if (g.gateAt(cell)) what = `cổng ${g.gateAt(cell)?.type}`;
+    else if (g.wireSides(this.layer, cell).length > 0) what = `có dây lớp ${this.layer + 1}`;
+    this.srLive.textContent = `Cột ${cur[0] + 1}, hàng ${cur[1] + 1}: ${what}`;
   }
 
   /** Cho test tự động: toạ độ tâm ô (CSS px). */

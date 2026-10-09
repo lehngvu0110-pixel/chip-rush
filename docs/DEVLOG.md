@@ -2,6 +2,29 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-14 – Chạy tốt trên máy tính/tablet + accessibility (WCAG AA) + chơi bằng bàn phím
+**Đã làm**
+- Chụp mọi màn ở 5 cỡ: điện thoại dọc, điện thoại xoay ngang (915×412), tablet (820×1180), laptop thấp (1366×640), máy tính (1440×900). Phát hiện:
+  - Laptop: lưới THIẾT KẾ/KIỂM THỬ bị bảng chân trị chiếm phần trên → ô nhỏ.
+  - Điện thoại xoay ngang: lưới bị thanh công cụ che, không chơi được.
+- `layout.ts`: bố cục rộng (màn ≥ 760 px và ngang hơn dọc) đặt bảng chân trị bên trái lưới; ô ≥ 44 px ở 1366×640, 1440×900, 1180×820 cho cả 12 màn (có test).
+- Điện thoại xoay ngang (CSS: landscape + cao ≤ 500 px + màn cảm ứng): màn "Xoay dọc điện thoại để chơi". Game đã tự tạm dừng khi xoay.
+- Màn lớn: die chip ở màn chính to hơn (tối đa 440 px).
+- axe-core (WCAG 2.1 AA) quét 10 màn, ban đầu có 4 loại lỗi, nay 0:
+  - Viewport chặn zoom (`user-scalable=no`): đã bỏ; canvas vẫn `touch-action: none`, `#app` dùng `touch-action: manipulation` để chạm đúp không zoom.
+  - Nội dung ngoài landmark: `#app` thành `<main>`, canvas có `role="img"` + nhãn.
+  - `aria-label` trên `span` sao không có role: thêm `role="img"`.
+  - Ô tiêu đề bảng PPA rỗng: ghi "Chỉ số".
+- Chơi bằng bàn phím (`src/input/grid-keys.ts`): mũi tên di chuyển con trỏ ô, Shift + mũi tên kéo dây/tẩy, Space/Enter chạm. Bàn phím phát lại "chạm giả" qua đúng đường xử lý ngón tay → không có logic thứ hai. Vùng `aria-live` mô tả ô đang đứng cho trình đọc màn hình. Space/Enter khi đang focus nút thì để nút xử lý.
+- 6 unit (bố cục rộng, phím) + 5 E2E mới. Tổng 363 unit, 19 E2E; JS 54 KB gzip.
+
+**Quyết định**
+- Điện thoại xoay ngang: nhắc xoay dọc thay vì làm bố cục ngang riêng — màn 412 px cao không đủ chỗ cho lưới + thanh công cụ 2 hàng mà vẫn giữ ô ≥ 44 px.
+- Bỏ chặn zoom vì WCAG 1.4.4 (và iOS Safari vốn đã bỏ qua `user-scalable=no`).
+
+**Việc tiếp theo**
+- Vũ: thử VoiceOver (iPhone) hoặc TalkBack (Android) ở màn chính + một màn THIẾT KẾ, ghi kết quả vào TESTING.
+
 ## 2026-10-13 – AI minh bạch: giải thích AI kỹ sư ngay trong game
 **Đã làm**
 - `src/core/level/ai-info.ts`: câu hiển thị theo SPEC 5.4.

@@ -51,6 +51,12 @@ function boot(root: HTMLElement): void {
   const stage = el('div', 'stage');
   root.append(stage, ui);
   const params = new URLSearchParams(location.search);
+  // Điện thoại xoay ngang: màn quá thấp để vẽ mạch → nhắc xoay dọc (chỉ hiện bằng CSS, xem .rotate-hint).
+  // Game tự tạm dừng khi xoay (platform/visibility), xoay lại là chơi tiếp.
+  const rotateHint = el('div', 'rotate-hint');
+  rotateHint.setAttribute('role', 'status');
+  rotateHint.innerHTML = '<svg viewBox="0 0 48 48" width="56" height="56" aria-hidden="true"><rect x="14" y="6" width="20" height="36" rx="4" fill="none" stroke="currentColor" stroke-width="3"/><path d="M6 30a18 18 0 0 0 10 12M42 18A18 18 0 0 0 32 6" fill="none" stroke="#ffb020" stroke-width="3" stroke-linecap="round"/></svg><p>Xoay dọc điện thoại để chơi CHIP RUSH</p>';
+  root.append(rotateHint);
 
   // 1. Lỗi chết → màn hình lỗi (cài sớm nhất; vòng lặp tạo sau nên dừng qua biến)
   let stopLoop = (): void => {};
@@ -271,6 +277,7 @@ function boot(root: HTMLElement): void {
   const levelIds = DESIGN_LEVELS.map((l) => l.id);
   const starsEl = (n: number, label: string): HTMLSpanElement => {
     const span = el('span', 'stars');
+    span.setAttribute('role', 'img');
     span.setAttribute('aria-label', label);
     for (let i = 0; i < 3; i++) {
       const s = el('span', i < n ? 'star on' : 'star');
@@ -382,7 +389,7 @@ function boot(root: HTMLElement): void {
       for (const c of cells) row.append(el(th ? 'th' : 'td', '', c));
       tbl.append(row);
     };
-    tr(['', 'Bạn', 'AI kỹ sư'], true);
+    tr(['Chỉ số', 'Bạn', 'AI kỹ sư'], true);
     tr(['Area (ô)', String(r.ppa.A), String(r.par.A)]);
     tr(['Delay (tầng cổng)', String(r.ppa.D), String(r.par.D)]);
     tr(['Power (lần đổi bit)', String(r.ppa.P), String(r.par.P)]);

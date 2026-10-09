@@ -32,6 +32,10 @@ Luật chi tiết: [`docs/SPEC.md`](docs/SPEC.md).
   - Giới hạn và cách kiểm chứng từng thuật toán: [`docs/SPEC.md` mục 5](docs/SPEC.md); quyết định thiết kế: [ADR-0007](docs/adr/0007-solver-thiet-ke.md), [ADR-0008](docs/adr/0008-kiem-thu-minimax.md).
 - **Trong quá trình phát triển:** dùng trợ lý AI để lên kế hoạch, viết code, viết tài liệu. Toàn bộ được ghi lại ở [`docs/ai-log/`](docs/ai-log/).
 
+## Điều khiển
+- **Điện thoại (khuyên dùng, cầm dọc):** kéo ngón tay để vẽ dây, chạm để đặt cổng/via/đo.
+- **Máy tính:** chuột như ngón tay, hoặc chơi hoàn toàn bằng bàn phím: mũi tên di chuyển ô viền trắng, **Shift + mũi tên** kéo dây, **Space/Enter** chạm vào ô, **Ctrl/⌘ + Z** hoàn tác; VẬN HÀNH dùng phím **1–4** chọn cổng. Màn rộng tự đặt bảng chân trị bên trái lưới.
+
 ## Chạy trên máy
 Cần Node.js ≥ 20.
 ```bash

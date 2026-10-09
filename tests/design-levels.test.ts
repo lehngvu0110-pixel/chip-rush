@@ -113,7 +113,7 @@ describe('công thức điểm', () => {
 });
 
 import { defaultSave, designUnlocked, recordDesign } from '../src/core/progress';
-import { cellAtPoint, layoutDesign, stepCells, tableColAtPoint } from '../src/modes/design/layout';
+import { MSG_H, TOOLBAR_H, cellAtPoint, layoutDesign, stepCells, tableColAtPoint } from '../src/modes/design/layout';
 
 describe('tiến độ THIẾT KẾ', () => {
   it('giữ số sao cao nhất và PPA có chi phí thấp nhất', () => {
@@ -141,6 +141,23 @@ describe('bố cục màn THIẾT KẾ', () => {
         expect(L.grid.cell, `${lv.id} @${w}×${h}`).toBeGreaterThanOrEqual(44);
       }
     }
+  });
+  it('màn rộng (laptop 1366×640, máy tính 1440×900, tablet ngang 1180×820): bảng bên trái lưới, không chồng nhau, ô ≥ 44 px', () => {
+    for (const lv of DESIGN_LEVELS) {
+      for (const [w, h] of [[1366, 640], [1440, 900], [1180, 820]] as const) {
+        const L = layoutDesign(w, h, lv.grid.cols, lv.grid.rows, lv.grid.inputs.length, lv.grid.outputs.length);
+        const T = L.table;
+        const tag = `${lv.id} @${w}×${h}`;
+        expect(L.grid.cell, tag).toBeGreaterThanOrEqual(44);
+        expect(T.x + T.labelW + T.colW * T.cols, tag).toBeLessThan(L.grid.x); // bảng nằm trái lưới
+        expect(L.grid.x + L.grid.cell * L.grid.cols, tag).toBeLessThanOrEqual(w);
+        expect(L.ppaY, tag).toBeLessThan(h - TOOLBAR_H - MSG_H); // dòng PPA không bị thanh công cụ che
+      }
+    }
+  });
+  it('màn dọc vẫn giữ bố cục bảng phía trên lưới', () => {
+    const L = layoutDesign(820, 1180, 5, 5, 2, 1);
+    expect(L.table.y + L.table.rows * L.table.rowH).toBeLessThan(L.grid.y);
   });
   it('đổi điểm chạm sang ô và cột bảng chân trị', () => {
     const L = layoutDesign(400, 800, 5, 5, 2, 1);

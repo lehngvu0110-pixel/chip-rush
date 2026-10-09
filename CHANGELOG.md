@@ -4,6 +4,7 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Chơi bằng bàn phím (mũi tên, Shift + mũi tên kéo dây, Space/Enter); bố cục rộng cho máy tính/tablet (bảng chân trị bên trái lưới); nhắc xoay dọc khi điện thoại xoay ngang.
 - Minh bạch AI: trang "AI kỹ sư hoạt động thế nào?", câu "đã chứng minh tối ưu / bạn có thể vượt" theo dữ liệu solver, nút "Xem AI kỹ sư đo" ở KIỂM THỬ, banner khi độ khó thích nghi nhắm vào cổng bạn hay sai.
 - Chip hôm nay (Daily Chip): 28 đề THIẾT KẾ sinh + giải trước, đổi đề 00:00 giờ Việt Nam, chuỗi ngày, chia sẻ.
 - Hướng dẫn lần đầu, không trừ sao: d01 (đường chấm + ngón tay ảo + 3 bước), t01 (AI chỉ dây nên đo và giải thích kết quả đo).
@@ -25,6 +26,7 @@
 - Nền tảng runtime: vòng lặp theo thời gian thực, canvas nét theo DPR (tối đa 2x), cảm ứng, âm thanh tổng hợp mở khóa bằng lần chạm đầu, tạm dừng khi ẩn tab/xoay màn hình, lưu trữ an toàn có dự phòng, màn hình lỗi có mã lỗi.
 - Overlay đo hiệu năng `?debug=1` và màn thử nghiệm kỹ thuật (thay tạm cho nút CHƠI NGAY).
 ### Sửa
+- Accessibility (axe, WCAG 2.1 AA = 0 lỗi): cho phép zoom, landmark `<main>`, nhãn canvas, role cho ngôi sao, tiêu đề bảng PPA.
 - CI: E2E chờ server mãi vì `vite preview` nghe ở IPv6; nay bind 127.0.0.1.
 - Nút "Đo hiệu năng" chỉ hiện khi URL có `?debug=1`.
 - Gọi `requestAnimationFrame` sai ngữ cảnh làm game không chạy và màn hình lỗi không hiện.
