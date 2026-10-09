@@ -252,3 +252,34 @@ describe('độ khó thích nghi (SPEC 5.3)', () => {
     expect(mean).toBeLessThan(0.86);
   });
 });
+
+describe('Minh bạch độ khó thích nghi (SPEC 5.4)', () => {
+  it('báo "ra thêm câu X" đúng 1 lần khi tỉ lệ sai cổng X ≥ ngưỡng (đủ 3 lần gặp)', () => {
+    const g = new RuntimeGame('endless', 11);
+    const events: GameEvent[] = [];
+    let seenOr = 0;
+    let wrongOr = 0;
+    for (let i = 0; i < 200 && !g.ended && wrongOr < 2; i++) {
+      if (g.packet.cell.gate === 'OR' && ++seenOr > 2) {
+        answerWrong(g);
+        wrongOr++;
+      } else answerRight(g);
+      events.push(...g.drainEvents());
+      // sau lần sai đầu (OR: 1 sai / 3 lần = 33%) chưa được báo
+      if (wrongOr === 1) expect(events.some((e) => e.type === 'adapt')).toBe(false);
+    }
+    expect(wrongOr).toBe(2);
+    const adapts = events.filter((e) => e.type === 'adapt');
+    expect(adapts).toEqual([{ type: 'adapt', gate: 'OR' }]);
+  });
+
+  it('Thử thách 60 giây tắt thích nghi nên không bao giờ báo', () => {
+    const g = new RuntimeGame('sixty', 5);
+    const events: GameEvent[] = [];
+    for (let i = 0; i < 30; i++) {
+      answerWrong(g);
+      events.push(...g.drainEvents());
+    }
+    expect(events.some((e) => e.type === 'adapt')).toBe(false);
+  });
+});

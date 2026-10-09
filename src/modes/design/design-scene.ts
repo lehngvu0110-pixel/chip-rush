@@ -19,6 +19,7 @@ import type { Scene } from '../../scene';
 import { Board, type BoardDrawOptions } from './board';
 import { nextHint, type Hint } from '../../core/level/hint';
 import { designGuide, guidePolyline } from '../../core/tutorial';
+import { designClaim, type DesignClaim } from '../../core/level/ai-info';
 import { cellAtPoint, layoutDesign, stepCells, tableColAtPoint, type DesignLayout } from './layout';
 
 export type Tool = 'wire' | 'gate' | 'via' | 'erase';
@@ -81,6 +82,8 @@ export class DesignScene implements Scene {
   private time = 0;
   private surf: RenderSurface | null = null;
   private readonly expected: Bit[][];
+  /** câu về par của AI kỹ sư (SPEC 5.4): "đã chứng minh tối ưu" hay "bạn có thể vượt!" */
+  private readonly claim: DesignClaim;
 
   // DOM
   private readonly bar: HTMLDivElement;
@@ -104,6 +107,7 @@ export class DesignScene implements Scene {
   ) {
     this.board = new Board(gridFor(level));
     this.expected = expectedRows(level).map((r) => r.outputs);
+    this.claim = designClaim(level);
     this.layout = layoutDesign(360, 640, level.grid.cols, level.grid.rows, level.grid.inputs.length, level.grid.outputs.length);
     this.bar = h('div', 'design-bar');
     // dải phía trên thanh công cụ: bình thường hiện gợi ý / chọn cổng; có thông báo thì thông báo đè lên
@@ -475,11 +479,10 @@ export class DesignScene implements Scene {
     // dòng PPA (trực tiếp) + mục tiêu của AI kỹ sư
     ctx.textAlign = 'center';
     ctx.font = `13px ${THEME.font}`;
-    const par = levelPar(this.level);
-    let line = `AI kỹ sư: chi phí ${par.C}`;
+    let line = this.claim.short;
     if (this.board.circuit && this.board.strict) {
       const ppa = ppaOf(this.grid, this.board.circuit);
-      line = `Area ${ppa.A} · Delay ${ppa.D} · Power ${ppa.P} → chi phí ${ppa.C}   |   ${line}`;
+      line = `A ${ppa.A} · D ${ppa.D} · P ${ppa.P} → chi phí ${ppa.C}   |   AI kỹ sư ${this.claim.C}${this.claim.proven ? ' (tối ưu)' : ''}`;
     }
     ctx.fillStyle = THEME.textDim;
     ctx.fillText(line, s.width / 2, L.ppaY, s.width - 24);

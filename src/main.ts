@@ -15,6 +15,7 @@ import { DebugScene, type DebugResult } from './modes/debug/debug-scene';
 import { DESIGN_LEVELS } from './core/level/design-levels';
 import type { DesignLevel } from './core/level/types';
 import { DesignScene } from './modes/design/design-scene';
+import { aiStats, debugClaim, designClaim } from './core/level/ai-info';
 import { currentStreak, dailyFor, recordDaily, shortDate, vnDateKey } from './core/level/daily';
 import { ICON_GEAR, ICON_STAR } from './ui/icons';
 import { gameUrl, shareResult } from './platform/share';
@@ -280,6 +281,14 @@ function boot(root: HTMLElement): void {
     return span;
   };
 
+  /** Nhận xét kết quả THIẾT KẾ so với AI kỹ sư, nói đúng phạm vi của chữ "tối ưu" (SPEC 5.4). */
+  const designVerdict = (lv: DesignLevel, score: number): string => {
+    const c = designClaim(lv);
+    if (score > 1000) return c.proven ? 'Bạn tìm ra cách ghép cổng khác tốt hơn — AI chỉ chứng minh tối ưu cho cách ghép của nó!' : 'Bạn thiết kế tốt hơn AI kỹ sư!';
+    if (score === 1000) return c.proven ? `Ngang AI kỹ sư. ${c.text}` : `Ngang AI kỹ sư. AI chưa chứng minh được C = ${c.C} là tốt nhất — thử vượt xem!`;
+    return `${c.text} Thử tối ưu tiếp?`;
+  };
+
   /**
    * Nút Chia sẻ: ảnh thẻ được tạo SẴN ngay khi hiện thẻ kết quả (iOS chỉ cho share() trong thao tác chạm,
    * không chờ được việc vẽ ảnh). Chưa kịp có ảnh thì vẫn chia sẻ chữ + link.
@@ -318,7 +327,9 @@ function boot(root: HTMLElement): void {
     hud.hidden = true;
     levelPanel.replaceChildren();
     const card = el('div', 'card level-card');
-    card.append(el('p', 'card-title', 'THIẾT KẾ'), el('p', 'note', 'Vẽ mạch đúng bảng chân trị. Chi phí càng thấp càng nhiều sao; thử vượt AI kỹ sư!'));
+    const aiLinkD = button('btn-link', 'AI kỹ sư là gì?');
+    aiLinkD.addEventListener('click', () => showAiInfo(showLevels));
+    card.append(el('p', 'card-title', 'THIẾT KẾ'), el('p', 'note', 'Vẽ mạch đúng bảng chân trị. Chi phí càng thấp càng nhiều sao; thử vượt AI kỹ sư!'), aiLinkD);
     const list = el('div', 'level-list');
     DESIGN_LEVELS.forEach((lv, i) => {
       const open = designUnlocked(save, levelIds, i);
@@ -364,7 +375,7 @@ function boot(root: HTMLElement): void {
     const score = el('p', 'result-score', String(r.score));
     score.setAttribute('aria-label', `Điểm ${r.score}`);
     countUp(score, r.score);
-    card.append(score, el('p', 'note', r.score > 1000 ? 'Bạn thiết kế tốt hơn AI kỹ sư!' : r.score === 1000 ? 'Ngang AI kỹ sư. 1000 = bằng AI.' : 'AI kỹ sư đạt 1000. Thử tối ưu tiếp?'));
+    card.append(score, el('p', 'note', designVerdict(lv, r.score)));
     const tbl = el('table', 'ppa-table');
     const tr = (cells: string[], th = false): void => {
       const row = el('tr', '');
@@ -452,7 +463,7 @@ function boot(root: HTMLElement): void {
     const score = el('p', 'result-score', String(r.score));
     score.setAttribute('aria-label', `Điểm ${r.score}`);
     countUp(score, r.score);
-    card.append(score, el('p', 'note', `Chi phí ${r.ppa.C} · AI kỹ sư ${r.par.C} (1000 điểm = ngang AI)`));
+    card.append(score, el('p', 'note', `Chi phí ${r.ppa.C} · AI kỹ sư ${r.par.C} (1000 điểm = ngang AI)`), el('p', 'note', designVerdict(lv, r.score)));
     if (streak > 0) {
       const st = el('p', 'streak', `Chuỗi ${streak} ngày`);
       st.setAttribute('aria-label', `Chuỗi ${streak} ngày liên tiếp`);
@@ -501,7 +512,9 @@ function boot(root: HTMLElement): void {
     hud.hidden = true;
     levelPanel.replaceChildren();
     const card = el('div', 'card level-card');
-    card.append(el('p', 'card-title', 'KIỂM THỬ'), el('p', 'note', 'Chip vừa sản xuất có 1 lỗi ẩn. Đo càng ít lần càng nhiều sao; AI kỹ sư biết số lần đo ít nhất.'));
+    const aiLinkT = button('btn-link', 'AI kỹ sư là gì?');
+    aiLinkT.addEventListener('click', () => showAiInfo(showDebugLevels));
+    card.append(el('p', 'card-title', 'KIỂM THỬ'), el('p', 'note', 'Chip vừa sản xuất có 1 lỗi ẩn. Đo càng ít lần càng nhiều sao; AI kỹ sư biết số lần đo ít nhất.'), aiLinkT);
     const list = el('div', 'level-list');
     DEBUG_LEVELS.forEach((lv, i) => {
       const open = debugUnlocked(save, debugIds, i);
@@ -545,7 +558,7 @@ function boot(root: HTMLElement): void {
       card.append(starsEl(r.stars, `${r.stars} trên 3 sao`));
       const n = el('p', 'result-score', String(r.probes));
       n.setAttribute('aria-label', `Số lần đo ${r.probes}`);
-      card.append(n, el('p', 'note', `lần đo · AI kỹ sư cần ${r.par} lần (trường hợp xấu nhất)`));
+      card.append(n, el('p', 'note', `lần đo · ${debugClaim(lv.id)?.text ?? `AI kỹ sư cần ${r.par} lần`}`));
     } else {
       card.append(el('p', 'note', r.reason ?? ''));
     }
@@ -560,6 +573,13 @@ function boot(root: HTMLElement): void {
     }
     const again = button(r.win ? '' : 'btn-primary', 'Chơi lại');
     again.addEventListener('click', () => startDebug(lv));
+    // Minh bạch: xem từng bước AI kỹ sư đo trên chính con chip này
+    const watch = button('', 'Xem AI kỹ sư đo');
+    watch.addEventListener('click', () => {
+      resultPanel.hidden = true;
+      hud.hidden = false;
+      if (scene instanceof DebugScene) scene.replayAi();
+    });
     const list = button('btn-secondary', 'Danh sách màn');
     list.addEventListener('click', showDebugLevels);
     if (r.win) {
@@ -570,11 +590,61 @@ function boot(root: HTMLElement): void {
         ),
       );
     }
-    card.append(again, list);
+    card.append(again, watch, list);
     resultPanel.append(card);
     resultPanel.hidden = false;
     hud.hidden = true;
     (card.querySelector('.btn-primary') as HTMLButtonElement | null)?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
+  };
+
+  // 7d'. "AI kỹ sư hoạt động thế nào?" — giải thích thuật toán, giới hạn, dữ liệu (ứng dụng AI có trách nhiệm)
+  const AI_LOG_URL = 'https://github.com/lehngvu0110-pixel/chip-rush/tree/main/docs/ai-log';
+  const showAiInfo = (back: () => void): void => {
+    const st = aiStats();
+    levelPanel.replaceChildren();
+    const card = el('div', 'card level-card ai-info');
+    card.setAttribute('role', 'dialog');
+    card.setAttribute('aria-label', 'AI kỹ sư hoạt động thế nào?');
+    card.append(el('p', 'card-title', 'AI kỹ sư hoạt động thế nào?'));
+    const body = el('div', 'ai-body');
+    const sec = (title: string, how: string, limit: string): void => {
+      const d = el('section', 'ai-sec');
+      d.append(el('h3', '', title), el('p', '', how), el('p', 'ai-limit', limit));
+      body.append(d);
+    };
+    body.append(el('p', 'note', 'AI kỹ sư không phải chatbot. Đó là 3 thuật toán tìm kiếm cổ điển, tính sẵn hoặc chạy ngay trên máy bạn — không gửi dữ liệu đi đâu, không học gì từ bạn ngoài ván đang chơi.'));
+    sec(
+      'THIẾT KẾ – tìm mạch rẻ nhất',
+      `Thử các cách đặt cổng, bỏ sớm những nhánh chắc chắn không tốt hơn (branch-and-bound với cận dưới), rồi đi dây bằng PathFinder — thuật toán đi dây của chip FPGA. Chứng minh tối ưu ${st.designProven}/${st.designTotal} màn và ${st.dailyProven}/${st.dailyTotal} đề Chip hôm nay.`,
+      'Giới hạn: "tối ưu" chỉ đúng với cách ghép cổng của AI; bạn ghép khác vẫn có thể rẻ hơn. Màn chưa chứng minh là kết quả tốt nhất AI tìm được — vượt được!',
+    );
+    sec(
+      'KIỂM THỬ – đo ít nhất',
+      `Coi mỗi lần đo là một câu hỏi có/không và tìm cây câu hỏi ngắn nhất trong trường hợp xấu nhất (minimax). Tối ưu ở ${st.debugOptimal}/${st.debugTotal} màn, đã đối chiếu với cách vét cạn mọi cây.`,
+      'Giới hạn: chỉ chắc chắn tối ưu khi có ≤ 16 nhóm lỗi; nhiều hơn thì dùng cách tham lam. Sau mỗi màn bấm "Xem AI kỹ sư đo" để xem từng bước.',
+    );
+    sec(
+      'VẬN HÀNH – ra đề theo điểm yếu',
+      'Đếm bạn hay sai cổng nào rồi rút thăm có trọng số (Thompson sampling) để ra thêm câu loại đó; 30% câu vẫn ngẫu nhiên. Tốc độ tự chỉnh để bạn đúng khoảng 75–85%. Khi AI bắt đầu nhắm vào một cổng, game báo ngay trên màn hình.',
+      'Giới hạn: chỉ nhớ trong 1 ván. Thử thách 60 giây tắt AI để mọi người cùng một đề, so điểm công bằng.',
+    );
+    sec(
+      'AI trong quá trình làm game',
+      'Nhóm dùng trợ lý AI (Claude) để viết code và tài liệu; mọi yêu cầu và phần đã kiểm tra được ghi công khai trong nhật ký AI trên GitHub. Hình vẽ bằng code, âm thanh tổng hợp — không dùng AI tạo ảnh hay âm thanh.',
+      'Mọi kết quả AI tạo ra đều được kiểm tra bằng test tự động và người chơi thử.',
+    );
+    const link = el('a', 'repo-link', 'Xem nhật ký AI trên GitHub');
+    link.href = AI_LOG_URL;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    body.append(link);
+    const close = button('btn-primary', 'Đã hiểu');
+    close.addEventListener('click', back);
+    card.append(body, close);
+    levelPanel.append(card);
+    start.hidden = true;
+    levelPanel.hidden = false;
+    close.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
   };
 
   // 7d. Cài đặt + giới thiệu (nút bánh răng ở màn hình chính)
@@ -617,6 +687,9 @@ function boot(root: HTMLElement): void {
       el('p', 'note', 'CHIP RUSH: thiết kế, kiểm thử và vận hành một con chip. Dự thi Phần thi Công nghệ – Road to Predator League 2027.'),
       el('p', 'note', '"AI kỹ sư" là thuật toán tìm kiếm (branch-and-bound, PathFinder, minimax) tính trước và chạy ngay trên máy bạn; game không gửi dữ liệu đi đâu.'),
     );
+    const aiBtn = button('btn-link', 'AI kỹ sư hoạt động thế nào?');
+    aiBtn.addEventListener('click', () => showAiInfo(showSettings));
+    about.append(aiBtn);
     const link = el('a', 'repo-link', 'Mã nguồn trên GitHub');
     link.href = REPO_URL;
     link.target = '_blank';

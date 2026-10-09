@@ -15,7 +15,7 @@ import { THEME } from '../../render/theme';
 import type { GamePointer } from '../../input/pointer';
 import type { Scene } from '../../scene';
 import { Board } from '../design/board';
-import { debugCoach, goldenValue, type CoachStep } from '../../core/tutorial';
+import { aiProbeSteps, debugCoach, goldenValue, type AiStep, type CoachStep } from '../../core/tutorial';
 import { cellAtPoint, layoutDesign, tableColAtPoint, type DesignLayout } from '../design/layout';
 
 export type DebugTool = 'probe' | 'report';
@@ -87,6 +87,8 @@ export class DebugScene implements Scene {
   private msgTimer = 0;
   /** hướng dẫn lần đầu (null = tắt) */
   coach: CoachStep | null = null;
+  /** phát lại cách AI kỹ sư đo (sau khi xong màn) */
+  aiRun: { steps: AiStep[]; i: number; t: number; done: boolean } | null = null;
 
   constructor(
     readonly level: DebugLevel,
@@ -394,6 +396,33 @@ export class DebugScene implements Scene {
     this.time += dt;
     this.particles.update(dt);
     if (this.surf) this.pcb.update(dt, this.surf);
+    if (this.aiRun && !this.aiRun.done && (this.aiRun.t -= dt) <= 0) this.advanceAi();
+  }
+
+  /** Phát lại từng bước đo của AI kỹ sư trên chính mạch này (mỗi bước ~2,6 s). */
+  replayAi(): void {
+    this.aiRun = { steps: aiProbeSteps(this.setup), i: -1, t: 0, done: false };
+    this.advanceAi();
+  }
+
+  private advanceAi(): void {
+    const run = this.aiRun;
+    if (!run) return;
+    run.i++;
+    const st = run.steps[run.i];
+    if (!st) {
+      run.done = true;
+      const how = run.steps.length === 0 ? 'không cần đo lần nào — chỉ nhìn bảng chân trị (đèn) là đủ' : `sau ${run.steps.length} lần đo`;
+      this.say(`AI kỹ sư kết luận ${how}: lỗi ở ${this.describeFault()} (tô màu trên mạch). Bấm nút Dừng để về.`, 'good', 12);
+      return;
+    }
+    const n = this.board.inputs.length;
+    this.board.inputs = this.board.inputs.map((_, i) => ((st.row >> (n - 1 - i)) & 1) as Bit);
+    this.board.evalCurrent();
+    this.deps.audio.play('probe');
+    const cmp = st.value === st.gold ? 'khớp mạch chuẩn → lỗi ở phía SAU' : `mạch chuẩn = ${st.gold} → lỗi ở phía TRƯỚC`;
+    this.say(`AI đo lần ${run.i + 1}/${run.steps.length} khi ${this.rowLabel(st.row)}: dây viền cam = ${st.value}, ${cmp}. Còn ${st.remaining} khả năng.`, 'info', 4);
+    run.t = this.surf?.reducedMotion ? 3.4 : 2.8;
   }
 
   render(s: RenderSurface): void {
@@ -417,9 +446,10 @@ export class DebugScene implements Scene {
 
     this.drawTable(s);
     const row = this.board.currentRow();
-    const marks = this.probes
-      .filter((q) => q.row === row)
-      .map((q) => ({ cell: q.cell, text: String(q.value), color: q.value ? THEME.bit1 : '#9aa6c8' }));
+    const run = this.aiRun;
+    const marks = run
+      ? run.steps.slice(0, run.i + 1).filter((q) => q.row === row).map((q) => ({ cell: q.cell, text: String(q.value), color: THEME.accent }))
+      : this.probes.filter((q) => q.row === row).map((q) => ({ cell: q.cell, text: String(q.value), color: q.value ? THEME.bit1 : '#9aa6c8' }));
     this.board.draw(s, G, {
       time: this.time,
       layer: 0,
@@ -440,6 +470,8 @@ export class DebugScene implements Scene {
 
   /** Ô dây cần đo tiếp (khi đã đặt đúng hàng đầu vào). */
   private coachGuide(): { wires: never[]; finger: null; cells: number[] } | null {
+    const cur = this.aiRun && !this.aiRun.done ? this.aiRun.steps[this.aiRun.i] : undefined;
+    if (cur) return { wires: [], finger: null, cells: [cur.cell] };
     const m = this.coach?.next;
     if (!m || this.ended || this.board.currentRow() !== m.row) return null;
     const cells: number[] = [];

@@ -137,7 +137,7 @@ Cài đặt: `src/ai/debug-solver.ts`, chạy offline trong `tools/solve-levels.
 ### 5.4 Câu hiển thị cho người chơi
 | Tình huống | Câu |
 | --- | --- |
-| `parOptimal: true` | "AI kỹ sư đã chứng minh: không thể tốt hơn C = …" |
+| `parOptimal: true` | "AI kỹ sư đã chứng minh: với cách ghép cổng này, không thể tốt hơn C = …" (sửa 13/10: thêm "với cách ghép cổng này" — xem Lịch sử) |
 | `parOptimal: false` | "Par của AI kỹ sư: C = … (bạn có thể vượt!)" |
 | KIỂM THỬ, par chính xác | "AI luôn tìm ra lỗi trong tối đa N lần đo, dù lỗi ở đâu" |
 | Thích nghi | "Game đang ra nhiều câu XOR vì bạn hay sai cổng này" |
@@ -151,3 +151,5 @@ Cài đặt: `src/ai/debug-solver.ts`, chạy offline trong `tools/solve-levels.
 | 08/10/2026 | KIỂM THỬ | Làm rõ, chờ duyệt | Quan sát miễn phí (công tắc, đèn), lớp tương đương theo dây đo được, giới hạn đo max(2·par, 3) |
 | 08/10/2026 | Solver THIẾT KẾ | Cài đặt | Thêm cận dưới + PathFinder; định nghĩa "tối ưu" chặt hơn bản đầu (phải chạm cận dưới, không chỉ duyệt hết cách đặt) |
 | 07/10/2026 | Lưới THIẾT KẾ | Làm rõ, chờ duyệt | Dây theo cạnh, cắt nhau cùng lớp = chập, cổng 1 ô có chân theo phía, cách tính Area |
+| 12/10/2026 | Daily Chip | Làm sớm + làm rõ, chờ duyệt | Có từ trước 26/10 (quay vòng), cách sinh đề, luật chuỗi ngày, `daily.history` |
+| 13/10/2026 | Câu hiển thị 5.4 | Sửa câu, không đổi luật | Thêm "với cách ghép cổng này": "tối ưu" của solver chỉ chứng minh cho mạch logic của AI (5.1); người chơi ghép cổng khác vẫn có thể có C thấp hơn, câu cũ nói quá. |

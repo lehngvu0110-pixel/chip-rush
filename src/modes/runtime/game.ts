@@ -9,11 +9,16 @@ import { Spawner, unlockedGates, type Packet } from './spawner';
 
 export type RuntimeMode = 'endless' | 'sixty';
 
+/** tỉ lệ sai tối thiểu của một cổng (≥ 3 lần gặp) để báo người chơi rằng game sẽ ra thêm câu cổng đó */
+export const ADAPT_ANNOUNCE_RATE = 0.34;
+
 export type GameEvent =
   | { type: 'correct'; points: number; gate: GateType; multiplier: number }
   | { type: 'wrong'; chosen: GateType; expected: GateType[] }
   | { type: 'miss'; expected: GateType[] }
   | { type: 'unlock'; gate: GateType }
+  /** độ khó thích nghi bắt đầu ra thêm câu loại cổng người chơi hay sai (SPEC 5.4) — báo 1 lần mỗi cổng mỗi ván */
+  | { type: 'adapt'; gate: GateType }
   | { type: 'end' };
 
 export interface RuntimeResult {
@@ -48,6 +53,8 @@ export class RuntimeGame {
   private gates: GateType[];
   private events: GameEvent[] = [];
   private readonly adaptive: AdaptiveDifficulty | null;
+  /** cổng đã báo "game đang ra thêm câu …" trong ván này */
+  private readonly announced = new Set<GateType>();
   private readonly spawner: Spawner;
 
   constructor(
@@ -131,6 +138,12 @@ export class RuntimeGame {
     } else {
       this.combo = 0;
       this.events.push(chosen ? { type: 'wrong', chosen, expected: p.validGates } : { type: 'miss', expected: p.validGates });
+      // Minh bạch: khi AI bắt đầu nhắm vào điểm yếu thì nói cho người chơi biết
+      const weak = this.adaptive?.weakestGate();
+      if (weak && weak.errorRate >= ADAPT_ANNOUNCE_RATE && !this.announced.has(weak.gate)) {
+        this.announced.add(weak.gate);
+        this.events.push({ type: 'adapt', gate: weak.gate });
+      }
       if (this.mode === 'endless') {
         this.lives--;
         if (this.lives <= 0) {

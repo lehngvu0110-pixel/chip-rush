@@ -200,6 +200,10 @@ export class RuntimeScene implements Scene {
           this.banner = { text: `Mở khóa ${ev.gate}: ${GATE_HINT[ev.gate] ?? ''}`, t: 2.5, color: THEME.accent };
           this.unlockGlow = { gate: ev.gate, t: 1.6 };
           break;
+        case 'adapt':
+          // SPEC 5.4: giải thích độ khó thích nghi ngay lúc nó tác động
+          this.banner = { text: `AI: ra thêm câu ${ev.gate} vì bạn hay sai cổng này`, t: 2.6, color: THEME.bit1 };
+          break;
         case 'end':
           if (!this.endSent) {
             this.endSent = true;

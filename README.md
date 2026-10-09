@@ -28,6 +28,7 @@ Luật chi tiết: [`docs/SPEC.md`](docs/SPEC.md).
   - **THIẾT KẾ** (`src/ai/design-solver.ts`): đặt cổng bằng vét cạn/beam search, cắt nhánh bằng **branch-and-bound** với cận dưới (BFS cho net 2 chân, nửa chu vi hộp bao cho net nhiều chân), đi dây bằng Dijkstra-Steiner và **PathFinder** (negotiated congestion — thuật toán đi dây FPGA kinh điển). Tính trước offline (`tools/solve-levels.ts`) thành "par"; **chứng minh tối ưu 7/12 màn** (vét cạn và Area bằng cận dưới), các màn còn lại người chơi có thể vượt AI.
   - **KIỂM THỬ** (`src/ai/debug-solver.ts`): cây quyết định **minimax** trên tập lớp lỗi (bitmask + ghi nhớ) → số lần đo ít nhất trong trường hợp xấu nhất; tối ưu ở cả 6 màn, đối chiếu bằng vét cạn mọi cây trong test. Màn hướng dẫn t01 dùng chính solver này để chỉ dây nên đo tiếp.
   - **VẬN HÀNH** (`src/ai/adaptive.ts`): **Thompson sampling** (Beta-Bernoulli) chọn loại gói người chơi hay sai, trộn 30% ngẫu nhiên.
+  - **Minh bạch trong game:** trang "AI kỹ sư hoạt động thế nào?" (Cài đặt hoặc danh sách màn) nêu thuật toán, số màn đã chứng minh tối ưu và giới hạn; sau mỗi màn KIỂM THỬ có nút "Xem AI kỹ sư đo" phát lại từng bước suy luận; VẬN HÀNH báo ngay khi AI bắt đầu ra thêm câu về cổng bạn hay sai.
   - Giới hạn và cách kiểm chứng từng thuật toán: [`docs/SPEC.md` mục 5](docs/SPEC.md); quyết định thiết kế: [ADR-0007](docs/adr/0007-solver-thiet-ke.md), [ADR-0008](docs/adr/0008-kiem-thu-minimax.md).
 - **Trong quá trình phát triển:** dùng trợ lý AI để lên kế hoạch, viết code, viết tài liệu. Toàn bộ được ghi lại ở [`docs/ai-log/`](docs/ai-log/).
 

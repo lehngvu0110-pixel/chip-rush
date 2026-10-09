@@ -485,3 +485,11 @@ html, body {
 @media (max-width: 340px) {
   .title { font-size: 32px; }
 }
+/* Trang "AI kỹ sư hoạt động thế nào?" */
+.ai-body { width: 100%; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 2px 2px 6px; }
+.ai-body > .note { max-width: none; }
+.ai-sec { border: 1px solid rgba(56, 232, 255, 0.25); border-radius: 12px; padding: 10px 12px; background: rgba(10, 15, 36, 0.6); }
+.ai-sec h3 { margin: 0 0 4px; font-size: 15px; color: var(--accent); }
+.ai-sec p { margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--text); }
+.ai-sec .ai-limit { margin-top: 6px; color: #ffd27a; font-size: 13px; }
+.ai-body .repo-link { align-self: center; }

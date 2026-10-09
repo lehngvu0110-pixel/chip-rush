@@ -85,3 +85,40 @@ export function debugCoach(setup: DebugSetup, probes: readonly ProbeRecord[]): C
 export function goldenValue(setup: DebugSetup, net: number, row: number): number {
   return evaluateRow(setup.group.circuit, row)[net] ?? 0;
 }
+
+/** Một bước AI kỹ sư đo (phát lại sau khi xong màn). */
+export interface AiStep {
+  net: number;
+  row: number;
+  value: number;
+  /** giá trị ở mạch chuẩn (không lỗi) */
+  gold: number;
+  cell: number;
+  /** số khả năng còn lại SAU lần đo này */
+  remaining: number;
+}
+
+/**
+ * Các phép đo AI kỹ sư làm với lỗi thật của màn: mỗi bước chạy lại minimax trên các lớp lỗi còn khớp
+ * (giống huấn luyện viên t01), dừng khi còn 1 khả năng. Số bước ≤ par (tests/ai-info.test.ts).
+ */
+export function aiProbeSteps(setup: DebugSetup): AiStep[] {
+  const steps: AiStep[] = [];
+  const probes: ProbeRecord[] = [];
+  for (let k = 0; k < 16; k++) {
+    const c = debugCoach(setup, probes);
+    if (!c.next) break;
+    const { net, row } = c.next;
+    const value = evaluateRow(setup.group.circuit, row, setup.fault)[net] ?? 0;
+    probes.push({ net, row, value });
+    let cell = -1;
+    for (const [key, n] of setup.probeCells) {
+      if (n === net) {
+        cell = Number(key.split(':')[1]);
+        break;
+      }
+    }
+    steps.push({ net, row, value, gold: goldenValue(setup, net, row), cell, remaining: consistentClasses(setup, probes).length });
+  }
+  return steps;
+}

@@ -2,6 +2,28 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-13 – AI minh bạch: giải thích AI kỹ sư ngay trong game
+**Đã làm**
+- `src/core/level/ai-info.ts`: câu hiển thị theo SPEC 5.4.
+  - Màn đã chứng minh: "AI kỹ sư đã chứng minh: với cách ghép cổng này, không thể tốt hơn C = …".
+  - Màn chưa chứng minh: "Par của AI kỹ sư: C = … (bạn có thể vượt!)".
+  - KIỂM THỬ: "AI luôn tìm ra lỗi trong tối đa N lần đo, dù lỗi ở đâu".
+  - `aiStats()` đếm số màn tối ưu từ dữ liệu thật.
+- THIẾT KẾ / Chip hôm nay: dòng PPA ghi "(tối ưu)" khi đã chứng minh. Thẻ kết quả có nhận xét đúng phạm vi; vượt AI ở màn "đã chứng minh" thì giải thích là bạn ghép cổng theo cách khác.
+- KIỂM THỬ: nút "Xem AI kỹ sư đo" phát lại từng bước (đổi đầu vào, viền cam dây đo, so mạch chuẩn, còn mấy khả năng) rồi kết luận lỗi. `aiProbeSteps` nằm trong `core/tutorial.ts`, dùng chung huấn luyện viên t01.
+- VẬN HÀNH (Vô tận): sự kiện `adapt` → banner "AI: ra thêm câu X vì bạn hay sai cổng này". Mỗi cổng báo 1 lần mỗi ván, ngưỡng sai ≥ 34% sau ≥ 3 lần gặp. 60 giây không bao giờ báo vì đã tắt thích nghi.
+- Trang "AI kỹ sư hoạt động thế nào?": vào từ Cài đặt và từ danh sách màn.
+  - 3 thuật toán + giới hạn của từng cái.
+  - AI trong quá trình làm game, link nhật ký AI.
+  - Nói rõ không gửi dữ liệu.
+- 12 unit + 3 E2E mới (tổng 357 unit, 14 E2E); JS 54 KB gzip.
+
+**Quyết định**
+- Sửa câu 5.4 (ghi trong Lịch sử SPEC): "tối ưu" của solver chỉ chứng minh cho mạch logic của AI. Câu cũ "không thể tốt hơn" nói quá, vì người chơi ghép cổng khác có thể rẻ hơn.
+
+**Vướng mắc / cần Vũ quyết**
+- Cân bằng KIỂM THỬ: báo đúng ngay mà không đo lần nào vẫn được 3 sao (0 ≤ par), và luật cho báo sai 1 lần. Màn có 2–4 khả năng thì đoán mò có xác suất 3 sao cao. Gợi ý: chỉ cho 3 sao khi số khả năng còn lại lúc báo = 1 (tức đã đủ thông tin). Đây là đổi luật nên cần Vũ duyệt.
+
 ## 2026-10-12 – Daily Chip ("Chip hôm nay")
 **Đã làm**
 - `tools/gen-daily.ts`: sinh 28 đề THIẾT KẾ có seed cố định.
