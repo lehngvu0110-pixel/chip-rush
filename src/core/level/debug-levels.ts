@@ -142,7 +142,3 @@ export const DEBUG_LEVELS: readonly DebugLevel[] = [
     fault: { kind: 'stuck-at', net: 't', value: 1 },
   },
 ];
-
-export function debugLevelById(id: string): DebugLevel | undefined {
-  return DEBUG_LEVELS.find((l) => l.id === id);
-}

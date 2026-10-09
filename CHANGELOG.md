@@ -25,6 +25,8 @@
 - Test tự động đầu-cuối bằng Playwright.
 - Nền tảng runtime: vòng lặp theo thời gian thực, canvas nét theo DPR (tối đa 2x), cảm ứng, âm thanh tổng hợp mở khóa bằng lần chạm đầu, tạm dừng khi ẩn tab/xoay màn hình, lưu trữ an toàn có dự phòng, màn hình lỗi có mã lỗi.
 - Overlay đo hiệu năng `?debug=1` và màn thử nghiệm kỹ thuật (thay tạm cho nút CHƠI NGAY).
+### Đổi
+- Tách `main.ts` thành các module giao diện trong `src/ui/`; bật `noUnusedLocals`/`noUnusedParameters`, xoá code chết.
 ### Sửa
 - Accessibility (axe, WCAG 2.1 AA = 0 lỗi): cho phép zoom, landmark `<main>`, nhãn canvas, role cho ngôi sao, tiêu đề bảng PPA.
 - CI: E2E chờ server mãi vì `vite preview` nghe ở IPv6; nay bind 127.0.0.1.

@@ -17,8 +17,9 @@
 | `src/ai` | Solver THIẾT KẾ, solver KIỂM THỬ, độ khó thích nghi | `core/*` |
 | `src/platform` | storage, visibility, share, errors | DOM |
 | `src/render` | Canvas, theme, vẽ mạch, hiệu ứng, âm thanh | `core/*`, DOM |
-| `src/input` | Pointer events → thao tác trên lưới | DOM |
-| `src/ui` | Hub, HUD, kết quả, tutorial, cài đặt | mọi tầng dưới |
+| `src/input` | Pointer events → thao tác trên lưới; `grid-keys.ts`: bàn phím → chạm giả | DOM |
+| `src/ui` | Dựng DOM thuần từ dữ liệu + callback: `dom.ts` (tiện ích), `start-screen.ts` (màn bắt đầu), `result-cards.ts` (thẻ kết quả 4 chế độ), `info-cards.ts` (danh sách màn, Cài đặt, trang AI), `share-button.ts`, `icons.ts` | `core/*`, `platform`, `render` (không giữ trạng thái game) |
+| `src/main.ts` | Điểm vào: canvas + vòng lặp, giữ trạng thái chung (tiến độ, âm thanh, scene), điều hướng giữa các màn, móc test `?e2e` | mọi tầng |
 | `src/modes/*` | Scene từng chế độ | mọi tầng dưới |
 | `tools/` | Script Node: giải màn (`solve-levels.ts`), sinh + giải đề Daily (`gen-daily.ts`), ảnh nộp bài, kiểm tra dung lượng, subset font | `core/*`, `ai/*` |
 

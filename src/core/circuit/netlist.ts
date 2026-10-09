@@ -1,6 +1,5 @@
 // Chuyển lưới (grid.ts) thành netlist để mô phỏng, và dịch lỗi mạch ngược về Ô LƯỚI
 // để giao diện tô đỏ đúng chỗ sai (ví dụ: tô cả đoạn dây bị chập).
-import { GATE_ARITY } from './gates';
 import { opposite, SIDES, type Grid, type Side } from './grid';
 import { compile, type CompiledCircuit } from './simulate';
 import type { CircuitError, GateInstance, Netlist } from './types';
@@ -186,5 +185,3 @@ export function diagnose(grid: Grid): Diagnosis {
   return { ok: false, problems, netlist };
 }
 
-/** Số chân vào cổng cần (tiện cho UI hiển thị "AND: 1/2 dây vào"). */
-export const gateArity = (type: keyof typeof GATE_ARITY): number => GATE_ARITY[type];

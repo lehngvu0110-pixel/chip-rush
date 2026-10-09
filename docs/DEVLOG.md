@@ -2,6 +2,22 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-15 – Dọn code: tách main.ts thành module UI, bật kiểm tra biến thừa
+**Đã làm**
+- `src/main.ts` từ ~920 dòng còn 541. Phần dựng DOM chuyển sang `src/ui/`, mỗi file chỉ dựng giao diện từ dữ liệu + callback, không giữ trạng thái game:
+  - `dom.ts`: el/button/action/extLink, ngôi sao, số chạy, focus không viền.
+  - `start-screen.ts`: màn bắt đầu (die chip, Chip hôm nay, CHƠI NGAY, kỷ lục).
+  - `result-cards.ts`: thẻ kết quả VẬN HÀNH / THIẾT KẾ / Chip hôm nay / KIỂM THỬ + `designVerdict`.
+  - `info-cards.ts`: danh sách màn (dùng chung THIẾT KẾ và KIỂM THỬ), trang AI kỹ sư, Cài đặt.
+  - `share-button.ts`: nút chia sẻ (tạo ảnh sẵn).
+- `main.ts` còn: khởi động, vòng lặp, HUD/tạm dừng, ghi tiến độ, điều hướng. Thêm 4 hàm gom việc lặp lại: `showCard`, `showPanel`, `enterPlay`, `backToBoard` (trước đây mỗi màn tự ẩn/hiện 5–6 panel).
+- `tsconfig`: bật `noUnusedLocals` + `noUnusedParameters`; xoá code chết (3 icon không dùng, `gateArity`, `debugLevelById`).
+- Không đổi hành vi: 363 unit + 19 E2E giữ nguyên và đều xanh, chụp lại màn hình so sánh không khác. JS 55 KB gzip.
+
+**Quyết định**
+- Chưa làm lưu trữ bền (`navigator.storage.persist`) / xuất-nhập tiến độ vì Vũ nói chưa cần (13/10).
+- Refactor trước khi nộp vì BTC chấm qua link GitHub: người đọc code mở `main.ts` đầu tiên.
+
 ## 2026-10-14 – Chạy tốt trên máy tính/tablet + accessibility (WCAG AA) + chơi bằng bàn phím
 **Đã làm**
 - Chụp mọi màn ở 5 cỡ: điện thoại dọc, điện thoại xoay ngang (915×412), tablet (820×1180), laptop thấp (1366×640), máy tính (1440×900). Phát hiện:
