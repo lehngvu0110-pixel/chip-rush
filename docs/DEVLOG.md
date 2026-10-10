@@ -2,6 +2,18 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-19 – Kiểm thử độ bền + checklist nộp bài
+**Đã làm**
+- `e2e/robustness.spec.ts` (13 test):
+  - Chạm/kéo/bấm nút ngẫu nhiên có seed, 120 thao tác ở 5 màn (THIẾT KẾ d12, d09; KIỂM THỬ t09; VẬN HÀNH; Chip hôm nay), bắt mọi exception + `console.error` + màn hình lỗi.
+  - localStorage bị chặn hoàn toàn; bộ nhớ đầy giữa chừng.
+  - 5 kiểu dữ liệu lưu hỏng.
+  - Đổi cỡ màn hình đúng lúc đang giữ ngón tay kéo dây, rồi chuyển tab.
+- **Tìm được 1 lỗi thật (B-01):** dữ liệu lưu hỏng ở một màn (vd. `"d01": "x"`) → qua màn đó thì game văng màn hình lỗi. Sửa: `loadSave` kiểm tra và làm sạch từng mục THIẾT KẾ/KIỂM THỬ (bỏ mục hỏng, kẹp số sao 0–3, số âm → 0). Thêm `tests/progress.test.ts`.
+- Monkey test chỉ chạy trên Chromium để CI không chậm thêm ~4 phút.
+- `docs/SUBMISSION.md`: checklist 12 việc trước khi nộp, ghi rõ ai làm.
+- Tổng 388 unit, 34 E2E.
+
 ## 2026-10-18 – Đo hiệu năng trên máy ảo chậm + bậc đồ hoạ "min" + làm mới ảnh nộp bài
 **Đã làm**
 - `tools/perf-bench.mjs`: Chromium giả lập Pixel 7, làm chậm CPU 1/4/6 lần, đo khoảng cách frame ở 4 màn (màn chính, VẬN HÀNH đang chơi, THIẾT KẾ d12, KIỂM THỬ t09). Móc test `__CHIPRUSH__.perf()` đọc chất lượng hiện tại.

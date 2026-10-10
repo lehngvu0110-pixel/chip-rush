@@ -32,6 +32,7 @@ export function defaultSave(): SaveData {
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const num = (v: unknown, d: number): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : d);
 const bool = (v: unknown, d: boolean): boolean => (typeof v === 'boolean' ? v : d);
+const stars = (v: unknown): number => Math.min(3, Math.floor(num(v, 0)));
 
 export interface LoadResult {
   data: SaveData;
@@ -64,8 +65,21 @@ export function loadSave(storage: SafeStorage): LoadResult {
   if (isObj(raw.badges)) {
     for (const [k, v] of Object.entries(raw.badges)) if (/^[a-z0-9-]{1,32}$/.test(k) && typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) d.badges[k] = v;
   }
-  if (isObj(raw.design)) d.design = raw.design as SaveData['design'];
-  if (isObj(raw.debug)) d.debug = raw.debug as SaveData['debug'];
+  // Từng màn được kiểm tra riêng: một mục hỏng (sửa tay, lỗi ghi dở) chỉ mất mục đó, không làm hỏng cả game
+  // (lỗi thật tìm được bằng e2e/robustness.spec.ts ngày 19/10: qua màn đè lên mục hỏng làm văng lỗi).
+  if (isObj(raw.design)) {
+    for (const [id, v] of Object.entries(raw.design)) {
+      if (!isObj(v) || !isObj(v.best)) continue;
+      const b = v.best;
+      d.design[id] = { stars: stars(v.stars), best: { A: num(b.A, 0), D: num(b.D, 0), P: num(b.P, 0) }, hinted: bool(v.hinted, false) };
+    }
+  }
+  if (isObj(raw.debug)) {
+    for (const [id, v] of Object.entries(raw.debug)) {
+      if (!isObj(v)) continue;
+      d.debug[id] = { stars: stars(v.stars), probes: num(v.probes, 0) };
+    }
+  }
   return { data: d, wasReset: false };
 }
 

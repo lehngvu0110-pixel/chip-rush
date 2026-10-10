@@ -32,3 +32,19 @@ Màn đầu của THIẾT KẾ và KIỂM THỬ có hướng dẫn tận tay (kh
 
 ### Bản rút gọn (≈ 500 ký tự)
 CHIP RUSH: vòng đời một con chip trong 3 chế độ chơi trên điện thoại. THIẾT KẾ – vẽ dây, đặt cổng logic, tối ưu diện tích/độ trễ/công suất. KIỂM THỬ – đo dây, suy luận tìm lỗi ẩn. VẬN HÀNH – arcade phản xạ cổng logic. Mỗi chế độ có "AI kỹ sư" (branch-and-bound, minimax, Thompson sampling) chạy ngay trong game để bạn so tài. Hình vẽ bằng code, không thu thập dữ liệu.
+
+## Checklist trước khi nộp (làm xong trước 25/10)
+| # | Việc | Ai | Xong? |
+| --- | --- | --- | --- |
+| 1 | Điền MSSV vào bảng trên và `README.md` | Vũ | ☐ |
+| 2 | Duyệt các mục "chờ duyệt" trong `SPEC.md` (lưới, KIỂM THỬ, mở khoá, Chip hôm nay, huy hiệu) và luật 3 sao KIỂM THỬ | Vũ | ☐ |
+| 3 | Đo hiệu năng trên 3 điện thoại thật bằng `?debug=1`, ghi vào `TESTING.md` | Vũ | ☐ |
+| 4 | Mở `font-test.html` trên 3 máy, kiểm tra dấu tiếng Việt | Vũ | ☐ |
+| 5 | Chơi hết 1 lượt mỗi chế độ trên iPhone (Safari) và Android (Chrome) qua link GitHub Pages | Vũ | ☐ |
+| 6 | `git push` → CI xanh cả Chromium và WebKit; GitHub Pages đã cập nhật bản mới | Vũ | ☐ |
+| 7 | Repo GitHub để **public** (BTC xem mã nguồn) — hỏi lại BTC câu 7 trong `COMPLIANCE.md` | Vũ | ☐ |
+| 8 | Đối chiếu lại toàn bộ `COMPLIANCE.md` (đặc biệt IV.1–IV.3: bản quyền, AI phái sinh, nội dung) | Vũ + Claude | ☐ |
+| 9 | Đổi phiên bản `0.1.0` → `1.0.0` trong `package.json`, chuyển mục "Chưa phát hành" của CHANGELOG thành `[1.0.0] – 2026-10-25`, tạo tag `v1.0.0` | Claude (khi Vũ bảo) | ☐ |
+| 10 | Chụp lại ảnh nộp bài nếu giao diện đổi sau 18/10 (`node tools/submission-assets.mjs`) | Claude | ☐ |
+| 11 | Nhật ký AI (`docs/ai-log/`) đủ mọi ngày, có phần "Kiểm tra" của người | Vũ + Claude | ☐ |
+| 12 | Ngày 26/10: dán nội dung bảng trên vào Portal, tải logo + ảnh in-game | Vũ | ☐ |

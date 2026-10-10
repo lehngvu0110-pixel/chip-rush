@@ -45,12 +45,14 @@ Lưu ý: dev server chưa nén/tối ưu như bản build; số đo khung hình 
 ## Lỗi đã biết
 | Mã | Mức | Mô tả | Cách né | Trạng thái |
 | --- | --- | --- | --- | --- |
+| B-01 | Cao | Dữ liệu lưu hỏng ở từng màn (vd. `design.d01 = "x"`) → qua màn đó làm game hiện màn hình lỗi (TypeError khi đọc `prev.best`) | — | Đã sửa 19/10: `loadSave` kiểm tra từng mục; test `tests/progress.test.ts` + `e2e/robustness.spec.ts` |
 
 ## Khả năng truy cập (accessibility)
 - `e2e/access.spec.ts` chạy **axe-core** (devDependency, không vào bản build) với bộ luật WCAG 2.0/2.1 A + AA + best-practice trên màn chính, Cài đặt, trang AI, danh sách màn, màn THIẾT KẾ, thẻ kết quả → 0 lỗi (14/10).
 - Giới hạn: axe chỉ kiểm phần DOM. Nội dung vẽ trên canvas (lưới, bảng chân trị) không đọc được bằng trình đọc màn hình; bù lại bằng vùng `aria-live` mô tả ô con trỏ bàn phím đang đứng, và mọi thao tác có phím tương ứng. Chưa thử với VoiceOver/TalkBack thật.
 
 ## E2E hiện có
+- `e2e/robustness.spec.ts`: chạm ngẫu nhiên có seed (120 thao tác) ở THIẾT KẾ d12, d09, KIỂM THỬ t09, VẬN HÀNH, Chip hôm nay → không lỗi (chỉ Chromium); localStorage bị chặn / đầy giữa chừng; 5 kiểu dữ liệu lưu hỏng; đổi cỡ màn hình lúc đang kéo dây + chuyển tab.
 - `e2e/badges.spec.ts`: qua d01 → thông báo huy hiệu, màn chính 1/12, bảng Huy hiệu (axe 0 lỗi); người chơi cũ được trao bù không thông báo.
 - `e2e/access.spec.ts`: axe (WCAG AA); chơi d01 và đo t01 chỉ bằng bàn phím; điện thoại xoay ngang → nhắc xoay dọc; laptop 1366×640 → bảng chân trị bên trái, ô ≥ 44 px.
 - `e2e/play-now.spec.ts`: VẬN HÀNH (Vô tận, 60 giây, tạm dừng, kỷ lục).

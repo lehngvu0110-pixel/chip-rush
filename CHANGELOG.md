@@ -31,6 +31,7 @@
 ### Đổi
 - Tách `main.ts` thành các module giao diện trong `src/ui/`; bật `noUnusedLocals`/`noUnusedParameters`, xoá code chết.
 ### Sửa
+- Dữ liệu lưu hỏng ở một màn làm game văng lỗi khi qua màn đó; nay mục hỏng bị bỏ khi đọc (B-01).
 - Accessibility (axe, WCAG 2.1 AA = 0 lỗi): cho phép zoom, landmark `<main>`, nhãn canvas, role cho ngôi sao, tiêu đề bảng PPA.
 - CI: E2E chờ server mãi vì `vite preview` nghe ở IPv6; nay bind 127.0.0.1.
 - Nút "Đo hiệu năng" chỉ hiện khi URL có `?debug=1`.
