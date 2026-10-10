@@ -48,6 +48,7 @@ Lưu ý: dev server chưa nén/tối ưu như bản build; số đo khung hình 
 - Giới hạn: axe chỉ kiểm phần DOM. Nội dung vẽ trên canvas (lưới, bảng chân trị) không đọc được bằng trình đọc màn hình; bù lại bằng vùng `aria-live` mô tả ô con trỏ bàn phím đang đứng, và mọi thao tác có phím tương ứng. Chưa thử với VoiceOver/TalkBack thật.
 
 ## E2E hiện có
+- `e2e/badges.spec.ts`: qua d01 → thông báo huy hiệu, màn chính 1/12, bảng Huy hiệu (axe 0 lỗi); người chơi cũ được trao bù không thông báo.
 - `e2e/access.spec.ts`: axe (WCAG AA); chơi d01 và đo t01 chỉ bằng bàn phím; điện thoại xoay ngang → nhắc xoay dọc; laptop 1366×640 → bảng chân trị bên trái, ô ≥ 44 px.
 - `e2e/play-now.spec.ts`: VẬN HÀNH (Vô tận, 60 giây, tạm dừng, kỷ lục).
 - `e2e/design.spec.ts`: THIẾT KẾ d01 (báo lỗi đèn chưa nối → kéo dây → qua màn 3 sao → lưu và mở d02), hoàn tác.

@@ -29,3 +29,7 @@ export const LOGO_SVG = `<svg viewBox="0 0 120 120" width="96" height="96" role=
 <circle cx="33" cy="33" r="3" fill="#38e8ff" fill-opacity="0.6"/>
 <path d="M66 36 L48 63 H59 L54 84 L73 55 H62 Z" fill="url(#lgBolt)" stroke="#fff3c4" stroke-width="1.5" stroke-linejoin="round"/>
 </svg>`;
+
+/** Huy hiệu: huy chương có ruy băng (tự vẽ). */
+export const ICON_MEDAL =
+  '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M7 2h4l1 5-3 2zM17 2h-4l-1 5 3 2z" fill="currentColor" fill-opacity="0.25"/><circle cx="12" cy="15" r="6" fill="currentColor" fill-opacity="0.18"/><path d="M12 12l1 2h2l-1.6 1.3.6 2.2-2-1.3-2 1.3.6-2.2L9 14h2z" fill="currentColor"/></svg>';

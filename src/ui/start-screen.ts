@@ -13,6 +13,7 @@ export interface StartScreenData {
   streak: number;
   bestEndless: number;
   best60: number;
+  badges: { earned: number; total: number };
   /** hiện nút màn đo hiệu năng (chỉ khi ?debug) */
   showPerf: boolean;
 }
@@ -23,6 +24,7 @@ export interface StartScreenActions {
   onRuntime: (mode: 'endless' | 'sixty') => void;
   onDaily: () => void;
   onSettings: () => void;
+  onBadges: () => void;
   onPerf: () => void;
 }
 
@@ -77,6 +79,9 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
   gear.setAttribute('aria-label', 'Cài đặt');
   gear.addEventListener('click', a.onSettings);
 
+  const badgeLink = action('btn-link badge-link', `Huy hiệu ${d.badges.earned}/${d.badges.total}`, a.onBadges);
+  badgeLink.setAttribute('aria-label', `Huy hiệu: đã đạt ${d.badges.earned} trên ${d.badges.total}`);
+
   // Màn đo hiệu năng chỉ dành cho nhóm phát triển
   const perf = action('btn-link', 'Đo hiệu năng (dành cho nhóm phát triển)', a.onPerf);
   perf.hidden = !d.showPerf;
@@ -91,6 +96,7 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
       actions,
       el('p', 'note', 'Chạm vào một khối của con chip để chọn công đoạn. CHƠI NGAY = VẬN HÀNH: cắm đúng cổng logic trước khi chip chạm ổ cắm.'),
       el('p', 'records', `Kỷ lục: Vô tận ${d.bestEndless} · 60 giây ${d.best60}`),
+      badgeLink,
       perf,
       el('p', 'version', versionLabel()),
     ],

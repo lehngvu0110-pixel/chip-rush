@@ -15,6 +15,7 @@ import { DebugScene, type DebugResult } from './modes/debug/debug-scene';
 import { DESIGN_LEVELS } from './core/level/design-levels';
 import { DesignScene } from './modes/design/design-scene';
 import { currentStreak, dailyFor, recordDaily, shortDate, vnDateKey } from './core/level/daily';
+import { BADGES, awardBadges, badgeCount } from './core/badges';
 import { HubScene } from './modes/hub/hub-scene';
 import { vnDateSeed } from './core/util/rng';
 import { FrameStats, QUALITY_WINDOW, decideQuality } from './debug/stats';
@@ -28,7 +29,7 @@ import { startScreen } from './ui/start-screen';
 import { button, el, focusQuiet } from './ui/dom';
 import { createShareButtonFactory } from './ui/share-button';
 import { debugResultCard, designResultCard, dailyResultCard, runtimeResultCard, type Card, type PassResult } from './ui/result-cards';
-import { aiInfoCard, levelListCard, settingsCard } from './ui/info-cards';
+import { aiInfoCard, badgesCard, levelListCard, settingsCard } from './ui/info-cards';
 
 // Điểm vào của game: dựng canvas + vòng lặp, giữ trạng thái chung (tiến độ, âm thanh, scene đang chạy)
 // và điều hướng giữa các màn. Phần dựng DOM của từng thẻ nằm trong src/ui/*.
@@ -68,6 +69,17 @@ function boot(root: HTMLElement): void {
   if (wasReset) toast('Dữ liệu lưu cũ không đọc được nên đã được đặt lại.');
   storage.onPersistenceLost(() => toast('Tiến độ không lưu được trên trình duyệt này.'));
   const persist = (): void => void writeSave(storage, save);
+  // Huy hiệu: người đã chơi từ trước được trao bù ngay khi mở game (không báo, tránh dồn thông báo)
+  if (awardBadges(save, vnDateKey()).length > 0) persist();
+  /** Lưu tiến độ sau một kết quả + trao huy hiệu vừa đạt (báo bằng 1 thông báo gộp). */
+  const saveProgress = (): void => {
+    const fresh = awardBadges(save, vnDateKey());
+    persist();
+    if (fresh.length > 0) {
+      audio.play('unlock');
+      toast(`Huy hiệu mới: ${fresh.map((b) => b.name).join(', ')}!`);
+    }
+  };
 
   // 3. Canvas, âm thanh, vòng lặp
   const surface = createSurface(stage);
@@ -245,7 +257,7 @@ function boot(root: HTMLElement): void {
   const showResult = (r: RuntimeResult): void => {
     const isRecord = recordRuntimeScore(save, r.mode, r.score);
     audio.play(isRecord && r.score > 0 ? 'win' : 'lose');
-    persist();
+    saveProgress();
     const best = r.mode === 'endless' ? save.runtime.bestEndless : save.runtime.best60;
     showCard(runtimeResultCard(r, { isRecord, best, share, onAgain: () => startRuntime(lastMode), onHome: showStart }));
   };
@@ -282,7 +294,7 @@ function boot(root: HTMLElement): void {
     // đã xem lời giải AI thì lần qua màn này không tính vào kết quả
     const counted = !scene.aiShown;
     const improved = counted && recordDesign(save, lv.id, r.ppa, r.stars, scene.hinted);
-    if (counted) persist();
+    if (counted) saveProgress();
     const next = DESIGN_LEVELS[levelIds.indexOf(lv.id) + 1];
     showCard(
       designResultCard(lv, r, {
@@ -315,7 +327,7 @@ function boot(root: HTMLElement): void {
     if (!(scene instanceof DesignScene) || scene.level.id !== lv.id) return;
     const counted = !scene.aiShown;
     const rec = counted ? recordDaily(save, key, r.stars, r.score) : null;
-    if (counted) persist();
+    if (counted) saveProgress();
     showCard(
       dailyResultCard(key, lv, r, {
         counted,
@@ -356,7 +368,7 @@ function boot(root: HTMLElement): void {
   const showDebugResult = (lv: DebugLevel, r: DebugResult): void => {
     if (!(scene instanceof DebugScene) || scene.level.id !== lv.id) return;
     const improved = r.win && recordDebug(save, lv.id, r.stars, r.probes);
-    if (r.win) persist();
+    if (r.win) saveProgress();
     const next = DEBUG_LEVELS[debugIds.indexOf(lv.id) + 1];
     showCard(
       debugResultCard(lv, r, {
@@ -376,6 +388,13 @@ function boot(root: HTMLElement): void {
   // 7d. "AI kỹ sư hoạt động thế nào?" + Cài đặt (nút bánh răng ở màn hình chính)
   const showAiInfo = (back: () => void): void => {
     const { card, focus } = aiInfoCard(back);
+    showPanel(card, focus);
+  };
+  const showBadges = (): void => {
+    const { card, focus } = badgesCard(
+      BADGES.map((b) => ({ name: b.name, desc: b.desc, earned: save.badges[b.id] ?? null })),
+      showStart,
+    );
     showPanel(card, focus);
   };
   const showSettings = (): void => {
@@ -424,6 +443,7 @@ function boot(root: HTMLElement): void {
         streak: currentStreak(save, key),
         bestEndless: save.runtime.bestEndless,
         best60: save.runtime.best60,
+        badges: { earned: badgeCount(save), total: BADGES.length },
         showPerf: params.has('debug'),
       },
       {
@@ -432,6 +452,7 @@ function boot(root: HTMLElement): void {
         onRuntime: startRuntime,
         onDaily: startDaily,
         onSettings: showSettings,
+        onBadges: showBadges,
         onPerf: () => {
           void audio.unlock();
           const sandbox = new SandboxScene(audio);

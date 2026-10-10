@@ -19,7 +19,7 @@ Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 | THIẾT KẾ | Giải đố: vẽ dây, đặt cổng, làm LED sáng đúng mọi trường hợp | Routing, bảng chân trị, via, bộ cộng, PPA |
 | KIỂM THỬ | Suy luận: đo các điểm trên mạch để tìm cổng hỏng hoặc dây kẹt | Probing, fault model (gate-invert, stuck-at), lớp lỗi tương đương |
 
-Thêm **Chip hôm nay**: mỗi ngày (giờ Việt Nam) một đề THIẾT KẾ giống nhau cho mọi người, giữ chuỗi ngày và chia sẻ điểm.
+Thêm **12 huy hiệu** xuyên 3 chế độ (ví dụ "Hơn cả AI": thiết kế rẻ hơn AI kỹ sư) và **Chip hôm nay**: mỗi ngày (giờ Việt Nam) một đề THIẾT KẾ giống nhau cho mọi người, giữ chuỗi ngày và chia sẻ điểm.
 
 Luật chi tiết: [`docs/SPEC.md`](docs/SPEC.md).
 

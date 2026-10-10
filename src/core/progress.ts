@@ -13,6 +13,8 @@ export interface SaveData {
   /** Daily Chip: ngày qua đề gần nhất (giờ VN), chuỗi ngày liên tiếp, kết quả tốt nhất từng ngày */
   daily: { lastDate: string | null; streak: number; history: Record<string, { stars: number; score: number }> };
   settings: { muted: boolean; reducedMotion: boolean };
+  /** huy hiệu đã đạt: id → ngày đạt (giờ VN, YYYY-MM-DD) — thêm 17/10 */
+  badges: Record<string, string>;
 }
 
 export function defaultSave(): SaveData {
@@ -23,6 +25,7 @@ export function defaultSave(): SaveData {
     runtime: { bestEndless: 0, best60: 0 },
     daily: { lastDate: null, streak: 0, history: {} },
     settings: { muted: false, reducedMotion: false },
+    badges: {},
   };
 }
 
@@ -58,6 +61,9 @@ export function loadSave(storage: SafeStorage): LoadResult {
     }
   }
   d.daily = { lastDate: typeof dl.lastDate === 'string' ? dl.lastDate : null, streak: num(dl.streak, 0), history: hist };
+  if (isObj(raw.badges)) {
+    for (const [k, v] of Object.entries(raw.badges)) if (/^[a-z0-9-]{1,32}$/.test(k) && typeof v === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(v)) d.badges[k] = v;
+  }
   if (isObj(raw.design)) d.design = raw.design as SaveData['design'];
   if (isObj(raw.debug)) d.debug = raw.debug as SaveData['debug'];
   return { data: d, wasReset: false };

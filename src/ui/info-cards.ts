@@ -3,6 +3,7 @@
 import { versionLabel } from '../config';
 import { aiStats } from '../core/level/ai-info';
 import { action, button, el, extLink, starsEl } from './dom';
+import { ICON_MEDAL } from './icons';
 
 export const REPO_URL = 'https://github.com/lehngvu0110-pixel/chip-rush';
 export const AI_LOG_URL = `${REPO_URL}/tree/main/docs/ai-log`;
@@ -131,5 +132,31 @@ export function settingsCard(d: SettingsDeps): { card: HTMLDivElement; focus: HT
   });
   const close = action('btn-primary', 'Xong', d.onClose);
   card.append(reset, close);
+  return { card, focus: close };
+}
+
+// ---------------- Huy hiệu ----------------
+export function badgesCard(items: { name: string; desc: string; earned: string | null }[], onBack: () => void): { card: HTMLDivElement; focus: HTMLButtonElement } {
+  const card = el('div', 'card level-card');
+  card.setAttribute('role', 'dialog');
+  card.setAttribute('aria-label', 'Huy hiệu');
+  const got = items.filter((i) => i.earned).length;
+  card.append(el('p', 'card-title', `Huy hiệu ${got}/${items.length}`), el('p', 'note', 'Huy hiệu chỉ lưu trên máy này. Chưa đạt thì vẫn xem được cách đạt.'));
+  const list = el('ul', 'badge-list');
+  // danh sách cuộn được → cho focus bằng bàn phím để cuộn (WCAG, axe scrollable-region-focusable)
+  list.tabIndex = 0;
+  list.setAttribute('aria-label', 'Danh sách huy hiệu');
+  for (const it of items) {
+    const li = el('li', it.earned ? 'badge on' : 'badge');
+    const medal = el('span', 'medal');
+    medal.innerHTML = ICON_MEDAL;
+    const text = el('span', 'badge-text');
+    text.append(el('strong', '', it.name), el('small', '', it.earned ? `${it.desc} Đạt ngày ${it.earned.slice(8, 10)}/${it.earned.slice(5, 7)}.` : it.desc));
+    li.append(medal, text);
+    li.setAttribute('aria-label', `${it.name}: ${it.earned ? 'đã đạt' : 'chưa đạt'}. ${it.desc}`);
+    list.append(li);
+  }
+  const close = action('btn-primary', 'Về màn chính', onBack);
+  card.append(list, close);
   return { card, focus: close };
 }

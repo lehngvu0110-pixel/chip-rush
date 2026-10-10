@@ -2,6 +2,23 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-17 – Huy hiệu (thành tựu) xuyên 3 chế độ
+**Đã làm**
+- `src/core/badges.ts`: 12 huy hiệu, mỗi cái một hàm điều kiện thuần trên dữ liệu lưu.
+  - THIẾT KẾ: Con chip đầu tiên, Trái tim của CPU (d12), Hơn cả AI (chi phí thấp hơn par), Kỹ sư 3 sao.
+  - KIỂM THỬ: Bắt được con bọ, Trưởng ban kiểm phiếu (t09 ≤ par), Thám tử 3 sao.
+  - VẬN HÀNH: Tay nhanh (500), Ép xung (2000), Nước rút (60 giây ≥ 300).
+  - Chip hôm nay: chuỗi 3 ngày, 7 ngày.
+- Trao huy hiệu sau mỗi kết quả (thông báo gộp + âm "mở khoá"); người chơi cũ được trao bù im lặng khi mở game.
+- Màn chính có link "Huy hiệu x/12" → bảng huy hiệu (đã đạt: màu cam + ngày đạt; chưa đạt: vẫn hiện cách đạt).
+- `save.badges` (id → ngày), đọc dữ liệu lưu bỏ khoá/ngày không hợp lệ; dữ liệu cũ không có trường này vẫn đọc được.
+- axe phát hiện danh sách cuộn không focus được bằng bàn phím → thêm `tabindex` + nhãn.
+- 7 unit + 2 E2E mới. Tổng 385 unit, 21 E2E; JS 57 KB gzip.
+
+**Quyết định**
+- Không có huy hiệu "may mắn" (đoán đúng không đo) để không khuyến khích đoán mò ở KIỂM THỬ.
+- "Hơn cả AI" chỉ tính khi chi phí THẤP HƠN par, bằng par thì chưa.
+
 ## 2026-10-16 – Thêm 3 màn KIỂM THỬ (t07–t09)
 **Đã làm**
 - t07 "Ngã ba" (cổng đảo, dây rẽ nhánh, 3 khả năng, par 2), t08 "Hai đèn chỉ đường" (dây kẹt, 2 đèn khoanh vùng, par 2), t09 "Bỏ phiếu" (mạch đa số, dây kẹt, 5 khả năng, par 3 — màn khó nhất). AI kỹ sư tự bố trí mạch, minimax tính par; cả 3 đều tối ưu.
