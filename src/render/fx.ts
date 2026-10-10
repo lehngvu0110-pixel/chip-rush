@@ -6,12 +6,17 @@ import { rgba } from './color';
 
 const sprites = new Map<string, HTMLCanvasElement>();
 const SPRITE_SCALE = 2; // vẽ sprite ở 2x để nét trên màn DPR 2
+const MAX_SPRITES = 48;
 
 /** Đốm sáng bán kính `r` (CSS px), lõi trắng nhẹ, viền mờ dần. Có cache theo (màu, r). */
-export function glowSprite(color: string, r: number): HTMLCanvasElement {
+export function glowSprite(color: string, rIn: number): HTMLCanvasElement {
+  // Làm tròn bán kính theo bước 2 px: bán kính lẻ (tính từ cỡ cửa sổ) không tạo sprite mới mỗi lần đổi cỡ.
+  // Giới hạn số sprite để cache không phình mãi khi kéo đổi cỡ cửa sổ liên tục (review 21/10).
+  const r = Math.max(2, Math.round(rIn / 2) * 2);
   const key = `${color}|${r}`;
   const hit = sprites.get(key);
   if (hit) return hit;
+  if (sprites.size >= MAX_SPRITES) sprites.clear();
   const c = document.createElement('canvas');
   const size = Math.ceil(r * 2 * SPRITE_SCALE);
   c.width = c.height = size;

@@ -247,13 +247,14 @@ export class Board {
     // dây: lớp đang chọn vẽ sau (nổi lên trên), lớp kia mờ đi
     const order = o.layer === 0 ? [1, 0] : [0, 1];
     ctx.lineCap = 'round';
+    const allWires = g.wires(); // giải mã + sắp xếp 1 lần mỗi frame thay vì 1 lần mỗi lớp
     for (const layer of order) {
       if (layer >= g.layers) continue;
       ctx.globalAlpha = layer === o.layer || g.layers === 1 ? 1 : 0.45;
       const lw = layer === 0 ? Math.max(5, cs * 0.16) : Math.max(4, cs * 0.12);
       const fancy = s.quality === 'high' && !s.reducedMotion;
       const lit: [number, number, number, number, boolean | undefined][] = [];
-      for (const w of g.wires()) {
+      for (const w of allWires) {
         if (w.layer !== layer) continue;
         const [x1, y1] = center(w.a);
         const [x2, y2] = center(w.b);

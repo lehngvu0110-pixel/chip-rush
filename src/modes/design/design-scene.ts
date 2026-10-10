@@ -36,6 +36,8 @@ export interface DesignSceneDeps {
   tutorial?: boolean;
   /** dòng nhỏ phía trên tên màn (mặc định "THIẾT KẾ · D01"; Daily Chip: "CHIP HÔM NAY · 26/10") */
   heading?: string;
+  /** true khi có bảng phủ lên màn chơi (thẻ kết quả, tạm dừng): bàn phím không được tác động lên lưới phía sau */
+  isBlocked?: () => boolean;
 }
 
 const UNDO_MAX = 60;
@@ -92,6 +94,10 @@ export class DesignScene implements Scene {
   private guide: Hint[] = [];
   tutStep: 'draw' | 'more' | 'check' | null = null;
   private checkBtn!: HTMLButtonElement;
+  /** hẹn giờ báo qua màn (0 = không có); chặn bấm KIỂM TRA 2 lần ghi kết quả 2 lần */
+  private passTimer = 0;
+  /** dòng PPA đã tính sẵn (null = cần tính lại) */
+  private ppaLine: string | null = null;
   private time = 0;
   private surf: RenderSurface | null = null;
   private readonly expected: Bit[][];
@@ -112,6 +118,7 @@ export class DesignScene implements Scene {
   /** vùng đọc cho trình đọc màn hình (ẩn khỏi mắt): mô tả ô con trỏ đang đứng */
   private readonly srLive: HTMLSpanElement;
   private readonly onKey = (e: KeyboardEvent): void => {
+    if (this.deps.isBlocked?.()) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       this.doUndo();
@@ -170,6 +177,7 @@ export class DesignScene implements Scene {
 
   private recompute(): void {
     this.board.recompute();
+    this.ppaLine = null;
   }
 
   // ---------------- DOM: thanh công cụ ----------------
@@ -307,6 +315,8 @@ export class DesignScene implements Scene {
   exit(): void {
     window.removeEventListener('keydown', this.onKey);
     window.clearTimeout(this.msgTimer);
+    window.clearTimeout(this.passTimer);
+    this.passTimer = 0;
     this.bar.remove();
     this.strip.remove();
   }
@@ -341,6 +351,7 @@ export class DesignScene implements Scene {
   }
 
   private check(): void {
+    if (this.passTimer) return; // đang chờ hiện thẻ kết quả của lần kiểm tra trước
     const e = evaluateDesign(this.level, this.grid, this.hinted);
     if (e.status === 'invalid') {
       this.problemNodes = e.problems.flatMap((p) => p.nodes);
@@ -370,7 +381,10 @@ export class DesignScene implements Scene {
       }
       this.pcb.burst(6);
     }
-    window.setTimeout(() => this.deps.onPass(this.level, e), 700);
+    this.passTimer = window.setTimeout(() => {
+      this.passTimer = 0;
+      this.deps.onPass(this.level, e);
+    }, 700);
   }
 
   // ---------------- thao tác chạm ----------------
@@ -401,6 +415,8 @@ export class DesignScene implements Scene {
         }
         return;
       }
+      // ngón thứ hai (hoặc lòng bàn tay) chạm khi đang kéo: bỏ qua, để nét đang vẽ vẫn vào lịch sử hoàn tác
+      if (this.drag && this.drag.id !== p.id) return;
       this.drag = { id: p.id, last: at, start: at, changed: false, snap: this.grid.state() };
       if (this.tool === 'erase') this.eraseAt(cell);
       return;
@@ -520,11 +536,15 @@ export class DesignScene implements Scene {
     // dòng PPA (trực tiếp) + mục tiêu của AI kỹ sư
     ctx.textAlign = 'center';
     ctx.font = `13px ${THEME.font}`;
-    let line = this.claim.short;
-    if (this.board.circuit && this.board.strict) {
-      const ppa = ppaOf(this.grid, this.board.circuit);
-      line = `A ${ppa.A} · D ${ppa.D} · P ${ppa.P} → chi phí ${ppa.C}   |   AI kỹ sư ${this.claim.C}${this.claim.proven ? ' (tối ưu)' : ''}`;
+    // Tính PPA mỗi frame rất tốn (duyệt cả lưới + bảng chân trị) → chỉ tính lại khi mạch đổi (review 21/10)
+    if (this.ppaLine === null) {
+      this.ppaLine = this.claim.short;
+      if (this.board.circuit && this.board.strict) {
+        const ppa = ppaOf(this.grid, this.board.circuit);
+        this.ppaLine = `A ${ppa.A} · D ${ppa.D} · P ${ppa.P} → chi phí ${ppa.C}   |   AI kỹ sư ${this.claim.C}${this.claim.proven ? ' (tối ưu)' : ''}`;
+      }
     }
+    const line = this.ppaLine;
     ctx.fillStyle = THEME.textDim;
     ctx.fillText(line, s.width / 2, L.ppaY, s.width - 24);
   }

@@ -31,6 +31,13 @@ export function addDays(key: string, d: number): string {
   return new Date((dayNumber(key) + d) * 86_400_000).toISOString().slice(0, 10);
 }
 
+/** Khoá ngày hợp lệ: đúng dạng YYYY-MM-DD VÀ là ngày có thật (2026-02-30 → false, vì đổi qua lại sẽ lệch). */
+export function isDateKey(key: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) return false;
+  const n = dayNumber(key);
+  return Number.isFinite(n) && addDays(key, 0) === key;
+}
+
 /** Chỉ số đề của một ngày: quay vòng 28 đề, ngày DAILY_START là đề 0. */
 export function dailyIndex(key: string, n = DAILY_LEVELS.length): number {
   return (((dayNumber(key) - dayNumber(DAILY_START)) % n) + n) % n;

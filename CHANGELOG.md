@@ -32,6 +32,8 @@
 ### Đổi
 - Tách `main.ts` thành các module giao diện trong `src/ui/`; bật `noUnusedLocals`/`noUnusedParameters`, xoá code chết.
 ### Sửa
+- Rà soát code 21/10 (B-02 → B-09): phím tắt không còn tác động lên lưới khi thẻ kết quả/tạm dừng đang mở; bấm KIỂM TRA 2 lần không ghi 2 kết quả; ngón tay thứ hai không cắt nét vẽ; 2 tab không ghi đè tiến độ của nhau; dữ liệu lưu hỏng không còn tạo chi phí 0 giả; `?date=` chỉ nhận ngày có thật; VẬN HÀNH bỏ qua lặp phím và tổ hợp Ctrl/Cmd; bộ đệm quầng sáng có giới hạn.
+- VẬN HÀNH đọc được bằng trình đọc màn hình (vùng `aria-live`); thẻ kết quả/tạm dừng là hộp thoại `aria-modal`.
 - Dữ liệu lưu hỏng ở một màn làm game văng lỗi khi qua màn đó; nay mục hỏng bị bỏ khi đọc (B-01).
 - Accessibility (axe, WCAG 2.1 AA = 0 lỗi): cho phép zoom, landmark `<main>`, nhãn canvas, role cho ngôi sao, tiêu đề bảng PPA.
 - CI: E2E chờ server mãi vì `vite preview` nghe ở IPv6; nay bind 127.0.0.1.

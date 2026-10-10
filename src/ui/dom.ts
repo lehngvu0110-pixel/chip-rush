@@ -61,3 +61,12 @@ export function countUp(node: HTMLElement, to: number, reducedMotion: boolean): 
 export function focusQuiet(b: HTMLElement | null | undefined): void {
   b?.focus({ preventScroll: true, focusVisible: false } as FocusOptions);
 }
+
+/**
+ * Focus phần tử ưu tiên; nếu không có / bị disabled / không nằm trong khung thì focus nút bấm được đầu tiên
+ * trong khung — để người dùng bàn phím, trình đọc màn hình không bị "lạc" focus ngoài hộp thoại.
+ */
+export function focusInside(box: HTMLElement, preferred?: HTMLElement | null): void {
+  const ok = (e: HTMLElement | null | undefined): e is HTMLElement => !!e && box.contains(e) && !(e as HTMLButtonElement).disabled;
+  focusQuiet(ok(preferred) ? preferred : box.querySelector<HTMLElement>('button:not([disabled]), a[href], [tabindex="0"]'));
+}

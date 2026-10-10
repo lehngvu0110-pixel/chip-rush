@@ -98,27 +98,49 @@ export class RuntimeScene implements Scene {
   private endSent = false;
   private reduced = false;
   private readonly onKey = (e: KeyboardEvent): void => {
+    // giữ phím lâu (lặp phím) hoặc tổ hợp Ctrl/Cmd/Alt không được tính là trả lời
+    if (e.repeat || e.ctrlKey || e.metaKey || e.altKey) return;
     const i = ['1', '2', '3', '4'].indexOf(e.key);
     const byLetter: Record<string, GateType> = { a: 'AND', o: 'OR', x: 'XOR', n: 'NAND' };
     const gate = i >= 0 ? RUNTIME_GATES[i] : byLetter[e.key.toLowerCase()];
     if (gate) this.choose(gate);
   };
 
+  /** Vùng đọc cho trình đọc màn hình (canvas không đọc được): đề gói mới + kết quả lượt trước. */
+  private srLive: HTMLSpanElement | null = null;
+  /** Kết quả lượt vừa rồi, đọc kèm đề gói kế tiếp (gộp 1 câu để không đọc chồng). */
+  private srPrefix = '';
+
   constructor(
     readonly game: RuntimeGame,
     private readonly audio: GameAudio,
     private readonly onEnd: (r: RuntimeResult) => void,
+    /** lớp UI để gắn vùng aria-live (bỏ trống trong unit test) */
+    private readonly ui?: HTMLElement,
   ) {}
 
   enter(s: RenderSurface): void {
     this.layout = layoutRuntime(s.width, s.height);
     this.reduced = s.reducedMotion;
     window.addEventListener('keydown', this.onKey);
+    if (this.ui && !this.srLive) {
+      const sp = document.createElement('span');
+      sp.className = 'sr-only';
+      sp.setAttribute('aria-live', 'polite');
+      sp.textContent = packetSpeech(this.game.packet, 'Phím 1 AND, 2 OR, 3 XOR, 4 NAND. ');
+      this.ui.append(sp);
+      this.srLive = sp;
+      this.lastSpoken = this.game.packet;
+    }
   }
 
   exit(): void {
     window.removeEventListener('keydown', this.onKey);
+    this.srLive?.remove();
+    this.srLive = null;
   }
+
+  private lastSpoken: unknown = null;
 
   pause(): void {
     this.game.pause();
@@ -178,6 +200,7 @@ export class RuntimeScene implements Scene {
             }
           }
           this.lastMult = ev.multiplier;
+          this.srPrefix = 'Đúng. ';
           break;
         }
         case 'wrong':
@@ -194,15 +217,18 @@ export class RuntimeScene implements Scene {
           this.floats = [];
           // Gói mới đã xuất hiện nên ghi rõ đây là đáp án của gói VỪA RỒI
           this.hintExpected = { text: `${ev.type === 'miss' ? 'Chậm quá! ' : ''}Gói vừa rồi cần: ${ev.expected.join(' / ')}`, t: 1.4 };
+          this.srPrefix = `${ev.type === 'miss' ? 'Hết giờ' : 'Sai'}, cần ${ev.expected.join(' hoặc ')}. Còn ${this.game.lives} mạng. `;
           break;
         case 'unlock':
           this.audio.play('unlock');
           this.banner = { text: `Mở khóa ${ev.gate}: ${GATE_HINT[ev.gate] ?? ''}`, t: 2.5, color: THEME.accent };
           this.unlockGlow = { gate: ev.gate, t: 1.6 };
+          this.srPrefix += `Mở khóa ${ev.gate}. `;
           break;
         case 'adapt':
           // SPEC 5.4: giải thích độ khó thích nghi ngay lúc nó tác động
           this.banner = { text: `AI: ra thêm câu ${ev.gate} vì bạn hay sai cổng này`, t: 2.6, color: THEME.bit1 };
+          this.srPrefix += `AI ra thêm câu ${ev.gate}. `;
           break;
         case 'end':
           if (!this.endSent) {
@@ -213,6 +239,11 @@ export class RuntimeScene implements Scene {
       }
     }
     if (this.game.lives < lives0) this.lifeLost = 0.6;
+    if (this.srLive && this.game.packet !== this.lastSpoken && !this.game.ended) {
+      this.lastSpoken = this.game.packet;
+      this.srLive.textContent = packetSpeech(this.game.packet, this.srPrefix);
+      this.srPrefix = '';
+    }
     if (this.game.packet !== this.lastPacket) {
       this.lastPacket = this.game.packet;
       this.packetIn = fx ? 0 : 1;
@@ -674,4 +705,9 @@ export class RuntimeScene implements Scene {
       ctx.fillText(`Mở ở ${need ?? 0} điểm`, r.x + 32, y + 58, r.w - 44);
     }
   }
+}
+
+/** Câu đọc cho trình đọc màn hình khi có gói mới, vd "Đúng. A 1, B 0, cần ra 1". Thuần → test được. */
+export function packetSpeech(p: { a: number; b: number; target: number }, prefix = ''): string {
+  return `${prefix}A ${p.a}, B ${p.b}, cần ra ${p.target}`;
 }

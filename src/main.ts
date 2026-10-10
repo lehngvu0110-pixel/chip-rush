@@ -8,13 +8,13 @@ import { attachPointer } from './input/pointer';
 import { createSafeStorage } from './platform/storage';
 import { watchVisibility } from './platform/visibility';
 import { installGlobalErrorHandlers, showErrorScreen } from './platform/errors';
-import { debugUnlocked, defaultSave, designUnlocked, loadSave, recordDebug, recordDesign, recordRuntimeScore, writeSave } from './core/progress';
+import { debugUnlocked, defaultSave, designUnlocked, loadSave, recordDebug, recordDesign, recordRuntimeScore, SAVE_KEY, writeSave } from './core/progress';
 import { DEBUG_LEVELS } from './core/level/debug-levels';
 import type { DebugLevel, DesignLevel } from './core/level/types';
 import { DebugScene, type DebugResult } from './modes/debug/debug-scene';
 import { DESIGN_LEVELS } from './core/level/design-levels';
 import { DesignScene } from './modes/design/design-scene';
-import { currentStreak, dailyFor, recordDaily, shortDate, vnDateKey } from './core/level/daily';
+import { currentStreak, dailyFor, isDateKey, recordDaily, shortDate, vnDateKey } from './core/level/daily';
 import { BADGES, awardBadges, badgeCount } from './core/badges';
 import { HubScene } from './modes/hub/hub-scene';
 import { vnDateSeed } from './core/util/rng';
@@ -26,7 +26,7 @@ import { RuntimeScene, layoutRuntime } from './modes/runtime/runtime-scene';
 import { TitleScene } from './modes/title/title-scene';
 import { ICON_PAUSE, ICON_SOUND_OFF, ICON_SOUND_ON } from './ui/icons';
 import { startScreen } from './ui/start-screen';
-import { button, el, focusQuiet } from './ui/dom';
+import { button, el, focusInside } from './ui/dom';
 import { createShareButtonFactory } from './ui/share-button';
 import { debugResultCard, designResultCard, dailyResultCard, runtimeResultCard, type Card, type PassResult } from './ui/result-cards';
 import { aiInfoCard, badgesCard, levelListCard, settingsCard } from './ui/info-cards';
@@ -174,6 +174,9 @@ function boot(root: HTMLElement): void {
   pausePanel.hidden = true;
   const resumeBtn = button('btn-primary', 'Tiếp tục');
   const quitBtn = button('btn-secondary', 'Về màn chính');
+  pausePanel.setAttribute('role', 'dialog');
+  pausePanel.setAttribute('aria-modal', 'true');
+  pausePanel.setAttribute('aria-label', 'Đã tạm dừng');
   const pauseCard = el('div', 'card');
   pauseCard.append(el('p', 'card-title', 'Đã tạm dừng'), resumeBtn, quitBtn);
   pausePanel.append(pauseCard);
@@ -210,8 +213,11 @@ function boot(root: HTMLElement): void {
   const resultPanel = el('div', 'panel result-panel');
   resultPanel.hidden = true;
   resultPanel.setAttribute('role', 'dialog');
+  resultPanel.setAttribute('aria-modal', 'true');
   resultPanel.setAttribute('aria-label', 'Kết quả');
   ui.append(resultPanel);
+  /** Đang có thẻ kết quả / bảng tạm dừng che bàn chơi → scene bỏ qua phím tắt (R, Z, H...). */
+  const isBlocked = (): boolean => !resultPanel.hidden || !pausePanel.hidden;
   const start = el('div', 'panel start-panel');
   ui.append(start);
   const levelPanel = el('div', 'panel level-panel');
@@ -224,7 +230,7 @@ function boot(root: HTMLElement): void {
     resultPanel.replaceChildren(card);
     resultPanel.hidden = false;
     hud.hidden = true;
-    focusQuiet(focus);
+    focusInside(resultPanel, focus);
   };
   /** Ẩn thẻ kết quả để chơi tiếp trên cùng màn (Tối ưu tiếp / xem AI). */
   const backToBoard = (): void => {
@@ -239,7 +245,7 @@ function boot(root: HTMLElement): void {
     pausePanel.hidden = true;
     hud.hidden = true;
     levelPanel.hidden = false;
-    focusQuiet(focus);
+    focusInside(levelPanel, focus);
   };
   /** Chuẩn bị vào một màn chơi: ẩn mọi panel, hiện HUD. */
   const enterPlay = (): void => {
@@ -262,7 +268,7 @@ function boot(root: HTMLElement): void {
     const seed = Number.isFinite(seedParam) && params.has('seed') ? seedParam : mode === 'sixty' ? vnDateSeed() : (Math.random() * 2 ** 32) >>> 0;
     const game = new RuntimeGame(mode, seed);
     exposeForTests(game);
-    setScene(new RuntimeScene(game, audio, showResult));
+    setScene(new RuntimeScene(game, audio, showResult, ui));
   };
   const showResult = (r: RuntimeResult): void => {
     const isRecord = recordRuntimeScore(save, r.mode, r.score);
@@ -293,7 +299,7 @@ function boot(root: HTMLElement): void {
     enterPlay();
     exposeForTests(null);
     // hướng dẫn lần đầu ở màn đầu tiên, tới khi qua màn lần đầu (không trừ sao)
-    setScene(new DesignScene(lv, { ui, audio, onPass: showDesignResult, tutorial: lv.id === 'd01' && !save.design[lv.id] }));
+    setScene(new DesignScene(lv, { ui, audio, onPass: showDesignResult, tutorial: lv.id === 'd01' && !save.design[lv.id], isBlocked }));
   };
   const showAiOnBoard = (): void => {
     backToBoard();
@@ -325,13 +331,13 @@ function boot(root: HTMLElement): void {
   // ?e2e&date=YYYY-MM-DD để test giả ngày (chỉ khi chạy test)
   const todayKey = (): string => {
     const forced = params.has('e2e') ? params.get('date') : null;
-    return forced && /^\d{4}-\d{2}-\d{2}$/.test(forced) ? forced : vnDateKey();
+    return forced && isDateKey(forced) ? forced : vnDateKey();
   };
   const startDaily = (): void => {
     const key = todayKey();
     enterPlay();
     exposeForTests(null);
-    setScene(new DesignScene(dailyFor(key), { ui, audio, heading: `CHIP HÔM NAY · ${shortDate(key)}`, onPass: (l, r) => showDailyResult(key, l, r) }));
+    setScene(new DesignScene(dailyFor(key), { ui, audio, heading: `CHIP HÔM NAY · ${shortDate(key)}`, onPass: (l, r) => showDailyResult(key, l, r), isBlocked }));
   };
   const showDailyResult = (key: string, lv: DesignLevel, r: PassResult): void => {
     if (!(scene instanceof DesignScene) || scene.level.id !== lv.id) return;
@@ -373,7 +379,7 @@ function boot(root: HTMLElement): void {
   const startDebug = (lv: DebugLevel): void => {
     enterPlay();
     exposeForTests(null);
-    setScene(new DebugScene(lv, { ui, audio, onEnd: showDebugResult, tutorial: lv.id === 't01' && !save.debug[lv.id] }));
+    setScene(new DebugScene(lv, { ui, audio, onEnd: showDebugResult, tutorial: lv.id === 't01' && !save.debug[lv.id], isBlocked }));
   };
   const showDebugResult = (lv: DebugLevel, r: DebugResult): void => {
     if (!(scene instanceof DebugScene) || scene.level.id !== lv.id) return;
@@ -554,6 +560,17 @@ function boot(root: HTMLElement): void {
   }
 
   showStart();
+
+  // Mở game ở 2 tab: tab kia lưu thì nạp lại tiến độ, để lần lưu sau của tab này không ghi đè mất
+  // (trước đây "tab nào lưu sau thắng"). Sự kiện 'storage' chỉ bắn ở các tab KHÁC tab vừa ghi.
+  window.addEventListener('storage', (e) => {
+    if (e.key !== SAVE_KEY && e.key !== null) return; // null = tab kia gọi localStorage.clear()
+    Object.assign(save, e.newValue === null ? defaultSave() : loadSave(storage).data);
+    audio.muted = save.settings.muted;
+    syncMute();
+    applyMotion();
+    if (!start.hidden) showStart(); // đang ở màn chính → vẽ lại số sao / chuỗi / huy hiệu
+  });
 
   // 8. Công cụ dev
   if (params.has('debug')) {

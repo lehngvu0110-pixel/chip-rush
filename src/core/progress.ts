@@ -1,6 +1,7 @@
 // Dữ liệu lưu của người chơi (docs/SPEC.md mục 4), khóa `chiprush.v1` trong localStorage.
 // Mọi đọc/ghi đi qua SafeStorage nên không bao giờ làm crash game.
 import type { SafeStorage } from '../platform/storage';
+import { costOf } from './scoring/design';
 
 export const SAVE_KEY = 'chiprush.v1';
 export const SAVE_VERSION = 1;
@@ -30,7 +31,8 @@ export function defaultSave(): SaveData {
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
-const num = (v: unknown, d: number): number => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : d);
+const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v) && v >= 0;
+const num = (v: unknown, d: number): number => (isNum(v) ? v : d);
 const bool = (v: unknown, d: boolean): boolean => (typeof v === 'boolean' ? v : d);
 const stars = (v: unknown): number => Math.min(3, Math.floor(num(v, 0)));
 
@@ -58,7 +60,7 @@ export function loadSave(storage: SafeStorage): LoadResult {
   const hist: SaveData['daily']['history'] = {};
   if (isObj(dl.history)) {
     for (const [k, v] of Object.entries(dl.history)) {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(k) && isObj(v)) hist[k] = { stars: num(v.stars, 0), score: num(v.score, 0) };
+      if (/^\d{4}-\d{2}-\d{2}$/.test(k) && isObj(v)) hist[k] = { stars: stars(v.stars), score: num(v.score, 0) };
     }
   }
   d.daily = { lastDate: typeof dl.lastDate === 'string' ? dl.lastDate : null, streak: num(dl.streak, 0), history: hist };
@@ -71,7 +73,9 @@ export function loadSave(storage: SafeStorage): LoadResult {
     for (const [id, v] of Object.entries(raw.design)) {
       if (!isObj(v) || !isObj(v.best)) continue;
       const b = v.best;
-      d.design[id] = { stars: stars(v.stars), best: { A: num(b.A, 0), D: num(b.D, 0), P: num(b.P, 0) }, hinted: bool(v.hinted, false) };
+      // thiếu/sai một chỉ số thì bỏ cả mục: nếu điền 0 thì chi phí = 0 → tự trao "Hơn cả AI" và không kết quả thật nào ghi đè được
+      if (!isNum(b.A) || !isNum(b.D) || !isNum(b.P)) continue;
+      d.design[id] = { stars: stars(v.stars), best: { A: b.A, D: b.D, P: b.P }, hinted: bool(v.hinted, false) };
     }
   }
   if (isObj(raw.debug)) {
@@ -106,7 +110,7 @@ export function recordDesign(
   hinted = false,
 ): boolean {
   const prev = data.design[id];
-  const prevC = prev ? prev.best.A + 3 * prev.best.D + prev.best.P : Infinity;
+  const prevC = prev ? costOf(prev.best.A, prev.best.D, prev.best.P) : Infinity;
   const better = !prev || ppa.C < prevC || stars > prev.stars;
   data.design[id] = {
     stars: Math.max(stars, prev?.stars ?? 0),

@@ -35,6 +35,8 @@ export interface DebugResult {
 }
 
 export interface DebugSceneDeps {
+  /** true khi có bảng phủ lên màn chơi: bàn phím không tác động lên lưới phía sau */
+  isBlocked?: () => boolean;
   ui: HTMLElement;
   audio: GameAudio;
   onEnd: (level: DebugLevel, r: DebugResult) => void;
@@ -87,10 +89,12 @@ export class DebugScene implements Scene {
   private readonly toolBtns = new Map<DebugTool, HTMLButtonElement>();
   private readonly answerBtns: HTMLButtonElement[] = [];
   private msgTimer = 0;
+  private endTimer = 0;
   /** con trỏ bàn phím (cột, hàng); null = chưa dùng bàn phím */
   kbCursor: [number, number] | null = null;
   private srLive!: HTMLSpanElement;
   private readonly onKey = (e: KeyboardEvent): void => {
+    if (this.deps.isBlocked?.()) return;
     const act = gridKeyAction(e, isControlFocused(document));
     if (!act || this.ended) return;
     e.preventDefault();
@@ -213,6 +217,7 @@ export class DebugScene implements Scene {
   exit(): void {
     window.removeEventListener('keydown', this.onKey);
     window.clearTimeout(this.msgTimer);
+    window.clearTimeout(this.endTimer); // rời màn trước khi thẻ kết quả kịp hiện
     this.bar.remove();
     this.strip.remove();
   }
@@ -419,7 +424,7 @@ export class DebugScene implements Scene {
     };
     if (!win) this.deps.audio.play('lose');
     if (!win) this.say(`${reason ?? ''} Lỗi thật: ${result.answer} (tô màu trên mạch).`, 'bad', 6);
-    window.setTimeout(() => this.deps.onEnd(this.level, result), win ? 800 : 1800);
+    this.endTimer = window.setTimeout(() => this.deps.onEnd(this.level, result), win ? 800 : 1800);
   }
 
   // ---------------- vẽ ----------------

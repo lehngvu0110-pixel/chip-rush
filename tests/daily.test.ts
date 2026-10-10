@@ -1,6 +1,6 @@
 // Daily Chip: 28 đề sinh sẵn đều hợp lệ + có lời giải AI; lịch đề theo giờ Việt Nam; chuỗi ngày.
 import { describe, expect, it } from 'vitest';
-import { DAILY_LEVELS, DAILY_START, addDays, currentStreak, dailyFor, dailyIndex, recordDaily, shortDate, vnDateKey } from '../src/core/level/daily';
+import { DAILY_LEVELS, DAILY_START, addDays, currentStreak, dailyFor, dailyIndex, isDateKey, recordDaily, shortDate, vnDateKey } from '../src/core/level/daily';
 import { aiSolutionGrid, evaluateDesign, validateLevel } from '../src/core/level/validate';
 import { DESIGN_LEVELS } from '../src/core/level/design-levels';
 import { applyHint, designGuide } from '../src/core/tutorial';
@@ -89,5 +89,13 @@ describe('chuỗi ngày', () => {
     expect(old.data.daily).toEqual({ lastDate: '2026-10-11', streak: 3, history: {} });
     const bad = loadSave(mk({ version: 1, daily: { history: { 'xyz': 1, '2026-10-11': { stars: 2, score: -5 } } } }));
     expect(bad.data.daily.history).toEqual({ '2026-10-11': { stars: 2, score: 0 } });
+  });
+});
+
+describe('isDateKey (?date= chỉ nhận ngày có thật)', () => {
+  it('nhận ngày đúng, từ chối ngày không tồn tại hoặc sai dạng', () => {
+    expect(isDateKey('2026-10-26')).toBe(true);
+    expect(isDateKey('2028-02-29')).toBe(true); // năm nhuận
+    for (const k of ['2026-02-30', '2026-02-29', '2026-13-01', '2026-00-10', '2026-10-32', '26-10-2026', '', '2026-1-5']) expect(isDateKey(k)).toBe(false);
   });
 });

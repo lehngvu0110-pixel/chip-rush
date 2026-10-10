@@ -2,6 +2,30 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-21 – Rà soát toàn bộ code + kiểm giấy phép bản build
+**Đã làm**
+- Nhờ một agent review độc lập đọc toàn bộ `src/` (không xem test) theo 5 mặt: đúng, dễ đọc, kiến trúc, bảo mật, hiệu năng. Kết quả được xếp ưu tiên; từng mục được kiểm lại bằng code trước khi sửa.
+- Sửa 8 lỗi (B-02 → B-09 trong TESTING):
+  - Bàn phím vẫn tác động lên lưới khi thẻ kết quả / bảng tạm dừng đang che (Ctrl+Z xoá dây phía sau thẻ). Thêm `isBlocked` cho scene THIẾT KẾ/KIỂM THỬ, panel có `aria-modal`.
+  - Bấm KIỂM TRA 2 lần nhanh → ghi kết quả 2 lần; hẹn giờ hiện thẻ kết quả không huỷ khi rời màn.
+  - Ngón tay thứ hai chạm lúc đang kéo dây cắt ngang nét vẽ.
+  - Mở game ở 2 tab: tab lưu sau ghi đè mất tiến độ của tab kia → nghe sự kiện `storage`, nạp lại.
+  - Dữ liệu lưu: sao lịch sử Chip hôm nay > 3; `best` thiếu chỉ số bị điền 0 → chi phí 0 → tự trao "Hơn cả AI" và không kết quả thật nào ghi đè được (nay bỏ cả mục). `recordDesign` dùng `costOf` thay vì công thức chép tay.
+  - `?date=2026-02-30` được nhận (JS tự đổi thành 02/03) → kiểm tra bằng cách đổi qua lại.
+  - VẬN HÀNH: giữ phím → lặp phím trả lời liên tục; Ctrl/Cmd + số (đổi tab trình duyệt) cũng bị tính là trả lời.
+  - Bộ đệm sprite quầng sáng không giới hạn: mỗi bán kính lẻ (tính từ cỡ cửa sổ) một sprite → làm tròn 2 px, tối đa 48.
+- Hiệu năng: dòng PPA ở THIẾT KẾ chỉ tính lại khi mạch đổi (trước: mỗi frame); `board.draw` giải mã danh sách dây 1 lần/frame.
+- Accessibility: VẬN HÀNH có vùng `aria-live` đọc đề gói ("A 1, B 0, cần ra 1") và kết quả lượt trước; focus dự phòng vào nút đầu tiên khi mở thẻ.
+- Kiểm giấy phép bản build: `npm ls --omit=dev` rỗng (không có thư viện chạy trong game); `dist/` chỉ gồm code của nhóm, 2 file font Be Vietnam Pro (OFL, kèm `licenses/OFL-BeVietnamPro.txt`), favicon tự vẽ. Không có chú thích `@license` của bên thứ ba trong bundle.
+- Test: +5 unit (393), +3 E2E (`e2e/review.spec.ts`, 37 mỗi trình duyệt). Đã kiểm test Ctrl+Z **đỏ** khi gỡ bản sửa, xanh khi có.
+
+**Quyết định**
+- Mục THIẾT KẾ có `best` hỏng bị bỏ hẳn (mất sao của màn đó) thay vì điền 0. Lý do: điền 0 tạo thành tích giả không sửa được; mất sao thì chơi lại là có.
+- Không sửa: lời giải AI tải bằng `applyAi` không vào lịch sử Hoàn tác (chỉ là móc test).
+
+**Việc tiếp theo**
+- Vũ: đo trên điện thoại thật (Redmi Note 8, iPhone), thử trình đọc màn hình (TalkBack/VoiceOver) ở VẬN HÀNH, mở repo public, nộp 26/10.
+
 ## 2026-10-20 – MSSV + video demo
 **Đã làm**
 - Điền MSSV 2611042 vào README và SUBMISSION; COMPLIANCE B.III: đủ nội dung, chờ nộp 26/10.

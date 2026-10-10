@@ -55,7 +55,10 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
 
   // Chip hôm nay: trạng thái hôm nay + chuỗi ngày
   const daily = action('btn-daily', '', a.onDaily);
-  const starTxt = (n: number): string => `${'★'.repeat(n)}${'☆'.repeat(3 - n)}`;
+  const starTxt = (n: number): string => {
+    const k = Math.max(0, Math.min(3, Math.floor(n) || 0)); // dữ liệu lưu lạ không được làm văng màn chính
+    return `${'★'.repeat(k)}${'☆'.repeat(3 - k)}`;
+  };
   daily.append(
     el('strong', '', `CHIP HÔM NAY · ${d.dateLabel}`),
     el(

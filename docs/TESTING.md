@@ -46,12 +46,21 @@ Lưu ý: dev server chưa nén/tối ưu như bản build; số đo khung hình 
 | Mã | Mức | Mô tả | Cách né | Trạng thái |
 | --- | --- | --- | --- | --- |
 | B-01 | Cao | Dữ liệu lưu hỏng ở từng màn (vd. `design.d01 = "x"`) → qua màn đó làm game hiện màn hình lỗi (TypeError khi đọc `prev.best`) | — | Đã sửa 19/10: `loadSave` kiểm tra từng mục; test `tests/progress.test.ts` + `e2e/robustness.spec.ts` |
+| B-02 | Trung bình | Thẻ kết quả / tạm dừng đang mở mà phím tắt vẫn tác động lên lưới phía sau (Ctrl+Z xoá dây, Shift+mũi tên vẽ dây) | Bấm chuột thay vì phím | Đã sửa 21/10: `isBlocked` + `aria-modal`; `e2e/review.spec.ts` (đỏ khi gỡ bản sửa) |
+| B-03 | Trung bình | Bấm KIỂM TRA 2 lần trong 0,7 s → ghi kết quả + trao huy hiệu 2 lần; rời màn ngay sau khi xong thì thẻ kết quả vẫn bật lên | — | Đã sửa 21/10: giữ và huỷ hẹn giờ trong `exit()` |
+| B-04 | Thấp | Ngón tay thứ hai chạm lúc đang kéo dây làm đứt nét đang vẽ | Kéo bằng 1 ngón | Đã sửa 21/10 |
+| B-05 | Trung bình | Mở game ở 2 tab: tab lưu sau ghi đè tiến độ tab kia | Chỉ mở 1 tab | Đã sửa 21/10: nghe sự kiện `storage`; `e2e/review.spec.ts` |
+| B-06 | Thấp | Dữ liệu lưu hỏng: sao lịch sử > 3; `best` thiếu chỉ số → chi phí 0 → tự trao "Hơn cả AI" | — | Đã sửa 21/10: `tests/progress.test.ts` |
+| B-07 | Thấp | `?e2e&date=2026-02-30` được nhận (thành 02/03) | — | Đã sửa 21/10: `isDateKey`, `tests/daily.test.ts` |
+| B-08 | Thấp | VẬN HÀNH: giữ phím → trả lời lặp liên tục; Ctrl/Cmd + số cũng bị tính | — | Đã sửa 21/10 |
+| B-09 | Thấp | Bộ đệm sprite quầng sáng không giới hạn khi đổi cỡ cửa sổ liên tục | — | Đã sửa 21/10: làm tròn 2 px, tối đa 48 sprite |
 
 ## Khả năng truy cập (accessibility)
 - `e2e/access.spec.ts` chạy **axe-core** (devDependency, không vào bản build) với bộ luật WCAG 2.0/2.1 A + AA + best-practice trên màn chính, Cài đặt, trang AI, danh sách màn, màn THIẾT KẾ, thẻ kết quả → 0 lỗi (14/10).
 - Giới hạn: axe chỉ kiểm phần DOM. Nội dung vẽ trên canvas (lưới, bảng chân trị) không đọc được bằng trình đọc màn hình; bù lại bằng vùng `aria-live` mô tả ô con trỏ bàn phím đang đứng, và mọi thao tác có phím tương ứng. Chưa thử với VoiceOver/TalkBack thật.
 
 ## E2E hiện có
+- `e2e/review.spec.ts`: thẻ kết quả mở → Ctrl+Z không xoá dây phía sau; 2 tab đồng bộ tiến độ; VẬN HÀNH có vùng `aria-live` đọc đề gói.
 - `e2e/robustness.spec.ts`: chạm ngẫu nhiên có seed (120 thao tác) ở THIẾT KẾ d12, d09, KIỂM THỬ t09, VẬN HÀNH, Chip hôm nay → không lỗi (chỉ Chromium); localStorage bị chặn / đầy giữa chừng; 5 kiểu dữ liệu lưu hỏng; đổi cỡ màn hình lúc đang kéo dây + chuyển tab.
 - `e2e/badges.spec.ts`: qua d01 → thông báo huy hiệu, màn chính 1/12, bảng Huy hiệu (axe 0 lỗi); người chơi cũ được trao bù không thông báo.
 - `e2e/access.spec.ts`: axe (WCAG AA); chơi d01 và đo t01 chỉ bằng bàn phím; điện thoại xoay ngang → nhắc xoay dọc; laptop 1366×640 → bảng chân trị bên trái, ô ≥ 44 px.
