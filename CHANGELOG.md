@@ -4,6 +4,7 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- 3 màn KIỂM THỬ mới: t07 Ngã ba, t08 Hai đèn chỉ đường, t09 Bỏ phiếu (5 khả năng, par 3); công cụ `tools/explore-faults.ts` chọn lỗi cho màn.
 - Chơi bằng bàn phím (mũi tên, Shift + mũi tên kéo dây, Space/Enter); bố cục rộng cho máy tính/tablet (bảng chân trị bên trái lưới); nhắc xoay dọc khi điện thoại xoay ngang.
 - Minh bạch AI: trang "AI kỹ sư hoạt động thế nào?", câu "đã chứng minh tối ưu / bạn có thể vượt" theo dữ liệu solver, nút "Xem AI kỹ sư đo" ở KIỂM THỬ, banner khi độ khó thích nghi nhắm vào cổng bạn hay sai.
 - Chip hôm nay (Daily Chip): 28 đề THIẾT KẾ sinh + giải trước, đổi đề 00:00 giờ Việt Nam, chuỗi ngày, chia sẻ.

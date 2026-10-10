@@ -2,6 +2,16 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-16 – Thêm 3 màn KIỂM THỬ (t07–t09)
+**Đã làm**
+- t07 "Ngã ba" (cổng đảo, dây rẽ nhánh, 3 khả năng, par 2), t08 "Hai đèn chỉ đường" (dây kẹt, 2 đèn khoanh vùng, par 2), t09 "Bỏ phiếu" (mạch đa số, dây kẹt, 5 khả năng, par 3 — màn khó nhất). AI kỹ sư tự bố trí mạch, minimax tính par; cả 3 đều tối ưu.
+- `tools/explore-faults.ts`: với bố trí đã lưu, thử mọi lỗi của mô hình làm "lỗi thật", in số khả năng + par → chọn lỗi hay nhất thay vì đoán.
+- Kết quả thăm dò (ghi trong LEVELS.md) khiến mình bỏ 3 ý tưởng: mạch đa số với lỗi cổng đảo (mọi lỗi đều par 0 — nhìn đèn là biết), bộ cộng đủ 7 cổng (AI không bố trí được trên lưới 8×8), bộ chọn kép MUX + XOR (lỗi hay nhất giống hệt t04). Vì vậy chỉ thêm 3 màn, không phải 4 như kế hoạch.
+- Mọi test KIỂM THỬ tự chạy cho màn mới (par = vét cạn mọi cây, cây của solver tìm đúng lớp, AI phát lại ≤ par…): 378 unit, 19 E2E xanh.
+
+**Việc tiếp theo**
+- Vũ: chơi thử t07–t09 xem độ khó có tăng dần không.
+
 ## 2026-10-15 – Dọn code: tách main.ts thành module UI, bật kiểm tra biến thừa
 **Đã làm**
 - `src/main.ts` từ ~920 dòng còn 541. Phần dựng DOM chuyển sang `src/ui/`, mỗi file chỉ dựng giao diện từ dữ liệu + callback, không giữ trạng thái game:

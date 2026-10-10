@@ -4,7 +4,7 @@ Game web về vi mạch, chơi trên điện thoại: **Thiết kế** một con
 
 Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 
-> Trạng thái: chơi được cả 3 chế độ (12 màn THIẾT KẾ, 6 màn KIỂM THỬ, VẬN HÀNH Vô tận + 60 giây) và **Chip hôm nay** (28 đề quay vòng theo ngày, chuỗi ngày). Đang hoàn thiện và đo hiệu năng trên máy thật trước khi nộp 26/10/2026.
+> Trạng thái: chơi được cả 3 chế độ (12 màn THIẾT KẾ, 9 màn KIỂM THỬ, VẬN HÀNH Vô tận + 60 giây) và **Chip hôm nay** (28 đề quay vòng theo ngày, chuỗi ngày). Đang hoàn thiện và đo hiệu năng trên máy thật trước khi nộp 26/10/2026.
 
 ![CHIP RUSH](docs/submission/anh-bia-1920x1080.png)
 
@@ -26,7 +26,7 @@ Luật chi tiết: [`docs/SPEC.md`](docs/SPEC.md).
 ## AI trong game và trong quá trình làm game
 - **Trong game** — "AI kỹ sư", AI cổ điển (tìm kiếm + suy luận), không gọi API, không học từ dữ liệu người chơi:
   - **THIẾT KẾ** (`src/ai/design-solver.ts`): đặt cổng bằng vét cạn/beam search, cắt nhánh bằng **branch-and-bound** với cận dưới (BFS cho net 2 chân, nửa chu vi hộp bao cho net nhiều chân), đi dây bằng Dijkstra-Steiner và **PathFinder** (negotiated congestion — thuật toán đi dây FPGA kinh điển). Tính trước offline (`tools/solve-levels.ts`) thành "par"; **chứng minh tối ưu 7/12 màn** (vét cạn và Area bằng cận dưới), các màn còn lại người chơi có thể vượt AI.
-  - **KIỂM THỬ** (`src/ai/debug-solver.ts`): cây quyết định **minimax** trên tập lớp lỗi (bitmask + ghi nhớ) → số lần đo ít nhất trong trường hợp xấu nhất; tối ưu ở cả 6 màn, đối chiếu bằng vét cạn mọi cây trong test. Màn hướng dẫn t01 dùng chính solver này để chỉ dây nên đo tiếp.
+  - **KIỂM THỬ** (`src/ai/debug-solver.ts`): cây quyết định **minimax** trên tập lớp lỗi (bitmask + ghi nhớ) → số lần đo ít nhất trong trường hợp xấu nhất; tối ưu ở cả 9 màn, đối chiếu bằng vét cạn mọi cây trong test. Màn hướng dẫn t01 dùng chính solver này để chỉ dây nên đo tiếp.
   - **VẬN HÀNH** (`src/ai/adaptive.ts`): **Thompson sampling** (Beta-Bernoulli) chọn loại gói người chơi hay sai, trộn 30% ngẫu nhiên.
   - **Minh bạch trong game:** trang "AI kỹ sư hoạt động thế nào?" (Cài đặt hoặc danh sách màn) nêu thuật toán, số màn đã chứng minh tối ưu và giới hạn; sau mỗi màn KIỂM THỬ có nút "Xem AI kỹ sư đo" phát lại từng bước suy luận; VẬN HÀNH báo ngay khi AI bắt đầu ra thêm câu về cổng bạn hay sai.
   - Giới hạn và cách kiểm chứng từng thuật toán: [`docs/SPEC.md` mục 5](docs/SPEC.md); quyết định thiết kế: [ADR-0007](docs/adr/0007-solver-thiet-ke.md), [ADR-0008](docs/adr/0008-kiem-thu-minimax.md).

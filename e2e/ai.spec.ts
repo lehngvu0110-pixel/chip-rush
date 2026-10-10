@@ -20,7 +20,7 @@ test('Trang "AI kỹ sư hoạt động thế nào?": số liệu thật, giới
   await page.getByRole('button', { name: 'AI kỹ sư hoạt động thế nào?' }).click();
   const dlg = page.getByRole('dialog', { name: 'AI kỹ sư hoạt động thế nào?' });
   await expect(dlg.getByText(/Chứng minh tối ưu \d+\/12 màn/)).toBeVisible();
-  await expect(dlg.getByText(/Tối ưu ở 6\/6 màn/)).toBeVisible();
+  await expect(dlg.getByText(/Tối ưu ở (\d+)\/\1 màn/)).toBeVisible();
   await expect(dlg.getByText(/Thử thách 60 giây tắt AI/)).toBeVisible();
   await expect(dlg.getByRole('link', { name: 'Xem nhật ký AI trên GitHub' })).toHaveAttribute('href', /docs\/ai-log/);
   await dlg.getByRole('button', { name: 'Đã hiểu' }).click();

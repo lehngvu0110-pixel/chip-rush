@@ -1,5 +1,6 @@
 // Các màn KIỂM THỬ (SPEC mục 3, docs/LEVELS.md). Mạch do AI kỹ sư tự bố trí lên lưới (tools/solve-levels.ts).
-// Lỗi viết theo tên trong `logic`. t01–t03: một cổng cho ra ngược; t04–t06: một dây bị kẹt ở 0 hoặc 1.
+// Lỗi viết theo tên trong `logic`. t01–t03: một cổng cho ra ngược; t04–t06: một dây bị kẹt ở 0 hoặc 1;
+// t07–t09 (thêm 16/10): mạch có rẽ nhánh, 2 đèn, nhiều đường song song; lỗi chọn bằng tools/explore-faults.ts.
 import type { DebugLevel } from './types';
 
 const IN3 = (cols: number, rows: number) => ({
@@ -140,5 +141,76 @@ export const DEBUG_LEVELS: readonly DebugLevel[] = [
     },
     model: 'stuck-at',
     fault: { kind: 'stuck-at', net: 't', value: 1 },
+  },
+  {
+    id: 't07',
+    name: 'Ngã ba',
+    concept: 'Một dây rẽ nhánh nuôi hai cổng',
+    intro: 'Dây A rẽ đi hai cổng. Một cổng đang cho ra ngược — đo ở đâu thì tách được hai nhánh?',
+    grid: IN3(6, 7),
+    logic: {
+      inputs: ['A', 'B', 'C'],
+      outputs: ['Y'],
+      gates: [
+        { id: 'a1', type: 'AND', inputs: ['A', 'B'], output: 'p' },
+        { id: 'o1', type: 'OR', inputs: ['A', 'C'], output: 'q' },
+        { id: 'x1', type: 'XOR', inputs: ['p', 'q'], output: 'Y' },
+      ],
+    },
+    model: 'gate-invert',
+    fault: { kind: 'gate-invert', gate: 'a1' },
+  },
+  {
+    id: 't08',
+    name: 'Hai đèn chỉ đường',
+    concept: 'Đèn nào sai khoanh vùng lỗi',
+    intro: 'Bộ cộng nửa có 2 đèn: S (tổng) và C (nhớ). Xem đèn nào sai trước — nó cho biết lỗi nằm ở nhánh nào.',
+    grid: {
+      cols: 6,
+      rows: 7,
+      layers: 2,
+      inputs: [{ id: 'A', cell: [0, 2] }, { id: 'B', cell: [0, 4] }],
+      outputs: [{ id: 'S', cell: [5, 2] }, { id: 'C', cell: [5, 4] }],
+    },
+    logic: {
+      inputs: ['A', 'B'],
+      outputs: ['S', 'C'],
+      gates: [
+        { id: 'n1', type: 'NOT', inputs: ['A'], output: 'na' },
+        { id: 'n2', type: 'NOT', inputs: ['B'], output: 'nb' },
+        { id: 'a1', type: 'AND', inputs: ['A', 'nb'], output: 'p' },
+        { id: 'a2', type: 'AND', inputs: ['na', 'B'], output: 'q' },
+        { id: 'o1', type: 'OR', inputs: ['p', 'q'], output: 'S' },
+        { id: 'a3', type: 'AND', inputs: ['A', 'B'], output: 'C' },
+      ],
+    },
+    model: 'stuck-at',
+    fault: { kind: 'stuck-at', net: 'p', value: 1 },
+  },
+  {
+    id: 't09',
+    name: 'Bỏ phiếu',
+    concept: 'Tổng kết: 5 khả năng, nhiều đường song song',
+    intro: 'Y sáng khi ít nhất 2 trong 3 công tắc bật. Ba cổng AND "bỏ phiếu" — một dây phiếu đang bị kẹt.',
+    grid: {
+      cols: 7,
+      rows: 7,
+      layers: 2,
+      inputs: [{ id: 'A', cell: [0, 1] }, { id: 'B', cell: [0, 3] }, { id: 'C', cell: [0, 5] }],
+      outputs: [{ id: 'Y', cell: [6, 3] }],
+    },
+    logic: {
+      inputs: ['A', 'B', 'C'],
+      outputs: ['Y'],
+      gates: [
+        { id: 'a1', type: 'AND', inputs: ['A', 'B'], output: 'p' },
+        { id: 'a2', type: 'AND', inputs: ['B', 'C'], output: 'q' },
+        { id: 'a3', type: 'AND', inputs: ['A', 'C'], output: 'r' },
+        { id: 'o1', type: 'OR', inputs: ['p', 'q'], output: 's' },
+        { id: 'o2', type: 'OR', inputs: ['s', 'r'], output: 'Y' },
+      ],
+    },
+    model: 'stuck-at',
+    fault: { kind: 'stuck-at', net: 'q', value: 1 },
   },
 ];

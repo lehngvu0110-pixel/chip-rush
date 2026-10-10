@@ -31,6 +31,11 @@ Bố trí mạch do AI kỹ sư đặt; par = số lần đo ít nhất trong tr
 | t04 | Dây kẹt | Kẹt (stuck-at) | 2 | 1 | Có | Nên có | |
 | t05 | Bốn nghi phạm | Kẹt (stuck-at) | 4 | 3 | Có | Nên có | |
 | t06 | Cộng đủ bị ốm | Kẹt (stuck-at) | 3 | 2 | Có | Nên có | |
+| t07 | Ngã ba | Cổng đảo đầu ra | 3 | 2 | Có | Thêm 16/10 | Dây A rẽ nhánh nuôi AND và OR |
+| t08 | Hai đèn chỉ đường | Kẹt (stuck-at) | 3 | 2 | Có | Thêm 16/10 | Cộng nửa 6 cổng; đèn C đúng → lỗi ở nhánh S |
+| t09 | Bỏ phiếu | Kẹt (stuck-at) | 5 | 3 | Có | Thêm 16/10 | Mạch đa số; 5 khả năng là màn khó nhất |
+
+Lỗi của t07–t09 được chọn bằng `tools/explore-faults.ts`: thử mọi lỗi của mô hình trên bố trí đã lưu, bỏ lỗi par 0 (nhìn đèn là đủ biết) và chọn lỗi có nhiều khả năng nhất. Đã thử và bỏ: mạch đa số với lỗi cổng đảo (mọi lỗi đều par 0), bộ cộng đủ 7 cổng (AI không bố trí được trên lưới 8×8), bộ chọn kép MUX + XOR (giống hệt t04).
 
 ## Daily Chip (CHIP HÔM NAY)
 Sinh + giải trước bằng `npx tsx tools/gen-daily.ts` (seed cố định) → `src/core/level/daily.json`. Ngày 26/10/2026 là đề 1, quay vòng 28 ngày (trước 26/10 cũng quay vòng theo công thức đó).

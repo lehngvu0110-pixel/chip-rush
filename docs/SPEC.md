@@ -70,7 +70,7 @@ Làm rõ khi cài đặt lưới (07/10, **chờ Vũ duyệt**, không đổi lu
 | Thành phần | Quy tắc |
 | --- | --- |
 | Màn chơi | Mạch có sẵn + bảng chân trị chuẩn + đúng 1 lỗi ẩn |
-| Mô hình lỗi | t01–t03: 1 cổng cho đầu ra đảo ngược; t04–t06: 1 net stuck-at-0 hoặc stuck-at-1 |
+| Mô hình lỗi | t01–t03, t07: 1 cổng cho đầu ra đảo ngược; t04–t06, t08–t09: 1 net stuck-at-0 hoặc stuck-at-1 |
 | Đo | Đổi công tắc đầu vào miễn phí; đọc giá trị 1 net với đầu vào hiện tại = 1 lần đo |
 | Trả lời | Chọn cổng/net nghi hỏng; đúng nếu cùng lớp tương đương với lỗi thật |
 | Thua | Trả lời sai 2 lần, hoặc số lần đo vượt 2 × par |

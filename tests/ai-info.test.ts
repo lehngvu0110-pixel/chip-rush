@@ -33,7 +33,7 @@ describe('câu về AI kỹ sư (SPEC 5.4)', () => {
     const sol = solutions as Record<string, { proven: boolean }>;
     expect(st.designProven).toBe(DESIGN_LEVELS.filter((l) => sol[l.id]?.proven).length);
     expect(st.designTotal).toBe(12);
-    expect(st.debugOptimal).toBe(6);
+    expect(st.debugOptimal).toBe(DEBUG_LEVELS.length); // mọi màn KIỂM THỬ đều ≤ 16 lớp → minimax tối ưu
     expect(st.dailyTotal).toBe(28);
     expect(st.dailyProven).toBeGreaterThan(0);
   });
