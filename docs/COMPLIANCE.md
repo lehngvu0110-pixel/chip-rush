@@ -5,7 +5,7 @@ Cập nhật lần cuối: 18/10/2026. Kiểm tra lại toàn bộ trước khi 
 | Điều | Yêu cầu | Cách CHIP RUSH đáp ứng | Trạng thái |
 | --- | --- | --- | --- |
 | B.I | Sinh viên có tài khoản chiến dịch; nhóm cùng một trường | Thành viên đều là sinh viên HCMUT | Chờ xác nhận HCMUT là trường đối tác |
-| B.III | Game chơi trên web qua Portal; nộp link GitHub, tên, mô tả, logo, ảnh in-game, tác giả, MSSV, trường | File tĩnh chạy mọi trình duyệt hiện đại; nội dung nộp ở `SUBMISSION.md`, ảnh logo + in-game ở `docs/submission/` (làm mới 18/10) | Còn thiếu MSSV |
+| B.III | Game chơi trên web qua Portal; nộp link GitHub, tên, mô tả, logo, ảnh in-game, tác giả, MSSV, trường | File tĩnh chạy mọi trình duyệt hiện đại; nội dung nộp ở `SUBMISSION.md`, ảnh logo + in-game ở `docs/submission/` (làm mới 18/10); tác giả + MSSV đã điền 20/10 | Đủ nội dung, chờ nộp 26/10 |
 | IV.1 | Không dùng tác phẩm có bản quyền chưa được phép | Hình vẽ bằng code, âm thanh tổng hợp, font OFL; mọi tài nguyên ghi ở `ASSETS.md` | Đạt |
 | IV.2 | Không dùng AI tạo sản phẩm phái sinh từ nội dung có bản quyền | Không dùng ảnh/âm thanh do AI tạo; AI chỉ hỗ trợ code và tài liệu, ghi ở `ai-log/` | Đạt |
 | IV.3 | Không bạo lực, máu me, chính trị, tôn giáo, thù địch, trái thuần phong mỹ tục | Chủ đề mạch điện tử; không bản đồ, cờ, cơ chế cờ bạc | Đạt |

@@ -2,6 +2,13 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-20 – MSSV + video demo
+**Đã làm**
+- Điền MSSV 2611042 vào README và SUBMISSION; COMPLIANCE B.III: đủ nội dung, chờ nộp 26/10.
+- `tools/demo-video.mjs`: Playwright tự chơi và ghi màn hình ~45 s, chèn dòng chú thích. Thứ tự cảnh: màn chính → THIẾT KẾ (kéo dây, chấm PPA) → bộ cộng đủ có dòng điện chạy → KIỂM THỬ (đo, báo lỗi, xem AI đo) → VẬN HÀNH → Chip hôm nay + Huy hiệu. ffmpeg xuất `docs/submission/demo.mp4` (H.264, 2,3 MB) và `docs/demo.gif` (6 s, 0,7 MB) cho README.
+- Lần quay đầu bị viền xám (Playwright ghi theo CSS px, không phóng) → quay ở khung 540×1200 rồi phóng lên 720×1600.
+- Dữ liệu dựng sẵn cho video/ảnh nộp bài từng có chi phí giả rất thấp → tự trao huy hiệu "Hơn cả AI" trong video. Đã đổi sang chi phí cao để video không khoe thành tích chưa ai đạt.
+
 ## 2026-10-19 – Kiểm thử độ bền + checklist nộp bài
 **Đã làm**
 - `e2e/robustness.spec.ts` (13 test):

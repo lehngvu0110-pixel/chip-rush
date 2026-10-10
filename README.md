@@ -8,6 +8,8 @@ Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 
 ![CHIP RUSH](docs/submission/anh-bia-1920x1080.png)
 
+<p align="center"><img src="docs/demo.gif" width="300" alt="Kéo dây ở màn THIẾT KẾ rồi được chấm điểm"><br><a href="docs/submission/demo.mp4">Xem video demo 45 giây (mp4)</a></p>
+
 ## Chơi thử
 - Bản mới nhất: **https://lehngvu0110-pixel.github.io/chip-rush/** (mở trên điện thoại cho trải nghiệm đúng nhất)
 - Thêm `?debug=1` vào cuối link để hiện bảng đo hiệu năng (FPS, thời gian khung hình).
@@ -69,7 +71,7 @@ Game không thu thập dữ liệu cá nhân, không dùng cookie, không gọi 
 ## Tác giả
 | Họ tên | MSSV | Trường |
 | --- | --- | --- |
-| Lê Hoàng Vũ | _(điền)_ | Trường ĐH Bách Khoa – ĐHQG-HCM |
+| Lê Hoàng Vũ | 2611042 | Trường ĐH Bách Khoa – ĐHQG-HCM |
 
 ## Giấy phép
 Mã nguồn: [MIT](LICENSE). Font Be Vietnam Pro: [SIL Open Font License 1.1](src/assets/fonts/OFL.txt).

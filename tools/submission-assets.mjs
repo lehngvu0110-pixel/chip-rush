@@ -10,7 +10,7 @@ const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: pr
 fs.mkdirSync('docs/submission', { recursive: true });
 const out = 'docs/submission/';
 const seed = (design, debug = {}, rt = { bestEndless: 0, best60: 0 }) => JSON.stringify({ version: 1, design, debug, runtime: rt, daily: { lastDate: null, streak: 0 }, settings: { muted: true, reducedMotion: false } });
-const D = {}; for (let i = 1; i <= 11; i++) D['d' + String(i).padStart(2, '0')] = { stars: i % 4 ? 3 : 2, best: { A: 1, D: 0, P: 1 }, hinted: false };
+const D = {}; for (let i = 1; i <= 11; i++) D['d' + String(i).padStart(2, '0')] = { stars: i % 4 ? 3 : 2, best: { A: 99, D: 9, P: 99 }, hinted: false };
 const T = { t01: { stars: 3, probes: 2 }, t02: { stars: 3, probes: 0 }, t03: { stars: 2, probes: 3 }, t04: { stars: 3, probes: 1 } };
 async function page(save) {
   const ctx = await b.newContext({ ...devices['Pixel 7'] });

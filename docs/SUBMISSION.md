@@ -10,8 +10,9 @@
 | Mô tả ngắn | Thiết kế, kiểm thử và vận hành một con chip ngay trên điện thoại — và thử thắng "AI kỹ sư". |
 | Mô tả dài | Xem mục bên dưới (≈ 300 chữ; nếu form giới hạn ký tự thì dùng bản rút gọn) |
 | Ảnh logo | `submission/logo-1024.png` (nền tối), `logo-512.png`, `logo-trong-suot-1024.png` (nền trong suốt) |
+| Video demo | `submission/demo.mp4` (45 s, dọc 720×1600, 2,3 MB) — quay từ chính game bằng `tools/demo-video.mjs`; nếu Portal có ô video thì tải lên |
 | Ảnh in-game | `1-man-chinh.png`, `2-thiet-ke.png`, `3-kiem-thu.png`, `4-van-hanh.png` (ảnh chụp thật trên khung Pixel 7, 1082×2202); ảnh bìa `anh-bia-1920x1080.png` |
-| Tác giả | Lê Hoàng Vũ – MSSV _(điền)_ – Trường ĐH Bách Khoa, ĐHQG-HCM |
+| Tác giả | Lê Hoàng Vũ – MSSV 2611042 – Trường ĐH Bách Khoa, ĐHQG-HCM |
 | Xác nhận đáp ứng điều lệ | Đối chiếu `COMPLIANCE.md` trước khi tick |
 
 > Chưa biết Portal nhận ảnh cỡ/định dạng nào (câu hỏi số 4 gửi BTC). Khi có trả lời thì cắt/nén lại từ ảnh gốc ở trên.
@@ -36,7 +37,7 @@ CHIP RUSH: vòng đời một con chip trong 3 chế độ chơi trên điện t
 ## Checklist trước khi nộp (làm xong trước 25/10)
 | # | Việc | Ai | Xong? |
 | --- | --- | --- | --- |
-| 1 | Điền MSSV vào bảng trên và `README.md` | Vũ | ☐ |
+| 1 | Điền MSSV vào bảng trên và `README.md` | Vũ | ☑ (20/10) |
 | 2 | Duyệt các mục "chờ duyệt" trong `SPEC.md` (lưới, KIỂM THỬ, mở khoá, Chip hôm nay, huy hiệu) và luật 3 sao KIỂM THỬ | Vũ | ☐ |
 | 3 | Đo hiệu năng trên 3 điện thoại thật bằng `?debug=1`, ghi vào `TESTING.md` | Vũ | ☐ |
 | 4 | Mở `font-test.html` trên 3 máy, kiểm tra dấu tiếng Việt | Vũ | ☐ |
