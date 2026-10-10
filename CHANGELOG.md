@@ -4,6 +4,7 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Bậc đồ hoạ "min": máy chậm tự vẽ ở độ phân giải thấp hơn (CPU chậm 4×: ~23 → ~47 fps trên máy ảo); công cụ `tools/perf-bench.mjs`.
 - 12 huy hiệu xuyên 3 chế độ + bảng Huy hiệu ở màn chính; trao bù cho người chơi cũ.
 - 3 màn KIỂM THỬ mới: t07 Ngã ba, t08 Hai đèn chỉ đường, t09 Bỏ phiếu (5 khả năng, par 3); công cụ `tools/explore-faults.ts` chọn lỗi cho màn.
 - Chơi bằng bàn phím (mũi tên, Shift + mũi tên kéo dây, Space/Enter); bố cục rộng cho máy tính/tablet (bảng chân trị bên trái lưới); nhắc xoay dọc khi điện thoại xoay ngang.

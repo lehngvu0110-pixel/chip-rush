@@ -2,6 +2,18 @@
 
 Mỗi buổi một mục, mới nhất ở trên. Ghi: đã làm, quyết định, vướng mắc, việc tiếp theo.
 
+## 2026-10-18 – Đo hiệu năng trên máy ảo chậm + bậc đồ hoạ "min" + làm mới ảnh nộp bài
+**Đã làm**
+- `tools/perf-bench.mjs`: Chromium giả lập Pixel 7, làm chậm CPU 1/4/6 lần, đo khoảng cách frame ở 4 màn (màn chính, VẬN HÀNH đang chơi, THIẾT KẾ d12, KIỂM THỬ t09). Móc test `__CHIPRUSH__.perf()` đọc chất lượng hiện tại.
+- Profiler: JS của game chỉ ~5% thời gian frame; phần lớn là trình duyệt vẽ điểm ảnh bằng CPU. Đổi DPR 2 → 1 tăng từ 23 lên 55 fps (CPU chậm 4×).
+- Thêm bậc chất lượng `min` (high → low → min): hạ DPR canvas chính xuống 1,25 khi đã tắt hiệu ứng mà vẫn giật. Bộ điều chất lượng xét mỗi 30 frame (trước: 60) và đo lại đủ 120 frame sau mỗi lần hạ.
+- Kết quả (CPU chậm 4×, sau khi tự hạ): 19–25 fps → 35–50 fps. CPU chậm 6× vẫn 14–21 fps → ghi rõ cần số đo máy thật (ADR-0006, TESTING).
+- Chạy lại `tools/submission-assets.mjs`: ảnh màn chính mới (Chip hôm nay ngày 26/10, Huy hiệu), KIỂM THỬ 27 sao; mô tả nộp bài thêm huy hiệu; COMPLIANCE cập nhật.
+- 1 unit mới (bậc min). Tổng 386 unit, 21 E2E.
+
+**Quyết định**
+- Không hạ DPR ngay từ đầu cho mọi máy: máy khoẻ vẫn nét ở DPR 2; chỉ máy đo được là chậm mới hạ.
+
 ## 2026-10-17 – Huy hiệu (thành tựu) xuyên 3 chế độ
 **Đã làm**
 - `src/core/badges.ts`: 12 huy hiệu, mỗi cái một hàm điều kiện thuần trên dữ liệu lưu.

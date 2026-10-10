@@ -26,7 +26,7 @@
 
 Ở mỗi chế độ bạn so tài với **"AI kỹ sư"** — AI cổ điển chạy ngay trong game, không gọi API: tìm kiếm nhánh-cận (branch-and-bound) kèm cận dưới và đi dây PathFinder để tìm mạch rẻ nhất (chứng minh được tối ưu ở 7/12 màn); cây quyết định minimax để biết số lần đo ít nhất trong trường hợp xấu nhất (tối ưu ở cả 9 màn); Thompson sampling để chế độ VẬN HÀNH ra nhiều gói ở loại cổng bạn hay sai. Bạn ngang AI thì được 1000 điểm, vượt AI ở màn chưa được chứng minh tối ưu là có thật. AI được giải thích ngay trong game: trang "AI kỹ sư hoạt động thế nào?" nói rõ thuật toán và giới hạn, nút "Xem AI kỹ sư đo" phát lại từng bước suy luận, và chế độ VẬN HÀNH báo khi AI bắt đầu nhắm vào điểm yếu của bạn.
 
-Mỗi ngày còn có **Chip hôm nay**: một đề thiết kế mới giống nhau cho mọi người, giữ chuỗi ngày và so điểm với bạn bè.
+Mỗi ngày còn có **Chip hôm nay**: một đề thiết kế mới giống nhau cho mọi người, giữ chuỗi ngày và so điểm với bạn bè; cùng 12 huy hiệu như "Hơn cả AI" để có lý do quay lại.
 
 Màn đầu của THIẾT KẾ và KIỂM THỬ có hướng dẫn tận tay (không trừ sao); nút Gợi ý luôn sẵn khi bí. Toàn bộ hình ảnh vẽ bằng code, âm thanh tổng hợp trong trình duyệt, không thu thập dữ liệu cá nhân. Quá trình dùng AI để phát triển được ghi lại công khai trong repo (`docs/ai-log/`).
 

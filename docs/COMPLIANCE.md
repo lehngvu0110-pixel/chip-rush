@@ -1,11 +1,11 @@
 # Đối chiếu điều lệ – Phần thi Công nghệ, Road to Predator League 2027
 
-Cập nhật lần cuối: 06/10/2026. Kiểm tra lại toàn bộ trước khi nộp (25/10).
+Cập nhật lần cuối: 18/10/2026. Kiểm tra lại toàn bộ trước khi nộp (25/10).
 
 | Điều | Yêu cầu | Cách CHIP RUSH đáp ứng | Trạng thái |
 | --- | --- | --- | --- |
 | B.I | Sinh viên có tài khoản chiến dịch; nhóm cùng một trường | Thành viên đều là sinh viên HCMUT | Chờ xác nhận HCMUT là trường đối tác |
-| B.III | Game chơi trên web qua Portal; nộp link GitHub, tên, mô tả, logo, ảnh in-game, tác giả, MSSV, trường | File tĩnh chạy mọi trình duyệt hiện đại; nội dung nộp chuẩn bị ở `SUBMISSION.md` | Đang làm |
+| B.III | Game chơi trên web qua Portal; nộp link GitHub, tên, mô tả, logo, ảnh in-game, tác giả, MSSV, trường | File tĩnh chạy mọi trình duyệt hiện đại; nội dung nộp ở `SUBMISSION.md`, ảnh logo + in-game ở `docs/submission/` (làm mới 18/10) | Còn thiếu MSSV |
 | IV.1 | Không dùng tác phẩm có bản quyền chưa được phép | Hình vẽ bằng code, âm thanh tổng hợp, font OFL; mọi tài nguyên ghi ở `ASSETS.md` | Đạt |
 | IV.2 | Không dùng AI tạo sản phẩm phái sinh từ nội dung có bản quyền | Không dùng ảnh/âm thanh do AI tạo; AI chỉ hỗ trợ code và tài liệu, ghi ở `ai-log/` | Đạt |
 | IV.3 | Không bạo lực, máu me, chính trị, tôn giáo, thù địch, trái thuần phong mỹ tục | Chủ đề mạch điện tử; không bản đồ, cờ, cơ chế cờ bạc | Đạt |

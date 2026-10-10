@@ -24,12 +24,15 @@ Kế hoạch đầy đủ nằm trong tài liệu kế hoạch dự án; file n�
 4. Hết giờ → **Sao chép** → dán JSON vào bảng dưới (cột Kết quả), ghi thêm "Chu kỳ chấm chạy" hiển thị trên màn.
 5. iPhone 14 Pro Max: chỉ cần ghi "Chu kỳ chấm chạy" (phải ≈ 3,00 s như iPhone 11).
 
+Khi chưa có máy: `node tools/perf-bench.mjs 1 4 6` đo trên Chromium với CPU chậm 1/4/6 lần (xem đầu file). Chỉ để so sánh giữa các bản, không thay số đo máy thật.
+
 Lưu ý: dev server chưa nén/tối ưu như bản build; số đo khung hình vẫn dùng được, còn thời gian tải phải đo trên bản GitHub Pages.
 
 ## Kết quả đo
 | Ngày | Bản (hash) | Thiết bị | Chỉ số | Kết quả | Đạt? |
 | --- | --- | --- | --- | --- | --- |
 | 07/10 | 47836a2+ | Chromium headless giả lập Pixel 7 (không phải máy thật, chỉ để so sánh) | frame trung vị / p95; trễ chạm p95; chu kỳ chấm | 16,7 / 16,7 ms; 36,7 ms; 3,00 s | Tham khảo |
+| 18/10 | sau bậc `min` | Như trên, CPU chậm 4× (`tools/perf-bench.mjs`) | fps sau khi tự hạ đồ hoạ: màn chính / VẬN HÀNH / THIẾT KẾ d12 / KIỂM THỬ t09 | 35 / 47 / 50 / 47 fps (trước: 19 / 25 / 24 / 22) | Tham khảo — xem ADR-0006 |
 
 ## Kiểm tra dấu tiếng Việt (`font-test.html`)
 | Thiết bị | Ngày | Kết quả |

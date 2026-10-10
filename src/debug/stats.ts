@@ -64,10 +64,10 @@ export const LOW_QUALITY_P95_MS = 33.4;
 export const QUALITY_WINDOW = 120;
 
 /**
- * Chỉ HẠ chất lượng, không tự nâng lại: tránh bật/tắt glow liên tục (nhấp nháy, khó chịu hơn giật).
+ * Hạ chất lượng từng bậc high → low → min khi p95 vẫn quá ngưỡng (mỗi bậc cần đủ QUALITY_WINDOW frame
+ * đo SAU lần hạ trước — main.ts đảm bảo). Chỉ hạ, không tự nâng lại: tránh bật/tắt liên tục (nhấp nháy).
  */
 export function decideQuality(current: Quality, recent: StatsSummary): Quality {
-  if (current === 'low') return 'low';
-  if (recent.frames < QUALITY_WINDOW) return current;
-  return recent.p95Ms > LOW_QUALITY_P95_MS ? 'low' : 'high';
+  if (current === 'min' || recent.frames < QUALITY_WINDOW || recent.p95Ms <= LOW_QUALITY_P95_MS) return current;
+  return current === 'high' ? 'low' : 'min';
 }

@@ -17,7 +17,14 @@ export function computeCanvasSize(cssW: number, cssH: number, dpr: number, maxDp
   return { width: Math.max(1, Math.round(cssW * scale)), height: Math.max(1, Math.round(cssH * scale)), scale };
 }
 
-export type Quality = 'high' | 'low';
+/**
+ * 'high' = đủ hiệu ứng; 'low' = tắt glow/hạt + ẩn nền bo mạch; 'min' = như low + vẽ ở độ phân giải thấp hơn
+ * (đo 18/10: thời gian frame tỉ lệ gần thuận với số điểm ảnh khi máy vẽ bằng CPU).
+ */
+export type Quality = 'high' | 'low' | 'min';
+
+/** DPR tối đa khi chất lượng 'min'. */
+export const MIN_QUALITY_DPR = 1.25;
 
 export interface RenderSurface {
   readonly canvas: HTMLCanvasElement;
@@ -25,8 +32,10 @@ export interface RenderSurface {
   /** kích thước vùng vẽ theo CSS px */
   width: number;
   height: number;
-  /** 'low' = tắt glow/hạt để giữ khung hình trên máy yếu */
+  /** 'low'/'min' = tắt glow/hạt để giữ khung hình trên máy yếu (xem Quality) */
   quality: Quality;
+  /** DPR tối đa của canvas chính (hạ xuống khi quality = 'min'; đổi xong gọi resize()) */
+  dprCap: number;
   /** true khi người chơi bật giảm chuyển động */
   reducedMotion: boolean;
   /**
@@ -62,10 +71,11 @@ export function createSurface(host: HTMLElement): RenderSurface & { resize(): vo
     width: 0,
     height: 0,
     quality: 'high' as Quality,
+    dprCap: MAX_DPR,
     reducedMotion: window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false,
     resize() {
       const rect = canvas.getBoundingClientRect();
-      const s = computeCanvasSize(rect.width, rect.height, window.devicePixelRatio);
+      const s = computeCanvasSize(rect.width, rect.height, window.devicePixelRatio, surface.dprCap);
       if (canvas.width !== s.width || canvas.height !== s.height) {
         canvas.width = s.width;
         canvas.height = s.height;

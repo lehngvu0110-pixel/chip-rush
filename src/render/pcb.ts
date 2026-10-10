@@ -151,7 +151,7 @@ export class PcbBackdrop {
   update(dt: number, s: RenderSurface): void {
     if (!this.layout) return;
     // chất lượng thấp: lớp nền bị ẩn (xem main.ts) nên cũng không chạy xung
-    const target = s.reducedMotion || s.quality === 'low' ? 0 : this.opts.pulses;
+    const target = s.reducedMotion || s.quality !== 'high' ? 0 : this.opts.pulses;
     let ambient = this.pulses.filter((p) => !p.oneShot).length;
     while (ambient < target) {
       this.spawn(false);

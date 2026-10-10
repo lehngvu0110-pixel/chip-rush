@@ -34,3 +34,24 @@ Chromium headless giả lập Pixel 7, **vẽ bằng CPU** (không GPU), làm ch
 Thí nghiệm ẩn từng lớp cho thấy phần đắt là **ghép 2 lớp toàn màn hình bằng CPU**, không phải lệnh vẽ của game.
 Điện thoại thật ghép lớp bằng GPU nên chi phí này thường rất nhỏ, nhưng chưa được kiểm chứng: Vũ đo trên Redmi Note 8 với `?debug=1`.
 Nếu máy không theo kịp, cơ chế tự hạ chất lượng (mục 6) đưa game về mức tải gần như bản cũ.
+
+## Bổ sung 18/10: bậc chất lượng thứ ba "min" (giảm độ phân giải)
+Đo bằng `tools/perf-bench.mjs` (Chromium giả lập Pixel 7, làm chậm CPU qua DevTools Protocol). Profiler cho thấy JS của game chỉ chiếm ~5% thời gian; còn lại là trình duyệt vẽ/ghép điểm ảnh bằng CPU. Thử đổi DPR ở VẬN HÀNH, CPU chậm 4 lần:
+
+| DPR canvas | Frame trung vị / p95 | Số frame trong 4 s |
+| --- | --- | --- |
+| 2 (tối đa hiện tại) | 49,9 / 66,7 ms | 94 |
+| 1,5 | 16,8 / 50,0 ms | 145 |
+| 1 | 16,7 / 33,3 ms | 223 |
+
+→ Thêm bậc `min`: nếu đã ở `low` mà p95 vẫn > 33,4 ms thì vẽ canvas chính ở DPR tối đa 1,25 (chữ hơi mềm hơn nhưng vẫn đọc tốt). Mỗi bậc chỉ xét sau khi đo đủ 120 frame ở bậc hiện tại; chỉ hạ, không tự nâng (tránh nhấp nháy).
+
+Kết quả sau khi game tự hạ đồ hoạ (đo sau 14 s):
+
+| CPU chậm | Màn chính | VẬN HÀNH | THIẾT KẾ d12 | KIỂM THỬ t09 |
+| --- | --- | --- | --- | --- |
+| 4× (trước) | 19 fps | 25 fps | 24 fps | 22 fps |
+| 4× (sau) | 35 fps | 47 fps | 50 fps | 47 fps |
+| 6× (sau) | 14 fps | 21 fps | 15 fps | 19 fps |
+
+Vẫn cần số đo máy thật: điện thoại vẽ canvas bằng GPU nên con số thật thường tốt hơn nhiều so với máy ảo vẽ bằng CPU.

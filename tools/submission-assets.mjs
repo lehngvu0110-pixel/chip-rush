@@ -22,7 +22,8 @@ async function page(save) {
 // 1–2. màn chính + THIẾT KẾ d12 (lời giải AI kỹ sư)
 {
   const p = await page(seed(D, T, { bestEndless: 1840, best60: 960 }));
-  await p.goto(B + '?e2e');
+  // ngày mở cổng nộp bài: nút Chip hôm nay hiện 26/10 thay vì ngày chụp
+  await p.goto(B + '?e2e&date=2026-10-26');
   await p.waitForTimeout(1500);
   await p.screenshot({ path: out + '1-man-chinh.png' });
   await p.getByRole('button', { name: 'THIẾT KẾ: tự vẽ mạch' }).click();

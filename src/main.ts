@@ -2,7 +2,7 @@ import './ui/styles.css';
 import { versionLabel } from './config';
 import { createLoop } from './loop';
 import type { Scene } from './scene';
-import { createSurface } from './render/canvas';
+import { MIN_QUALITY_DPR, createSurface } from './render/canvas';
 import { createAudio } from './render/audio';
 import { attachPointer } from './input/pointer';
 import { createSafeStorage } from './platform/storage';
@@ -95,6 +95,7 @@ function boot(root: HTMLElement): void {
   let scene: Scene | null = null;
   let pendingInputTs = -1;
   let warmup = 0;
+  let qualityChangedAt = 0;
 
   const loop = createLoop({
     update: (dt) => scene?.update(dt),
@@ -109,12 +110,21 @@ function boot(root: HTMLElement): void {
         stats.addLatency(performance.now() - pendingInputTs);
         pendingInputTs = -1;
       }
-      // Tự tắt glow nếu máy không theo kịp (bỏ qua 2 giây đầu vì lúc tải hay giật).
-      if (++warmup > QUALITY_WINDOW && warmup % 60 === 0) {
-        surface.quality = decideQuality(surface.quality, stats.summary(QUALITY_WINDOW));
-        // Máy không theo kịp: ẩn luôn lớp nền bo mạch. Đo trên Chromium chạy đồ hoạ bằng CPU,
-        // ghép 2 lớp canvas toàn màn hình chiếm khoảng nửa thời gian mỗi frame (ADR-0006).
-        surface.backdrop.style.visibility = surface.quality === 'low' ? 'hidden' : '';
+      // Tự hạ đồ hoạ nếu máy không theo kịp. Bỏ qua lúc mới tải (hay giật), và sau mỗi lần hạ phải đo
+      // lại đủ QUALITY_WINDOW frame mới xét tiếp (số đo cũ là của mức chất lượng trước).
+      if (++warmup - qualityChangedAt > QUALITY_WINDOW && warmup % 30 === 0) {
+        const next = decideQuality(surface.quality, stats.summary(QUALITY_WINDOW));
+        if (next !== surface.quality) {
+          surface.quality = next;
+          qualityChangedAt = warmup;
+          // low: ẩn lớp nền bo mạch — trên máy vẽ bằng CPU, ghép 2 lớp toàn màn hình rất tốn (ADR-0006)
+          surface.backdrop.style.visibility = 'hidden';
+          // min: vẽ ở độ phân giải thấp hơn (số điểm ảnh giảm ~2,5 lần so với DPR 2)
+          if (next === 'min') {
+            surface.dprCap = MIN_QUALITY_DPR;
+            surface.resize();
+          }
+        }
       }
     },
   });
@@ -509,6 +519,8 @@ function boot(root: HTMLElement): void {
       },
       // vị trí 4 nút cổng (CSS px) để test bấm bằng chạm thật lên canvas
       buttons: () => layoutRuntime(surface.width, surface.height).buttons,
+      // đo hiệu năng tự động (tools/perf-bench.mjs): chất lượng đồ hoạ hiện tại + thống kê 120 frame gần nhất
+      perf: () => ({ quality: surface.quality, ...stats.summary(QUALITY_WINDOW) }),
       // màn THIẾT KẾ: id màn, toạ độ tâm ô, đầu vào hiện tại
       debug: () => {
         const ds = scene;
@@ -548,7 +560,7 @@ function boot(root: HTMLElement): void {
     createPerfOverlay(ui, stats, {
       version: versionLabel(),
       quality: () => surface.quality,
-      size: () => `${Math.round(surface.width)}×${Math.round(surface.height)} @${window.devicePixelRatio}x`,
+      size: () => `${Math.round(surface.width)}×${Math.round(surface.height)} @${Math.min(window.devicePixelRatio, surface.dprCap)}x`,
     });
   }
   if (import.meta.env.DEV && params.has('crash')) {

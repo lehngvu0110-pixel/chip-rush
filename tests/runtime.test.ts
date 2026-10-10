@@ -231,6 +231,13 @@ describe('thống kê hiệu năng', () => {
     expect(decideQuality('high', mk(QUALITY_WINDOW, 20))).toBe('high');
     expect(decideQuality('low', mk(QUALITY_WINDOW, 8))).toBe('low');
   });
+
+  it('hạ từng bậc high → low → min (vẽ độ phân giải thấp); min là đáy', () => {
+    const mk = (p95: number) => ({ frames: QUALITY_WINDOW, medianMs: 40, p95Ms: p95, fps: 25, latencySamples: 0, latencyP95Ms: null });
+    expect(decideQuality('low', mk(LOW_QUALITY_P95_MS + 1))).toBe('min');
+    expect(decideQuality('min', mk(200))).toBe('min');
+    expect(decideQuality('min', mk(10))).toBe('min'); // không tự nâng lại
+  });
 });
 
 describe('SandboxScene', () => {
