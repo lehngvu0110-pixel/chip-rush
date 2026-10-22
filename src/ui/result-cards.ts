@@ -210,3 +210,36 @@ export function debugResultCard(
   card.append(again, action('', 'Xem AI kỹ sư đo', o.onWatchAi), action('btn-secondary', 'Danh sách màn', o.onList));
   return { card, focus: next ?? (r.win ? null : again) };
 }
+
+// ---------------- LẮP RÁP ----------------
+export function assemblyResultCard(
+  lv: { id: string; name: string; concept: string },
+  r: { stars: number; powerOns: number; checks: { text: string; got: string }[] },
+  o: { improved: boolean; share: MakeShare; onNext?: () => void; onWatch: () => void; onAgain: () => void; onList: () => void },
+): Card {
+  const card = el('div', 'card');
+  card.append(el('h2', 'result-title', 'Mạch chạy rồi!'));
+  card.append(starsEl(r.stars, `${r.stars} trên 3 sao`));
+  card.append(bigScore(r.powerOns, `Số lần cấp nguồn ${r.powerOns}`, true, false), el('p', 'note', `lần cấp nguồn · 3 sao khi chạy đúng ngay lần đầu`));
+  // bảng kiểm: mọi yêu cầu của màn kèm số đo thật
+  const list = el('ul', 'result-stats asm-checks');
+  for (const c of r.checks) {
+    const li = el('li', '');
+    li.append(el('span', '', `✓ ${c.text}`), el('strong', '', c.got));
+    list.append(li);
+  }
+  card.append(list, el('p', 'note', `Bạn vừa học: ${lv.concept}.`));
+  if (o.improved) card.append(el('p', 'result-record', 'Kết quả tốt nhất của bạn!'));
+  const next = o.onNext ? action('btn-primary', 'Màn tiếp', o.onNext) : null;
+  if (next) card.append(next);
+  card.append(
+    o.share(
+      { mode: 'LẮP RÁP', title: `${lv.id.toUpperCase()} · ${lv.name}`, big: String(r.powerOns), bigLabel: 'lần cấp nguồn để mạch chạy', stars: r.stars, lines: [lv.concept] },
+      `Mình vừa lắp xong mạch "${lv.name}" trong CHIP RUSH sau ${r.powerOns} lần cấp nguồn. Thử sức nhé:`,
+    ),
+    action('', 'Xem mạch chạy', o.onWatch),
+    action('', 'Chơi lại', o.onAgain),
+    action('btn-secondary', 'Danh sách màn', o.onList),
+  );
+  return { card, focus: next };
+}

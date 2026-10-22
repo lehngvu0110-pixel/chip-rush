@@ -3,7 +3,7 @@
 import { versionLabel } from '../config';
 import { aiStats } from '../core/level/ai-info';
 import { action, button, el, extLink, starsEl } from './dom';
-import { ICON_MEDAL } from './icons';
+import { ICON_LOCK, ICON_MEDAL } from './icons';
 
 export const REPO_URL = 'https://github.com/lehngvu0110-pixel/chip-rush';
 export const AI_LOG_URL = `${REPO_URL}/tree/main/docs/ai-log`;
@@ -19,16 +19,22 @@ export interface LevelItem {
   onPick: () => void;
 }
 
-export function levelListCard(o: { title: string; note: string; items: LevelItem[]; onAiInfo: () => void; onBack: () => void }): HTMLDivElement {
+export function levelListCard(o: { title: string; note: string; items: LevelItem[]; onAiInfo?: () => void; onBack: () => void; extra?: { label: string; onClick: () => void } }): HTMLDivElement {
   const card = el('div', 'card level-card');
-  card.append(el('p', 'card-title', o.title), el('p', 'note', o.note), action('btn-link', 'AI kỹ sư là gì?', o.onAiInfo));
+  const links = el('div', 'list-links');
+  if (o.onAiInfo) links.append(action('btn-link', 'AI kỹ sư là gì?', o.onAiInfo));
+  if (o.extra) links.append(action('btn-link', o.extra.label, o.extra.onClick));
+  card.append(el('p', 'card-title', o.title), el('p', 'note', o.note), links);
   const list = el('div', 'level-list');
   for (const it of o.items) {
-    const b = button('level-item', '');
+    const b = button(`level-item${it.stars > 0 ? ' done' : ''}`, '');
     b.disabled = !it.open;
     const head = el('span', 'level-head');
-    head.append(el('strong', '', `${it.id.toUpperCase()} · ${it.name}`), el('small', '', it.sub));
-    b.append(head, starsEl(it.stars, `${it.stars} sao`));
+    head.append(el('strong', '', it.name), el('small', '', it.sub));
+    // số màn trong ô tròn (màn khoá: biểu tượng ổ khoá)
+    const num = el('span', 'level-num', it.open ? it.id.toUpperCase() : '');
+    if (!it.open) num.innerHTML = ICON_LOCK;
+    b.append(num, head, starsEl(it.stars, `${it.stars} sao`));
     b.setAttribute('aria-label', `${it.id} ${it.name}${it.open ? '' : ', chưa mở'}, ${it.stars} sao`);
     b.addEventListener('click', it.onPick);
     list.append(b);

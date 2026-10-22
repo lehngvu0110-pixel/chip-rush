@@ -105,6 +105,13 @@ Làm rõ khi cài đặt (08/10, **chờ Vũ duyệt**, không đổi luật đ�
   - Cổng được dùng = đúng số cổng của mạch sinh ra (người chơi biết "nguyên liệu", phải tự nghĩ cách ghép).
   - Chuỗi: qua đề lần đầu trong ngày mới cộng; lần cuối là hôm qua → +1, xa hơn → về 1; bỏ lỡ 1 ngày thì chuỗi hiện 0. Xem lời giải AI thì không tính. Gợi ý vẫn tính chuỗi nhưng tối đa 2 sao như màn thường.
 
+## 4b. LẮP RÁP (lắp mạch)
+- **Luật:** bo mạch có sẵn đường đồng và vị trí lắp (R1, D1, Q1...). Người chơi chọn linh kiện trong khay, cắm vào vị trí có cùng số chân, xoay 180° nếu cần, rồi bấm CẤP NGUỒN. Phải cắm đủ mọi vị trí mới được cấp nguồn (không tính lần thử).
+- **Chấm:** bộ chấm chạy mô phỏng trên bản sao bo mạch: các yêu cầu sáng/tắt chạy nối tiếp theo thứ tự ghi trong màn (mỗi trạng thái nút 0,6 s), yêu cầu nháy đo trong 4 s sau 1 s khởi động, yêu cầu giữ sáng đo sau khi ấn 1,5 s rồi nhả. LED "sáng" khi dòng ≥ 2 mA; bóng đèn khi ≥ 50% dòng định mức. Có linh kiện cháy hoặc chập mạch (dòng pin > 2 A kéo dài > 50 ms) thì không qua.
+- **Sao:** qua màn ở lần cấp nguồn đầu 3 sao, ≤ 3 lần 2 sao, còn lại 1 sao. Lưu sao cao nhất và số lần cấp nguồn ít nhất (`assembly` trong dữ liệu lưu).
+- **Mở khoá:** a01 mở từ đầu; màn sau mở khi qua màn trước.
+- **Mô hình linh kiện:** LED sụt 2 V, cháy khi > 30 mA; diode 0,7 V; BJT β = 150 (cháy khi dòng base > 50 mA), cắm ngược thì không dẫn C-E; MOSFET mở khi U G-S > 3 V, có điện dung cổng 1 nF; tụ hoá ngược cực thì phồng; IC 555 đổi trạng thái theo điện áp bước trước, chân thấp hơn GND > 0,5 V thì cháy (cắm ngược).
+
 ## 5. AI & solver
 
 Chỉ nói "tối ưu"/"tối thiểu" khi thuật toán đã duyệt hết không gian. Cả ba đều là AI cổ điển (tìm kiếm, thống kê trực tuyến), không phải LLM.
@@ -154,5 +161,6 @@ Cài đặt: `src/ai/debug-solver.ts`, chạy offline trong `tools/solve-levels.
 | 07/10/2026 | Lưới THIẾT KẾ | Làm rõ, chờ duyệt | Dây theo cạnh, cắt nhau cùng lớp = chập, cổng 1 ô có chân theo phía, cách tính Area |
 | 12/10/2026 | Daily Chip | Làm sớm + làm rõ, chờ duyệt | Có từ trước 26/10 (quay vòng), cách sinh đề, luật chuỗi ngày, `daily.history` |
 | 17/10/2026 | Huy hiệu | Thêm, chờ duyệt | 12 huy hiệu xuyên 3 chế độ, điều kiện trong `src/core/badges.ts`; trao bù im lặng cho dữ liệu cũ; xoá tiến độ thì xoá cả huy hiệu |
+| 23/10/2026 | LẮP RÁP | Thêm, chờ duyệt | Chế độ thứ tư, luật ở mục 4b; dữ liệu lưu thêm `assembly`, dữ liệu cũ không cần chuyển đổi |
 | 22/10/2026 | Thư viện linh kiện | Thêm, chờ duyệt | Mục học tập ngoài 3 chế độ, không ảnh hưởng điểm, sao, huy hiệu hay dữ liệu lưu; nội dung trong `src/core/parts/catalog.ts` |
 | 13/10/2026 | Câu hiển thị 5.4 | Sửa câu, không đổi luật | Thêm "với cách ghép cổng này": "tối ưu" của solver chỉ chứng minh cho mạch logic của AI (5.1); người chơi ghép cổng khác vẫn có thể có C thấp hơn, câu cũ nói quá. |

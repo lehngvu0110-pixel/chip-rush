@@ -16,6 +16,8 @@ export interface SaveData {
   settings: { muted: boolean; reducedMotion: boolean };
   /** huy hiệu đã đạt: id → ngày đạt (giờ VN, YYYY-MM-DD) — thêm 17/10 */
   badges: Record<string, string>;
+  /** LẮP RÁP: sao cao nhất và số lần cấp nguồn ít nhất mỗi màn (thêm 22/10, dữ liệu cũ không có thì coi như rỗng) */
+  assembly: Record<string, { stars: number; powerOns: number }>;
 }
 
 export function defaultSave(): SaveData {
@@ -27,6 +29,7 @@ export function defaultSave(): SaveData {
     daily: { lastDate: null, streak: 0, history: {} },
     settings: { muted: false, reducedMotion: false },
     badges: {},
+    assembly: {},
   };
 }
 
@@ -84,6 +87,12 @@ export function loadSave(storage: SafeStorage): LoadResult {
       d.debug[id] = { stars: stars(v.stars), probes: num(v.probes, 0) };
     }
   }
+  if (isObj(raw.assembly)) {
+    for (const [id, v] of Object.entries(raw.assembly)) {
+      if (!isObj(v) || !/^a\d{2}$/.test(id)) continue;
+      d.assembly[id] = { stars: stars(v.stars), powerOns: Math.max(1, Math.floor(num(v.powerOns, 1))) };
+    }
+  }
   return { data: d, wasReset: false };
 }
 
@@ -137,4 +146,17 @@ export function recordDebug(data: SaveData, id: string, stars: number, probes: n
 export function debugUnlocked(data: SaveData, ids: readonly string[], i: number, gate = 'd05'): boolean {
   if (data.design[gate] === undefined) return false;
   return i === 0 || (ids[i - 1] !== undefined && data.debug[ids[i - 1] as string] !== undefined);
+}
+
+/** Ghi kết quả qua màn LẮP RÁP: giữ số sao cao nhất và số lần cấp nguồn ít nhất. Trả về true nếu tốt hơn trước. */
+export function recordAssembly(data: SaveData, id: string, stars: number, powerOns: number): boolean {
+  const prev = data.assembly[id];
+  const better = !prev || stars > prev.stars || powerOns < prev.powerOns;
+  data.assembly[id] = { stars: Math.max(stars, prev?.stars ?? 0), powerOns: Math.min(powerOns, prev?.powerOns ?? Infinity) };
+  return better;
+}
+
+/** LẮP RÁP mở ngay từ đầu (học linh kiện không cần biết thiết kế chip); màn sau mở khi qua màn trước. */
+export function assemblyUnlocked(data: SaveData, ids: readonly string[], i: number): boolean {
+  return i === 0 || (ids[i - 1] !== undefined && data.assembly[ids[i - 1] as string] !== undefined);
 }

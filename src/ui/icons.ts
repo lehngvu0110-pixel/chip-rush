@@ -33,3 +33,9 @@ export const LOGO_SVG = `<svg viewBox="0 0 120 120" width="96" height="96" role=
 /** Huy hiệu: huy chương có ruy băng (tự vẽ). */
 export const ICON_MEDAL =
   '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M7 2h4l1 5-3 2zM17 2h-4l-1 5 3 2z" fill="currentColor" fill-opacity="0.25"/><circle cx="12" cy="15" r="6" fill="currentColor" fill-opacity="0.18"/><path d="M12 12l1 2h2l-1.6 1.3.6 2.2-2-1.3-2 1.3.6-2.2L9 14h2z" fill="currentColor"/></svg>';
+
+/** Ổ khoá nhỏ (màn chưa mở). */
+export const ICON_LOCK = svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>', 16);
+
+/** Linh kiện: điện trở có 2 chân (link Thư viện linh kiện). */
+export const ICON_PART = svg('<path d="M2 12h4M18 12h4"/><rect x="6" y="8" width="12" height="8" rx="3"/><path d="M9 8v8M12 8v8M15 8v8" stroke-width="1.6"/>', 18);

@@ -13,6 +13,7 @@
 | `src/core/level` | Màn THIẾT KẾ/KIỂM THỬ, Daily Chip (`daily.ts` + `daily.json`), validate, lời giải AI tính sẵn (`solutions.json`, `debug-solutions.json`) | `core/circuit`, `core/debug` |
 | `src/core/debug` | Mô hình lỗi, lớp tương đương (KIỂM THỬ) | `core/circuit` |
 | `src/core/scoring` | PPA, sao, điểm VẬN HÀNH | `core/circuit` |
+| `src/core/assembly` | LẮP RÁP: bộ mô phỏng mạch điện (`circuit.ts`), bo mạch + bộ chấm (`board.ts`), 11 màn (`levels.ts`) | không |
 | `src/core/parts` | Thư viện linh kiện: nội dung từng linh kiện, mã vạch màu điện trở | không |
 | `src/core/progress.ts` | Tiến trình, mở khóa, schema lưu | `core/*` |
 | `src/ai` | Solver THIẾT KẾ, solver KIỂM THỬ, độ khó thích nghi | `core/*` |
