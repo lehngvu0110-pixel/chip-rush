@@ -1,5 +1,5 @@
 // Màn bắt đầu: logo, die chip 3 khối (canvas vẽ ở HubScene, nút DOM trong suốt đè lên),
-// nút Chip hôm nay, CHƠI NGAY / 60 giây, kỷ lục. Chỉ dựng DOM; hành động qua callback.
+// nút Chip hôm nay, CHƠI NGAY / 60 giây, kỷ lục, Huy hiệu, Linh kiện điện tử. Chỉ dựng DOM; hành động qua callback.
 import { versionLabel } from '../config';
 import { DIE_BLOCKS, type BlockId } from '../modes/hub/hub-scene';
 import { action, button, el } from './dom';
@@ -25,6 +25,7 @@ export interface StartScreenActions {
   onDaily: () => void;
   onSettings: () => void;
   onBadges: () => void;
+  onParts: () => void;
   onPerf: () => void;
 }
 
@@ -84,6 +85,8 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
 
   const badgeLink = action('btn-link badge-link', `Huy hiệu ${d.badges.earned}/${d.badges.total}`, a.onBadges);
   badgeLink.setAttribute('aria-label', `Huy hiệu: đã đạt ${d.badges.earned} trên ${d.badges.total}`);
+  const links = el('div', 'start-links');
+  links.append(badgeLink, action('btn-link parts-link', 'Linh kiện điện tử', a.onParts));
 
   // Màn đo hiệu năng chỉ dành cho nhóm phát triển
   const perf = action('btn-link', 'Đo hiệu năng (dành cho nhóm phát triển)', a.onPerf);
@@ -99,7 +102,7 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
       actions,
       el('p', 'note', 'Chạm vào một khối của con chip để chọn công đoạn. CHƠI NGAY = VẬN HÀNH: cắm đúng cổng logic trước khi chip chạm ổ cắm.'),
       el('p', 'records', `Kỷ lục: Vô tận ${d.bestEndless} · 60 giây ${d.best60}`),
-      badgeLink,
+      links,
       perf,
       el('p', 'version', versionLabel()),
     ],

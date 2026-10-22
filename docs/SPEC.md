@@ -154,4 +154,5 @@ Cài đặt: `src/ai/debug-solver.ts`, chạy offline trong `tools/solve-levels.
 | 07/10/2026 | Lưới THIẾT KẾ | Làm rõ, chờ duyệt | Dây theo cạnh, cắt nhau cùng lớp = chập, cổng 1 ô có chân theo phía, cách tính Area |
 | 12/10/2026 | Daily Chip | Làm sớm + làm rõ, chờ duyệt | Có từ trước 26/10 (quay vòng), cách sinh đề, luật chuỗi ngày, `daily.history` |
 | 17/10/2026 | Huy hiệu | Thêm, chờ duyệt | 12 huy hiệu xuyên 3 chế độ, điều kiện trong `src/core/badges.ts`; trao bù im lặng cho dữ liệu cũ; xoá tiến độ thì xoá cả huy hiệu |
+| 22/10/2026 | Thư viện linh kiện | Thêm, chờ duyệt | Mục học tập ngoài 3 chế độ, không ảnh hưởng điểm, sao, huy hiệu hay dữ liệu lưu; nội dung trong `src/core/parts/catalog.ts` |
 | 13/10/2026 | Câu hiển thị 5.4 | Sửa câu, không đổi luật | Thêm "với cách ghép cổng này": "tối ưu" của solver chỉ chứng minh cho mạch logic của AI (5.1); người chơi ghép cổng khác vẫn có thể có C thấp hơn, câu cũ nói quá. |

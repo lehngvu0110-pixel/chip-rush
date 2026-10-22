@@ -13,12 +13,13 @@
 | `src/core/level` | Màn THIẾT KẾ/KIỂM THỬ, Daily Chip (`daily.ts` + `daily.json`), validate, lời giải AI tính sẵn (`solutions.json`, `debug-solutions.json`) | `core/circuit`, `core/debug` |
 | `src/core/debug` | Mô hình lỗi, lớp tương đương (KIỂM THỬ) | `core/circuit` |
 | `src/core/scoring` | PPA, sao, điểm VẬN HÀNH | `core/circuit` |
+| `src/core/parts` | Thư viện linh kiện: nội dung từng linh kiện, mã vạch màu điện trở | không |
 | `src/core/progress.ts` | Tiến trình, mở khóa, schema lưu | `core/*` |
 | `src/ai` | Solver THIẾT KẾ, solver KIỂM THỬ, độ khó thích nghi | `core/*` |
 | `src/platform` | storage, visibility, share, errors | DOM |
-| `src/render` | Canvas, theme, vẽ mạch, hiệu ứng, âm thanh | `core/*`, DOM |
+| `src/render` | Canvas, theme, vẽ mạch, hiệu ứng, âm thanh; `mesh3d.ts` (bộ vẽ 3D mini: dựng khối, chiếu phối cảnh, thuật toán hoạ sĩ) + `part-models.ts` (mô hình linh kiện) | `core/*`, DOM |
 | `src/input` | Pointer events → thao tác trên lưới; `grid-keys.ts`: bàn phím → chạm giả | DOM |
-| `src/ui` | Dựng DOM thuần từ dữ liệu + callback: `dom.ts` (tiện ích), `start-screen.ts` (màn bắt đầu), `result-cards.ts` (thẻ kết quả 4 chế độ), `info-cards.ts` (danh sách màn, Cài đặt, trang AI), `share-button.ts`, `icons.ts` | `core/*`, `platform`, `render` (không giữ trạng thái game) |
+| `src/ui` | Dựng DOM thuần từ dữ liệu + callback: `dom.ts` (tiện ích), `start-screen.ts` (màn bắt đầu), `result-cards.ts` (thẻ kết quả 4 chế độ), `info-cards.ts` (danh sách màn, Cài đặt, trang AI), `parts-cards.ts` + `part-viewer.ts` + `part-symbols.ts` (Thư viện linh kiện, khung xem 3D), `share-button.ts`, `icons.ts` | `core/*`, `platform`, `render` (không giữ trạng thái game) |
 | `src/main.ts` | Điểm vào: canvas + vòng lặp, giữ trạng thái chung (tiến độ, âm thanh, scene), điều hướng giữa các màn, móc test `?e2e` | mọi tầng |
 | `src/modes/*` | Scene từng chế độ | mọi tầng dưới |
 | `tools/` | Script Node: giải màn (`solve-levels.ts`), sinh + giải đề Daily (`gen-daily.ts`), ảnh nộp bài, kiểm tra dung lượng, subset font | `core/*`, `ai/*` |
