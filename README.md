@@ -23,6 +23,8 @@ Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 
 Thêm **12 huy hiệu** xuyên 3 chế độ (ví dụ "Hơn cả AI": thiết kế rẻ hơn AI kỹ sư) và **Chip hôm nay**: mỗi ngày (giờ Việt Nam) một đề THIẾT KẾ giống nhau cho mọi người, giữ chuỗi ngày và chia sẻ điểm.
 
+**Linh kiện điện tử** (link ở màn chính): thư viện 11 linh kiện (điện trở, tụ gốm, tụ hoá, cuộn cảm, diode, LED, BJT, MOSFET, IC 555, thạch anh, nút nhấn). Mỗi linh kiện có mô hình 3D dựng bằng code, kéo để xoay 360°, chụm 2 ngón hoặc lăn chuột để phóng to; kèm ký hiệu sơ đồ, thông số, cách nhận biết chân và mục "Liên hệ với vi mạch" nối với PPA và cổng logic trong game.
+
 Luật chi tiết: [`docs/SPEC.md`](docs/SPEC.md).
 
 ## AI trong game và trong quá trình làm game

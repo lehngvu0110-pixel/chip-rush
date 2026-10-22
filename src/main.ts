@@ -30,6 +30,8 @@ import { button, el, focusInside } from './ui/dom';
 import { createShareButtonFactory } from './ui/share-button';
 import { debugResultCard, designResultCard, dailyResultCard, runtimeResultCard, type Card, type PassResult } from './ui/result-cards';
 import { aiInfoCard, badgesCard, levelListCard, settingsCard } from './ui/info-cards';
+import { partDetailCard, partsListCard } from './ui/parts-cards';
+import { partById, type PartId } from './core/parts/catalog';
 
 // Điểm vào của game: dựng canvas + vòng lặp, giữ trạng thái chung (tiến độ, âm thanh, scene đang chạy)
 // và điều hướng giữa các màn. Phần dựng DOM của từng thẻ nằm trong src/ui/*.
@@ -413,6 +415,18 @@ function boot(root: HTMLElement): void {
     );
     showPanel(card, focus);
   };
+  // 7e. Thư viện linh kiện: danh sách → thẻ chi tiết có mô hình 3D xoay 360°
+  const showParts = (focusId?: PartId): void => {
+    setScene(new TitleScene());
+    const { card, focus } = partsListCard({ onPick: showPart, onBack: showStart, focusId });
+    showPanel(card, focus);
+  };
+  const showPart = (id: PartId): void => {
+    const part = partById(id);
+    if (!part) return showParts();
+    const { card, focus } = partDetailCard(part, { reducedMotion: surface.reducedMotion, onPick: showPart, onList: () => showParts(id) });
+    showPanel(card, focus);
+  };
   const showSettings = (): void => {
     const { card, focus } = settingsCard({
       sound: {
@@ -469,6 +483,7 @@ function boot(root: HTMLElement): void {
         onDaily: startDaily,
         onSettings: showSettings,
         onBadges: showBadges,
+        onParts: () => showParts(),
         onPerf: () => {
           void audio.unlock();
           const sandbox = new SandboxScene(audio);

@@ -4,6 +4,7 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Thư viện "Linh kiện điện tử" (link ở màn chính): 11 linh kiện, mỗi cái có mô hình 3D xoay 360° và phóng to (kéo, chụm 2 ngón, lăn chuột, bàn phím), ký hiệu sơ đồ, thông số mẫu, cách nhận biết chân, liên hệ với thiết kế vi mạch. Bộ vẽ 3D tự viết trên Canvas 2D (`src/render/mesh3d.ts`), không thêm thư viện.
 - Video demo 45 s (`docs/submission/demo.mp4`) và GIF cho README, quay tự động bằng `tools/demo-video.mjs`.
 - Bậc đồ hoạ "min": máy chậm tự vẽ ở độ phân giải thấp hơn (CPU chậm 4×: ~23 → ~47 fps trên máy ảo); công cụ `tools/perf-bench.mjs`.
 - 12 huy hiệu xuyên 3 chế độ + bảng Huy hiệu ở màn chính; trao bù cho người chơi cũ.

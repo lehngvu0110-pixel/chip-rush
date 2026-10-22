@@ -531,3 +531,53 @@ html, body {
 .badge-text strong { font-size: 15px; }
 .badge-text small { font-size: 12.5px; color: var(--text-dim); line-height: 1.35; }
 .badge-link { margin-top: -4px; }
+/* Màn chính: hàng link Huy hiệu + Linh kiện điện tử */
+.start-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 18px; margin-top: -4px; }
+.start-links .badge-link { margin-top: 0; }
+/* Thư viện linh kiện: danh sách có ảnh 3D nhỏ, thẻ chi tiết có khung xem 3D */
+.parts-card, .part-card { width: min(440px, 100%); }
+.card .part-item { max-width: none; justify-content: flex-start; gap: 12px; padding: 6px 12px; }
+.part-thumb { flex: none; display: block; border-radius: 10px; background: radial-gradient(circle at 50% 45%, #1d2a5a, #0a1022 75%); }
+.part-card { gap: 8px; padding: 16px 14px; }
+.part-card .card-title { margin: 0; }
+.part-sub { margin: -4px 0 0; color: var(--text-dim); font-size: 13px; }
+.part-view { width: 100%; display: flex; flex-direction: column; gap: 6px; flex: none; }
+.part-canvas {
+  display: block;
+  width: 100%;
+  height: clamp(170px, 36vh, 320px);
+  border-radius: 16px;
+  border: 1px solid rgba(56, 232, 255, 0.3);
+  background: #0b1020;
+  touch-action: none;
+  cursor: grab;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+.part-canvas:active { cursor: grabbing; }
+.part-canvas:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }
+.part-controls { display: flex; gap: 6px; justify-content: center; }
+.card .part-controls .btn, .card .part-nav .btn { width: auto; max-width: none; min-width: 44px; padding: 6px 10px; font-size: 14px; }
+.card .part-controls .part-zoom { font-size: 20px; line-height: 1; padding: 6px 0; width: 44px; }
+.part-auto[aria-pressed='true'] { border-color: var(--accent); background: rgba(56, 232, 255, 0.14); }
+.part-hint { margin: 0; color: var(--text-dim); font-size: 12px; line-height: 1.35; }
+.part-body { width: 100%; flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; text-align: left; padding: 2px 2px 6px; }
+.part-body > p { margin: 0; font-size: 14px; line-height: 1.5; }
+.part-sample strong { color: var(--accent-2); }
+.part-symbol { display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 12px; border: 1px solid rgba(154, 166, 200, 0.25); background: rgba(10, 15, 36, 0.6); color: var(--accent); }
+.part-symbol-svg { display: grid; flex: none; }
+.part-symbol small { color: var(--text-dim); font-size: 13px; }
+.part-specs { width: 100%; border-collapse: collapse; font-size: 13.5px; line-height: 1.4; }
+.part-specs th, .part-specs td { padding: 6px 4px; border-bottom: 1px solid #1d2647; vertical-align: top; text-align: left; }
+.part-specs th { width: 34%; color: var(--text-dim); font-weight: 700; }
+.part-h { margin: 2px 0 0; font-size: 15px; color: var(--accent); }
+.part-tips { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 6px; font-size: 13.5px; line-height: 1.45; }
+.part-chip { border-color: rgba(255, 176, 32, 0.45); }
+.part-chip h3 { color: var(--accent-2); }
+.part-nav { width: 100%; display: flex; gap: 6px; justify-content: space-between; flex: none; }
+.part-nav .btn { flex: 1 1 0; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-height: 700px) {
+  .part-canvas { height: clamp(150px, 32vh, 240px); }
+  .part-hint { display: none; }
+}
