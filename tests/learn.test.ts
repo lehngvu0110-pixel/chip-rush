@@ -14,6 +14,8 @@ describe('sơ đồ tư duy', () => {
       if (n.link?.kind === 'part') expect(partById(n.link.id), n.id).toBeDefined();
     }
     expect(MIND_ROOT.children).toHaveLength(6);
+    // README và thẻ Góc học tập ghi "6 nhánh, 29 ý"
+    expect(MIND_ROOT.children!.reduce((n, b) => n + b.children!.length, 0)).toBe(29);
     for (const b of MIND_ROOT.children!) {
       expect(b.children!.length).toBeGreaterThanOrEqual(3);
       expect(b.children!.length).toBeLessThanOrEqual(6);

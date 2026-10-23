@@ -44,7 +44,7 @@ export function learnHubCard(o: { quizBest: number | null; onMindmap: () => void
     tiles.append(b);
     return b;
   };
-  const first = tile(ICON_MINDMAP, 'Sơ đồ tư duy', '6 nhánh, 30 ý chính: đại lượng, định luật, linh kiện, bán dẫn, mạch số, vi mạch', '#38e8ff', o.onMindmap, 'Sơ đồ tư duy');
+  const first = tile(ICON_MINDMAP, 'Sơ đồ tư duy', '6 nhánh, 29 ý chính: đại lượng, định luật, linh kiện, bán dẫn, mạch số, vi mạch', '#38e8ff', o.onMindmap, 'Sơ đồ tư duy');
   tile(ICON_QUIZ, 'Trắc nghiệm', o.quizBest === null ? '10 câu mỗi lượt, có lời giải từng câu' : `Kỷ lục ${o.quizBest}/10 · 10 câu mỗi lượt, có lời giải`, '#ffb020', o.onQuiz, 'Trắc nghiệm');
   tile(ICON_PART, 'Linh kiện 3D', '11 linh kiện xoay 360°, phóng to, đọc thông số', '#3ddc84', o.onParts, 'Linh kiện điện tử');
   card.append(tiles, back('Về màn chính', o.onBack));

@@ -4,7 +4,7 @@
 
 ## [Chưa phát hành]
 ### Thêm
-- Góc học tập (màn chính): sơ đồ tư duy điện - điện tử 6 nhánh / 30 ý có liên kết sang linh kiện 3D và màn chơi; trắc nghiệm 10 câu (32 câu lý thuyết + 7 dạng câu tính toán đổi số mỗi lượt) có lời giải, xem lại câu sai, lưu kỷ lục (`learn` trong dữ liệu lưu). Thư viện linh kiện chuyển vào Góc học tập.
+- Góc học tập (màn chính): sơ đồ tư duy điện - điện tử 6 nhánh / 29 ý có liên kết sang linh kiện 3D và màn chơi; trắc nghiệm 10 câu (32 câu lý thuyết + 7 dạng câu tính toán đổi số mỗi lượt) có lời giải, xem lại câu sai, lưu kỷ lục (`learn` trong dữ liệu lưu). Thư viện linh kiện chuyển vào Góc học tập.
 - Phím Esc quay lại ở các bảng; hover trên máy có chuột; bảng giữa hiện mờ dần.
 - Chế độ thứ tư LẮP RÁP: 11 màn cắm linh kiện lên bo mạch (LED + điện trở, đọc vạch màu, nút bấm, cổng AND/OR, diode, BJT, cổng NOT, tụ giữ điện, MOSFET + điện trở kéo xuống, mạch nháy 555). Bộ mô phỏng mạch điện tự viết, bộ chấm tự động, sao theo số lần cấp nguồn, lưu tiến độ `assembly` (dữ liệu cũ vẫn đọc được).
 - Màn chính: die chip 4 khối chạy vòng THIẾT KẾ → KIỂM THỬ → LẮP RÁP → VẬN HÀNH.

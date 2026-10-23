@@ -51,7 +51,7 @@ Trong LẮP RÁP, linh kiện quá tải sẽ bốc khói. Khi có điện, bạ
 ### Góc học tập
 | Phần | Nội dung |
 | --- | --- |
-| **Sơ đồ tư duy** | 6 nhánh, 30 ý chính: đại lượng cơ bản, định luật (Ohm, Kirchhoff), linh kiện thụ động, bán dẫn, mạch số, vi mạch. Chạm nhánh để mở, chạm ý để đọc giải thích và công thức. Nhiều ý có nút đi thẳng tới linh kiện 3D hoặc màn chơi dùng đúng kiến thức đó. |
+| **Sơ đồ tư duy** | 6 nhánh, 29 ý chính: đại lượng cơ bản, định luật (Ohm, Kirchhoff), linh kiện thụ động, bán dẫn, mạch số, vi mạch. Chạm nhánh để mở, chạm ý để đọc giải thích và công thức. Nhiều ý có nút đi thẳng tới linh kiện 3D hoặc màn chơi dùng đúng kiến thức đó. |
 | **Trắc nghiệm** | Mỗi lượt 10 câu theo 4 chủ đề (hoặc trộn tất cả). Gồm 32 câu lý thuyết và 7 dạng câu tính toán đổi số mỗi lần: Ohm, công suất, điện trở hạn dòng cho LED, nối tiếp/song song, đọc vạch màu, nhị phân, cổng logic. Mỗi câu có lời giải; cuối lượt xem lại câu sai, lưu kỷ lục. |
 | **Linh kiện 3D** | 11 linh kiện (điện trở, tụ gốm, tụ hoá, cuộn cảm, diode, LED, BJT, MOSFET, IC 555, thạch anh, nút nhấn), mô hình dựng bằng code, kéo xoay 360°, chụm 2 ngón hoặc lăn chuột để phóng to. Kèm ký hiệu sơ đồ, thông số mẫu, cách nhận biết chân và mục "Liên hệ với vi mạch". |
 
