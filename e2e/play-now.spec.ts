@@ -90,3 +90,31 @@ test('Thử thách 60 giây: đồng hồ chạy, nút Dừng tạm dừng và T
   await page.getByRole('button', { name: 'Tiếp tục' }).click();
   await expect.poll(async () => (await state(page)).timeLeft).toBeLessThan(t1);
 });
+
+test('Thử thách 60 giây chống spam: bấm sai bị khoá 0,8 s, spam 1 phím không lên điểm', async ({ page }) => {
+  type S = RuntimeState & { lockLeft: number };
+  const st = (): Promise<S> => state(page) as Promise<S>;
+  await page.goto('/?e2e&seed=20261023');
+  await page.getByRole('button', { name: 'Thử thách 60 giây' }).click();
+  await expect.poll(async () => (await st()).mode).toBe('sixty');
+  // bấm sai → chập mạch: trả lời đúng ngay sau đó không được nhận
+  let s = await st();
+  const wrong = s.unlocked.find((g) => !s.validGates.includes(g))!;
+  await page.keyboard.press(String(GATES.indexOf(wrong) + 1));
+  await expect.poll(async () => (await st()).lockLeft).toBeGreaterThan(0.3);
+  s = await st();
+  await page.keyboard.press(String(GATES.indexOf(s.validGates[0]!) + 1));
+  expect((await st()).score).toBe(0);
+  await page.screenshot({ path: test.info().outputPath('chap-mach.png') });
+  // hết khoá thì trả lời bình thường
+  await expect.poll(async () => (await st()).lockLeft, { timeout: 3000 }).toBe(0);
+  await answerRight(page);
+  await expect.poll(async () => (await st()).score).toBe(10);
+  // spam phím 1 (AND) liên tục 6 giây: điểm không tăng đáng kể
+  const before = (await st()).score;
+  for (let i = 0; i < 60; i++) {
+    await page.keyboard.press('1');
+    await page.waitForTimeout(100);
+  }
+  expect((await st()).score - before).toBeLessThan(60);
+});

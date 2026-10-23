@@ -21,7 +21,11 @@ export const RUNTIME = {
   maxFall: 3.0,
   lives: 3,
   sixtyDuration: 60,
-  wrongPenalty: 5,
+  /**
+   * Thử thách 60 giây, chống spam (23/10): bấm sai thì "chập mạch", khoá nút trong `sixtyLockout` giây
+   * (gói ngừng rơi trong lúc khoá) và trừ đúng số điểm câu đó lẽ ra được cộng (10 × hệ số hiện tại).
+   */
+  sixtyLockout: 0.8,
   basePoints: 10,
   comboStep: 5,
   maxMultiplier: 4,
