@@ -4,6 +4,8 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Góc học tập (màn chính): sơ đồ tư duy điện - điện tử 6 nhánh / 29 ý có liên kết sang linh kiện 3D và màn chơi; trắc nghiệm 10 câu (32 câu lý thuyết + 7 dạng câu tính toán đổi số mỗi lượt) có lời giải, xem lại câu sai, lưu kỷ lục (`learn` trong dữ liệu lưu). Thư viện linh kiện chuyển vào Góc học tập.
+- Phím Esc quay lại ở các bảng; hover trên máy có chuột; bảng giữa hiện mờ dần.
 - Chế độ thứ tư LẮP RÁP: 11 màn cắm linh kiện lên bo mạch (LED + điện trở, đọc vạch màu, nút bấm, cổng AND/OR, diode, BJT, cổng NOT, tụ giữ điện, MOSFET + điện trở kéo xuống, mạch nháy 555). Bộ mô phỏng mạch điện tự viết, bộ chấm tự động, sao theo số lần cấp nguồn, lưu tiến độ `assembly` (dữ liệu cũ vẫn đọc được).
 - Màn chính: die chip 4 khối chạy vòng THIẾT KẾ → KIỂM THỬ → LẮP RÁP → VẬN HÀNH.
 - Thư viện "Linh kiện điện tử" (link ở màn chính): 11 linh kiện, mỗi cái có mô hình 3D xoay 360° và phóng to (kéo, chụm 2 ngón, lăn chuột, bàn phím), ký hiệu sơ đồ, thông số mẫu, cách nhận biết chân, liên hệ với thiết kế vi mạch. Bộ vẽ 3D tự viết trên Canvas 2D (`src/render/mesh3d.ts`), không thêm thư viện.
@@ -33,6 +35,8 @@
 - Nền tảng runtime: vòng lặp theo thời gian thực, canvas nét theo DPR (tối đa 2x), cảm ứng, âm thanh tổng hợp mở khóa bằng lần chạm đầu, tạm dừng khi ẩn tab/xoay màn hình, lưu trữ an toàn có dự phòng, màn hình lỗi có mã lỗi.
 - Overlay đo hiệu năng `?debug=1` và màn thử nghiệm kỹ thuật (thay tạm cho nút CHƠI NGAY).
 ### Đổi
+- Viết lại README: mục lục, ảnh trong game (`docs/screenshots/`), bảng tính năng, phím tắt, kỹ thuật, kiểm thử.
+- LẮP RÁP trên màn rộng: khay linh kiện và thông báo gom vào giữa.
 - Giao diện: danh sách màn rộng hết thẻ, số màn trong ô tròn (màn đã qua tô sáng, màn khoá có ổ khoá); link Huy hiệu / Linh kiện dạng viên có biểu tượng; vạch sáng ở mép trên thẻ.
 - Tách `main.ts` thành các module giao diện trong `src/ui/`; bật `noUnusedLocals`/`noUnusedParameters`, xoá code chết.
 ### Sửa

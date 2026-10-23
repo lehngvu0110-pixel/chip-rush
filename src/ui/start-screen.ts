@@ -3,7 +3,7 @@
 import { versionLabel } from '../config';
 import { DIE_BLOCKS, type BlockId } from '../modes/hub/hub-scene';
 import { action, button, el } from './dom';
-import { ICON_GEAR, ICON_MEDAL, ICON_PART, LOGO_SVG } from './icons';
+import { ICON_BOOK, ICON_GEAR, ICON_MEDAL, LOGO_SVG } from './icons';
 
 export interface StartScreenData {
   /** "26/10" */
@@ -26,7 +26,7 @@ export interface StartScreenActions {
   onDaily: () => void;
   onSettings: () => void;
   onBadges: () => void;
-  onParts: () => void;
+  onLearn: () => void;
   onPerf: () => void;
 }
 
@@ -90,10 +90,11 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
   badgeLink.append(el('span', '', `Huy hiệu ${d.badges.earned}/${d.badges.total}`));
   badgeLink.setAttribute('aria-label', `Huy hiệu: đã đạt ${d.badges.earned} trên ${d.badges.total}`);
   const links = el('div', 'start-links');
-  const partsLink = action('btn-chip parts-link', '', a.onParts);
-  partsLink.innerHTML = ICON_PART;
-  partsLink.append(el('span', '', 'Linh kiện điện tử'));
-  links.append(badgeLink, partsLink);
+  const learnLink = action('btn-chip learn-link', '', a.onLearn);
+  learnLink.innerHTML = ICON_BOOK;
+  learnLink.append(el('span', '', 'Góc học tập'));
+  learnLink.setAttribute('aria-label', 'Góc học tập: sơ đồ tư duy, trắc nghiệm, linh kiện 3D');
+  links.append(badgeLink, learnLink);
 
   // Màn đo hiệu năng chỉ dành cho nhóm phát triển
   const perf = action('btn-link', 'Đo hiệu năng (dành cho nhóm phát triển)', a.onPerf);

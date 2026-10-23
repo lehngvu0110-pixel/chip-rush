@@ -22,7 +22,8 @@ export function partsListCard(o: { onPick: (id: PartId) => void; onBack: () => v
     if (p.id === o.focusId) focus = b;
     list.append(b);
   }
-  const back = action('btn-secondary', 'Về màn chính', o.onBack);
+  const back = action('btn-secondary', 'Về Góc học tập', o.onBack);
+  back.dataset.back = '';
   card.append(list, back);
   return { card, focus: focus ?? back };
 }
@@ -81,6 +82,7 @@ export function partDetailCard(p: Part, d: PartDetailDeps): { card: HTMLDivEleme
   const nextBtn = action('btn-secondary btn-small', `${next.name} ›`, () => d.onPick(next.id));
   nextBtn.setAttribute('aria-label', `Linh kiện sau: ${next.name}`);
   const list = action('btn-small', 'Danh sách', d.onList);
+  list.dataset.back = '';
   nav.append(prevBtn, list, nextBtn);
   card.append(body, nav);
   return { card, focus: list };

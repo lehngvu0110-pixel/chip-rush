@@ -1,7 +1,7 @@
 // Dữ liệu lưu bị hỏng từng phần: chỉ mất phần hỏng, phần còn lại giữ nguyên; ghi tiến độ đè lên vẫn chạy.
 import { describe, expect, it } from 'vitest';
 import { beatAiLevels } from '../src/core/badges';
-import { assemblyUnlocked, defaultSave, loadSave, recordAssembly, recordDebug, recordDesign } from '../src/core/progress';
+import { assemblyUnlocked, defaultSave, loadSave, recordAssembly, recordDebug, recordDesign, recordQuiz } from '../src/core/progress';
 import type { SafeStorage } from '../src/platform/storage';
 
 const mk = (raw: unknown): SafeStorage => ({ get: () => raw, set: () => true, remove: () => {}, onPersistenceLost: () => {} }) as unknown as SafeStorage;
@@ -68,5 +68,19 @@ describe('LẮP RÁP (thêm 22/10)', () => {
     expect(recordAssembly(d, 'a01', 3, 1)).toBe(true);
     expect(d.assembly.a01).toEqual({ stars: 3, powerOns: 1 });
     expect(assemblyUnlocked(d, ids, 1)).toBe(true);
+  });
+});
+
+describe('Góc học tập (thêm 23/10)', () => {
+  it('dữ liệu cũ chưa có mục learn → chưa có kỷ lục; giá trị lạ bị kẹp', () => {
+    expect(loadSave(mk({ version: 1 })).data.learn).toEqual({ quizBest: null, quizPlayed: 0 });
+    expect(loadSave(mk({ version: 1, learn: { quizBest: 99, quizPlayed: 'x' } })).data.learn).toEqual({ quizBest: 10, quizPlayed: 0 });
+  });
+  it('ghi lượt trắc nghiệm: đếm lượt, chỉ báo kỷ lục khi cao hơn', () => {
+    const d = defaultSave();
+    expect(recordQuiz(d, 6)).toBe(true);
+    expect(recordQuiz(d, 5)).toBe(false);
+    expect(recordQuiz(d, 8)).toBe(true);
+    expect(d.learn).toEqual({ quizBest: 8, quizPlayed: 3 });
   });
 });

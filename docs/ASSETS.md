@@ -9,6 +9,7 @@ Mọi file không phải mã nguồn tự viết đều phải có một dòng �
 | `public/favicon.svg` | Icon | Tự vẽ bằng SVG trong repo | Nhóm CHIP RUSH (với trợ lý AI) | MIT | Hình con chip đơn giản |
 | `src/ui/icons.ts` (logo, nút dừng/âm thanh, ngôi sao) | SVG nội tuyến | Viết tay bằng mã SVG trong repo | Nhóm CHIP RUSH (với trợ lý AI) | MIT | Logo = vỏ chip + tia chớp; không dùng công cụ tạo ảnh AI |
 | `docs/submission/demo.mp4`, `docs/demo.gif` | Video/ảnh động demo | Quay từ chính game bằng `tools/demo-video.mjs` (Playwright + ffmpeg); chữ chú thích chèn bằng HTML lúc quay | Nhóm CHIP RUSH (với trợ lý AI) | MIT | Không dùng AI tạo hình/âm thanh; video không có tiếng |
+| `docs/screenshots/*.png` | Ảnh trong game cho README | Chụp từ chính game bằng Playwright, thu nhỏ còn 360 px | Nhóm CHIP RUSH (với trợ lý AI) | MIT | Không dùng công cụ tạo ảnh AI |
 | `docs/submission/*.png` (logo PNG, ảnh in-game, ảnh bìa) | Ảnh nộp bài | Chụp/kết xuất từ chính game bằng `tools/submission-assets.mjs` (Playwright) | Nhóm CHIP RUSH (với trợ lý AI) | MIT | Logo PNG = `LOGO_SVG` kết xuất; ảnh bìa ghép từ ảnh chụp game thật; không dùng công cụ tạo ảnh AI |
 
 Âm thanh: tổng hợp bằng Web Audio trong code, không dùng file âm thanh.

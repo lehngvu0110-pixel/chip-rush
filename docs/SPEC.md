@@ -112,6 +112,11 @@ Làm rõ khi cài đặt (08/10, **chờ Vũ duyệt**, không đổi luật đ�
 - **Mở khoá:** a01 mở từ đầu; màn sau mở khi qua màn trước.
 - **Mô hình linh kiện:** LED sụt 2 V, cháy khi > 30 mA; diode 0,7 V; BJT β = 150 (cháy khi dòng base > 50 mA), cắm ngược thì không dẫn C-E; MOSFET mở khi U G-S > 3 V, có điện dung cổng 1 nF; tụ hoá ngược cực thì phồng; IC 555 đổi trạng thái theo điện áp bước trước, chân thấp hơn GND > 0,5 V thì cháy (cắm ngược).
 
+## 4c. Góc học tập
+- **Không ảnh hưởng điểm, sao hay huy hiệu** của 4 chế độ; chỉ lưu kỷ lục trắc nghiệm (`learn.quizBest`, số câu đúng / 10) và số lượt đã làm.
+- **Sơ đồ tư duy:** gốc "Điện - Điện tử", 6 nhánh, mỗi nhánh 4-5 ý (`src/core/learn/mindmap.ts`). Chạm nhánh để mở, chạm ý để đọc; ý có liên kết thì mở linh kiện 3D hoặc chế độ chơi tương ứng.
+- **Trắc nghiệm:** 10 câu mỗi lượt, khoảng 60% câu soạn sẵn (không lặp trong lượt) và 40% câu tính toán sinh ngẫu nhiên; lọc theo 4 chủ đề hoặc trộn. Thứ tự phương án được xáo. Sao: ≥ 9 câu đúng 3 sao, ≥ 7 câu 2 sao, ≥ 5 câu 1 sao.
+
 ## 5. AI & solver
 
 Chỉ nói "tối ưu"/"tối thiểu" khi thuật toán đã duyệt hết không gian. Cả ba đều là AI cổ điển (tìm kiếm, thống kê trực tuyến), không phải LLM.
@@ -161,6 +166,7 @@ Cài đặt: `src/ai/debug-solver.ts`, chạy offline trong `tools/solve-levels.
 | 07/10/2026 | Lưới THIẾT KẾ | Làm rõ, chờ duyệt | Dây theo cạnh, cắt nhau cùng lớp = chập, cổng 1 ô có chân theo phía, cách tính Area |
 | 12/10/2026 | Daily Chip | Làm sớm + làm rõ, chờ duyệt | Có từ trước 26/10 (quay vòng), cách sinh đề, luật chuỗi ngày, `daily.history` |
 | 17/10/2026 | Huy hiệu | Thêm, chờ duyệt | 12 huy hiệu xuyên 3 chế độ, điều kiện trong `src/core/badges.ts`; trao bù im lặng cho dữ liệu cũ; xoá tiến độ thì xoá cả huy hiệu |
+| 23/10/2026 | Góc học tập | Thêm, chờ duyệt | Mục 4c; dữ liệu lưu thêm `learn`, dữ liệu cũ không cần chuyển đổi |
 | 23/10/2026 | LẮP RÁP | Thêm, chờ duyệt | Chế độ thứ tư, luật ở mục 4b; dữ liệu lưu thêm `assembly`, dữ liệu cũ không cần chuyển đổi |
 | 22/10/2026 | Thư viện linh kiện | Thêm, chờ duyệt | Mục học tập ngoài 3 chế độ, không ảnh hưởng điểm, sao, huy hiệu hay dữ liệu lưu; nội dung trong `src/core/parts/catalog.ts` |
 | 13/10/2026 | Câu hiển thị 5.4 | Sửa câu, không đổi luật | Thêm "với cách ghép cổng này": "tối ưu" của solver chỉ chứng minh cho mạch logic của AI (5.1); người chơi ghép cổng khác vẫn có thể có C thấp hơn, câu cũ nói quá. |

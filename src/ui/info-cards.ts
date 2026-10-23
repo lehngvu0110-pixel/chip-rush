@@ -39,7 +39,9 @@ export function levelListCard(o: { title: string; note: string; items: LevelItem
     b.addEventListener('click', it.onPick);
     list.append(b);
   }
-  card.append(list, action('btn-secondary', 'Về màn chính', o.onBack));
+  const backBtn = action('btn-secondary', 'Về màn chính', o.onBack);
+  backBtn.dataset.back = '';
+  card.append(list, backBtn);
   return card;
 }
 
@@ -79,6 +81,7 @@ export function aiInfoCard(onBack: () => void): { card: HTMLDivElement; focus: H
   );
   body.append(extLink('repo-link', 'Xem nhật ký AI trên GitHub', AI_LOG_URL));
   const close = action('btn-primary', 'Đã hiểu', onBack);
+  close.dataset.back = '';
   card.append(body, close);
   return { card, focus: close };
 }
@@ -137,6 +140,7 @@ export function settingsCard(d: SettingsDeps): { card: HTMLDivElement; focus: HT
     d.onReset();
   });
   const close = action('btn-primary', 'Xong', d.onClose);
+  close.dataset.back = '';
   card.append(reset, close);
   return { card, focus: close };
 }
@@ -163,6 +167,7 @@ export function badgesCard(items: { name: string; desc: string; earned: string |
     list.append(li);
   }
   const close = action('btn-primary', 'Về màn chính', onBack);
+  close.dataset.back = '';
   card.append(list, close);
   return { card, focus: close };
 }
