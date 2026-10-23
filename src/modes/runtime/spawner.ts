@@ -49,13 +49,57 @@ export function isUnique(cell: Cell, gates: readonly GateType[]): boolean {
   return makePacket(cell, gates).validGates.length === 1;
 }
 
+/**
+ * Bảng gói "công bằng" cho Thử thách 60 giây (chống spam, 23/10): chọn ô theo trọng số sao cho với MỌI cổng đã mở,
+ * cổng đó chỉ là đáp án đúng ở tối đa 50% số gói. Vì vậy bấm mãi một cổng (hoặc bấm ngẫu nhiên) chỉ đúng ≤ 50%,
+ * kết hợp phạt đối xứng (sai trừ đúng số điểm lẽ ra được cộng) thì kỳ vọng điểm của đoán bừa ≤ 0.
+ * 50% là mức thấp nhất có thể: gói nào cũng có ít nhất 1 cổng đúng, nên với 2 cổng thì tổng tỉ lệ đúng ≥ 100%.
+ * Mỗi dòng: [ô, trọng số]; tests/runtime-game.test.ts kiểm tra lại giới hạn 50% bằng chính makePacket().
+ */
+export const FAIR_CELLS: Record<string, [Cell, number][]> = {
+  // {AND} khi A ≠ B và mục tiêu 0; {OR} khi A ≠ B và mục tiêu 1
+  'AND,OR': [
+    [{ gate: 'AND', a: 0, b: 1 }, 0.25],
+    [{ gate: 'AND', a: 1, b: 0 }, 0.25],
+    [{ gate: 'OR', a: 0, b: 1 }, 0.25],
+    [{ gate: 'OR', a: 1, b: 0 }, 0.25],
+  ],
+  // {AND}, {OR, XOR}, {AND, OR}, {XOR} mỗi loại 25%
+  'AND,OR,XOR': [
+    [{ gate: 'AND', a: 0, b: 1 }, 0.125],
+    [{ gate: 'AND', a: 1, b: 0 }, 0.125],
+    [{ gate: 'OR', a: 0, b: 1 }, 0.125],
+    [{ gate: 'OR', a: 1, b: 0 }, 0.125],
+    [{ gate: 'AND', a: 1, b: 1 }, 0.25],
+    [{ gate: 'XOR', a: 1, b: 1 }, 0.25],
+  ],
+  // {NAND}, {AND}, {AND, OR}, {XOR, NAND} mỗi loại 25%
+  'AND,OR,XOR,NAND': [
+    [{ gate: 'NAND', a: 0, b: 0 }, 0.25],
+    [{ gate: 'AND', a: 0, b: 1 }, 0.125],
+    [{ gate: 'AND', a: 1, b: 0 }, 0.125],
+    [{ gate: 'AND', a: 1, b: 1 }, 0.25],
+    [{ gate: 'XOR', a: 1, b: 1 }, 0.25],
+  ],
+};
+
 export class Spawner {
   constructor(
     private readonly rng: Rng,
     private readonly adaptive: AdaptiveDifficulty | null,
+    /** dùng bảng FAIR_CELLS (Thử thách 60 giây) */
+    private readonly fair = false,
   ) {}
 
   next(gates: readonly GateType[]): Packet {
+    const table = this.fair ? FAIR_CELLS[gates.join(',')] : undefined;
+    if (table) {
+      let r = this.rng();
+      for (const [cell, w] of table) {
+        if ((r -= w) < 0) return makePacket(cell, gates);
+      }
+      return makePacket(table[table.length - 1]![0], gates);
+    }
     const cells = allCells(gates);
     const unique = cells.filter((c) => isUnique(c, gates));
     // Với xác suất uniqueRatio chỉ chọn trong ô 1 đáp án; phần còn lại chọn trong mọi ô

@@ -40,6 +40,7 @@
 - Giao diện: danh sách màn rộng hết thẻ, số màn trong ô tròn (màn đã qua tô sáng, màn khoá có ổ khoá); link Huy hiệu / Linh kiện dạng viên có biểu tượng; vạch sáng ở mép trên thẻ.
 - Tách `main.ts` thành các module giao diện trong `src/ui/`; bật `noUnusedLocals`/`noUnusedParameters`, xoá code chết.
 ### Sửa
+- Thử thách 60 giây: bấm liên tục một đáp án không còn lên điểm (trước: đạt 84% điểm người chơi thật, nay khoảng 3%). Sinh gói công bằng (mỗi cổng đúng ≤ 50%), sai trừ đúng số điểm lẽ ra được cộng, bấm sai bị "chập mạch" khoá nút 0,8 s có thanh đếm ngược; trình đọc màn hình không còn báo "còn 3 mạng" ở chế độ 60 giây.
 - Rà soát code 21/10 (B-02 → B-09): phím tắt không còn tác động lên lưới khi thẻ kết quả/tạm dừng đang mở; bấm KIỂM TRA 2 lần không ghi 2 kết quả; ngón tay thứ hai không cắt nét vẽ; 2 tab không ghi đè tiến độ của nhau; dữ liệu lưu hỏng không còn tạo chi phí 0 giả; `?date=` chỉ nhận ngày có thật; VẬN HÀNH bỏ qua lặp phím và tổ hợp Ctrl/Cmd; bộ đệm quầng sáng có giới hạn.
 - VẬN HÀNH đọc được bằng trình đọc màn hình (vùng `aria-live`); thẻ kết quả/tạm dừng là hộp thoại `aria-modal`.
 - Dữ liệu lưu hỏng ở một màn làm game văng lỗi khi qua màn đó; nay mục hỏng bị bỏ khi đọc (B-01).

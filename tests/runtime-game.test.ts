@@ -3,7 +3,7 @@ import { RUNTIME } from '../src/config';
 import { fixedFallTime, multiplier, pointsFor } from '../src/core/scoring/runtime';
 import { createRng, vnDateSeed } from '../src/core/util/rng';
 import { AdaptiveDifficulty, sampleBeta, type Cell } from '../src/ai/adaptive';
-import { RUNTIME_GATES, Spawner, allCells, isUnique, makePacket, unlockedGates } from '../src/modes/runtime/spawner';
+import { FAIR_CELLS, RUNTIME_GATES, Spawner, allCells, isUnique, makePacket, unlockedGates } from '../src/modes/runtime/spawner';
 import { RuntimeGame, type GameEvent } from '../src/modes/runtime/game';
 import type { GateType } from '../src/core/circuit/types';
 
@@ -78,7 +78,12 @@ const answerRight = (g: RuntimeGame) => g.answer(g.packet.validGates[0] as GateT
 /** Trả lời sai: chọn cổng đã mở mà KHÔNG cho đúng bit (luôn tồn tại vì AND và OR khác nhau ở 01). */
 function answerWrong(g: RuntimeGame): boolean {
   const wrong = g.unlocked.find((x) => !g.packet.validGates.includes(x));
-  if (wrong) return g.answer(wrong);
+  if (wrong) {
+    const ok = g.answer(wrong);
+    // Thử thách 60 giây: chờ hết "chập mạch" để câu sau được nhận
+    if (g.lockLeft > 0) g.update(g.lockLeft);
+    return ok;
+  }
   g.update(g.fall + 0.01); // gói mà mọi cổng đều đúng: để rơi chạm khe = trượt
   return true;
 }
@@ -156,20 +161,59 @@ describe('RuntimeGame – Vô tận', () => {
 });
 
 describe('RuntimeGame – Thử thách 60 giây', () => {
-  it('hết 60 s thì kết thúc; sai không mất mạng mà trừ 5 điểm, không xuống dưới 0', () => {
+  it('hết 60 s thì kết thúc; sai không mất mạng mà trừ đúng số điểm lẽ ra được cộng, không xuống dưới 0', () => {
     const g = new RuntimeGame('sixty', 8);
     answerWrong(g);
     expect(g.score).toBe(0);
     expect(g.lives).toBe(RUNTIME.lives);
-    for (let i = 0; i < 3; i++) answerRight(g);
+    for (let i = 0; i < 6; i++) answerRight(g);
+    expect(g.score).toBe(70); // 5 câu × 10 + câu thứ 6 hệ số 2 = 20
     answerWrong(g);
-    expect(g.score).toBe(25);
+    expect(g.score).toBe(50); // câu này lẽ ra được 10 × 2 = 20 → trừ 20
     for (let t = 0; t < 61 && !g.ended; t += 0.1) {
       g.update(0.1);
       if (g.progress > 0.5) answerRight(g);
     }
     expect(g.ended).toBe(true);
     expect(g.timeLeft).toBe(0);
+  });
+
+  it('bấm sai thì chập mạch: khoá nút, gói ngừng rơi, đồng hồ vẫn chạy; trượt (không bấm) thì không khoá', () => {
+    const g = new RuntimeGame('sixty', 12);
+    const wrong = g.unlocked.find((x) => !g.packet.validGates.includes(x))!;
+    expect(g.answer(wrong)).toBe(true);
+    expect(g.lockLeft).toBe(RUNTIME.sixtyLockout);
+    expect(answerRight(g)).toBe(false); // đang khoá: không nhận
+    const before = { progress: g.progress, elapsed: g.elapsed };
+    g.update(0.5);
+    expect(g.progress).toBe(before.progress);
+    expect(g.elapsed).toBeCloseTo(before.elapsed + 0.5);
+    g.update(RUNTIME.sixtyLockout);
+    expect(g.lockLeft).toBe(0);
+    expect(answerRight(g)).toBe(true);
+    // để gói rơi chạm đáy: sai nhưng không khoá
+    g.update(g.fall + 0.01);
+    expect(g.lockLeft).toBe(0);
+  });
+
+  it('bảng gói công bằng: mỗi cổng đã mở là đáp án đúng ở tối đa 50% số gói, cổng nào cũng có lúc đúng', () => {
+    for (const [key, table] of Object.entries(FAIR_CELLS)) {
+      const gates = key.split(',') as GateType[];
+      expect(gates).toEqual(unlockedGates({ 'AND,OR': 0, 'AND,OR,XOR': 100, 'AND,OR,XOR,NAND': 250 }[key]!));
+      expect(table.reduce((s, [, w]) => s + w, 0)).toBeCloseTo(1, 9);
+      for (const gate of gates) {
+        const share = table.reduce((s, [cell, w]) => s + (makePacket(cell, gates).validGates.includes(gate) ? w : 0), 0);
+        expect(share, `${key}: ${gate}`).toBeLessThanOrEqual(0.5 + 1e-9);
+        expect(share, `${key}: ${gate}`).toBeGreaterThan(0);
+      }
+    }
+    // Spawner chế độ công bằng thật sự rút theo bảng (tần suất thực tế ≈ trọng số)
+    const sp = new Spawner(createRng(3), null, true);
+    const gates = unlockedGates(250);
+    let andValid = 0;
+    const N = 20_000;
+    for (let i = 0; i < N; i++) if (sp.next(gates).validGates.includes('AND')) andValid++;
+    expect(andValid / N).toBeCloseTo(0.5, 1);
   });
 
   it('dùng đường tăng tốc cố định theo số câu đúng', () => {

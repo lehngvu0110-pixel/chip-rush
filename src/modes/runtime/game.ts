@@ -48,6 +48,8 @@ export class RuntimeGame {
   packet: Packet;
   ended = false;
   paused = false;
+  /** Thử thách 60 giây: còn bao nhiêu giây "chập mạch" (khoá nút, gói ngừng rơi) sau một lần bấm sai */
+  lockLeft = 0;
 
   private bestScore = 0;
   private gates: GateType[];
@@ -63,7 +65,7 @@ export class RuntimeGame {
   ) {
     // Thử thách 60 giây TẮT thích nghi để mọi người cùng seed gặp cùng chuỗi gói (so điểm công bằng).
     this.adaptive = mode === 'endless' ? new AdaptiveDifficulty() : null;
-    this.spawner = new Spawner(createRng(seed), this.adaptive);
+    this.spawner = new Spawner(createRng(seed), this.adaptive, mode === 'sixty');
     this.gates = unlockedGates(0);
     this.packet = this.spawner.next(this.gates);
   }
@@ -84,13 +86,18 @@ export class RuntimeGame {
       this.finish();
       return;
     }
+    if (this.lockLeft > 0) {
+      // đang chập mạch: đồng hồ 60 s vẫn chạy (cái giá của bấm sai), gói thì đứng yên
+      this.lockLeft = Math.max(0, this.lockLeft - dt);
+      return;
+    }
     this.progress += dt / this.fall;
     if (this.progress >= 1) this.resolve(false, null);
   }
 
   /** Người chơi chọn cổng. Trả về true nếu câu trả lời được nhận (không bị bỏ qua). */
   answer(gate: GateType): boolean {
-    if (this.ended || this.paused || !this.gates.includes(gate)) return false;
+    if (this.ended || this.paused || this.lockLeft > 0 || !this.gates.includes(gate)) return false;
     this.resolve(this.packet.validGates.includes(gate), gate);
     return true;
   }
@@ -136,6 +143,8 @@ export class RuntimeGame {
       this.bestCombo = Math.max(this.bestCombo, this.combo);
       this.events.push({ type: 'correct', points, gate: chosen as GateType, multiplier: mult });
     } else {
+      // điểm câu này lẽ ra được cộng: Thử thách 60 giây trừ đúng chừng ấy (phạt đối xứng, chống đoán bừa)
+      const lost = pointsFor(this.combo);
       this.combo = 0;
       this.events.push(chosen ? { type: 'wrong', chosen, expected: p.validGates } : { type: 'miss', expected: p.validGates });
       // Minh bạch: khi AI bắt đầu nhắm vào điểm yếu thì nói cho người chơi biết
@@ -151,7 +160,9 @@ export class RuntimeGame {
           return;
         }
       } else {
-        this.score = Math.max(0, this.score - RUNTIME.wrongPenalty);
+        this.score = Math.max(0, this.score - lost);
+        // chỉ khoá khi người chơi BẤM sai; để gói rơi chạm đáy thì không bấm gì nên không cần khoá
+        if (chosen) this.lockLeft = RUNTIME.sixtyLockout;
       }
     }
 

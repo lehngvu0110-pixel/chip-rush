@@ -217,7 +217,9 @@ export class RuntimeScene implements Scene {
           this.floats = [];
           // Gói mới đã xuất hiện nên ghi rõ đây là đáp án của gói VỪA RỒI
           this.hintExpected = { text: `${ev.type === 'miss' ? 'Chậm quá! ' : ''}Gói vừa rồi cần: ${ev.expected.join(' / ')}`, t: 1.4 };
-          this.srPrefix = `${ev.type === 'miss' ? 'Hết giờ' : 'Sai'}, cần ${ev.expected.join(' hoặc ')}. Còn ${this.game.lives} mạng. `;
+          this.srPrefix = `${ev.type === 'miss' ? 'Hết giờ' : 'Sai'}, cần ${ev.expected.join(' hoặc ')}. ${
+            this.game.mode === 'endless' ? `Còn ${this.game.lives} mạng.` : `Bị trừ điểm${ev.type === 'wrong' ? `, khoá nút ${String(RUNTIME.sixtyLockout).replace('.', ',')} giây` : ''}.`
+          } `;
           break;
         case 'unlock':
           this.audio.play('unlock');
@@ -404,6 +406,7 @@ export class RuntimeScene implements Scene {
 
     // --- 4 nút cổng ---
     for (const [i, b] of L.buttons.entries()) this.drawButton(s, b.gate, b.rect, i + 1);
+    if (this.game.lockLeft > 0) this.drawLockout(s);
 
     // viền đỏ khi sai (gradient ở 2 mép, rẻ hơn blur)
     if (this.vignette > 0) {
@@ -621,6 +624,49 @@ export class RuntimeScene implements Scene {
     ctx.lineWidth = 1;
     ctx.stroke();
     bit('CẦN RA', target, pins[2], THEME.accent);
+  }
+
+  /** Thử thách 60 giây: bấm sai → "chập mạch", phủ tối 4 nút + thanh đếm ngược (chống spam, SPEC 1). */
+  private drawLockout(s: RenderSurface): void {
+    const ctx = s.ctx;
+    const bs = this.layout.buttons.map((b) => b.rect);
+    const x0 = Math.min(...bs.map((r) => r.x));
+    const y0 = Math.min(...bs.map((r) => r.y));
+    const x1 = Math.max(...bs.map((r) => r.x + r.w));
+    const k = this.game.lockLeft / RUNTIME.sixtyLockout;
+    ctx.save();
+    for (const r of bs) {
+      roundRectPath(ctx, r.x, r.y, r.w, r.h, 14);
+      ctx.fillStyle = 'rgba(5,8,18,0.72)';
+      ctx.fill();
+      ctx.strokeStyle = rgba(THEME.error, 0.8);
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 5]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      // thanh đếm ngược rút dần
+      ctx.fillStyle = THEME.error;
+      ctx.fillRect(r.x + 10, r.y + r.h - 9, (r.w - 20) * k, 4);
+    }
+    // nhãn nền đặc nằm giữa cụm nút (không đè lên ổ cắm phía trên)
+    const text = `CHẬP MẠCH! Khoá ${this.game.lockLeft.toFixed(1).replace('.', ',')} s`;
+    ctx.font = `700 15px ${THEME.font}`;
+    const tw = Math.min(x1 - x0 - 16, ctx.measureText(text).width + 28);
+    const cx = (x0 + x1) / 2;
+    const cy = (y0 + Math.max(...bs.map((r) => r.y + r.h))) / 2;
+    roundRectPath(ctx, cx - tw / 2, cy - 17, tw, 34, 17);
+    ctx.fillStyle = '#1c0a14';
+    ctx.fill();
+    ctx.strokeStyle = THEME.error;
+    ctx.lineWidth = 2;
+    ctx.globalAlpha = this.reduced ? 1 : 0.7 + 0.3 * Math.sin(this.time * 18) ** 2;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#ffd0de';
+    ctx.fillText(text, cx, cy + 1, tw - 20);
+    ctx.restore();
   }
 
   private drawButton(s: RenderSurface, gate: GateType, r: Rect, key: number): void {

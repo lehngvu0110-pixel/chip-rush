@@ -44,7 +44,7 @@ Màn chính là một con chip nhìn từ trên xuống, chia 4 khối chạy v�
 | **THIẾT KẾ** | Kéo ngón tay vẽ dây, đặt cổng logic, làm đèn sáng đúng bảng chân trị; chấm theo chi phí PPA so với AI kỹ sư | 12 | Đi dây, bảng chân trị, via 2 lớp, bộ cộng, PPA |
 | **KIỂM THỬ** | Chip vừa sản xuất có 1 lỗi ẩn; đo các điểm trên mạch để tìm ra, càng ít lần đo càng nhiều sao | 9 | Đo kiểm (probing), mô hình lỗi stuck-at và đảo cổng, lớp lỗi tương đương |
 | **LẮP RÁP** | Cắm linh kiện từ khay lên bo mạch, xoay đúng chiều, bấm CẤP NGUỒN; mạch chạy bằng mô phỏng thật | 11 | Định luật Ohm, mã màu điện trở, cực LED/diode/tụ hoá, AND/OR bằng công tắc, BJT, MOSFET, cổng NOT, hằng số RC, IC 555 |
-| **VẬN HÀNH** | Arcade phản xạ: chọn cổng AND/OR/XOR/NAND trước khi gói bit chạm ổ cắm; Vô tận hoặc Thử thách 60 giây | Vô tận | Cổng logic |
+| **VẬN HÀNH** | Arcade phản xạ: chọn cổng AND/OR/XOR/NAND trước khi gói bit chạm ổ cắm; Vô tận (3 mạng) hoặc Thử thách 60 giây (bấm sai bị "chập mạch" khoá 0,8 s, nên bấm bừa không lên điểm) | Vô tận | Cổng logic |
 
 Trong LẮP RÁP, linh kiện quá tải sẽ bốc khói. Khi có điện, bạn có thể ấn giữ nút nhấn ngay trên bo, hoặc chạm một linh kiện để đo dòng và điện áp như dùng đồng hồ vạn năng.
 
@@ -108,7 +108,7 @@ Giới hạn và cách kiểm chứng xem [`docs/SPEC.md` mục 5](docs/SPEC.md)
 
 | Loại | Hiện tại | Giới hạn |
 | --- | --- | --- |
-| JavaScript | 96 KB | 120 KB |
+| JavaScript | 97 KB | 120 KB |
 | CSS | 6 KB | 15 KB |
 | Font | 53 KB | 60 KB |
 | Tổng lần tải đầu | 157 KB | 200 KB |
@@ -152,12 +152,13 @@ npm run e2e        # test đầu-cuối trên bản build (Android Chromium + iP
 ```
 
 ## Kiểm thử
-- **494 unit test** (Vitest), gồm:
+- **502 unit test** (Vitest), gồm:
   - luật chơi, solver AI;
   - bộ mô phỏng mạch so với kết quả tính tay (Ohm, β·Ib, nạp RC, tần số 555);
   - hình học bo mạch LẮP RÁP: đường đồng nối đúng lưới điện, lời giải chạy được, lỗi hay gặp bị chấm trượt;
-  - đáp án câu trắc nghiệm tính toán khớp công thức.
-- **43 test đầu-cuối** (Playwright) trên bản build: chơi trọn từng chế độ, chơi bằng bàn phím, nhiều cỡ màn hình, dữ liệu lưu hỏng, bộ nhớ đầy, chạm ngẫu nhiên.
+  - đáp án câu trắc nghiệm tính toán khớp công thức;
+  - chống spam ở Thử thách 60 giây: bot bấm bừa không kiếm được điểm.
+- **44 test đầu-cuối** (Playwright) trên bản build: chơi trọn từng chế độ, chơi bằng bàn phím, nhiều cỡ màn hình, dữ liệu lưu hỏng, bộ nhớ đầy, chạm ngẫu nhiên.
 - **axe-core (WCAG 2.1 AA): 0 lỗi** trên các màn chính.
 - Thiết bị thật và số đo hiệu năng ghi ở [docs/TESTING.md](docs/TESTING.md).
 

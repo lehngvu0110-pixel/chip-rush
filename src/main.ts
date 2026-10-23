@@ -617,6 +617,7 @@ function boot(root: HTMLElement): void {
           packet: { a: game.packet.a, b: game.packet.b, target: game.packet.target },
           fall: game.fall,
           timeLeft: game.timeLeft,
+          lockLeft: game.lockLeft,
         };
       },
       // vị trí 4 nút cổng (CSS px) để test bấm bằng chạm thật lên canvas
