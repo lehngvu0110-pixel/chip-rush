@@ -8,7 +8,7 @@ import { attachPointer } from './input/pointer';
 import { createSafeStorage } from './platform/storage';
 import { watchVisibility } from './platform/visibility';
 import { installGlobalErrorHandlers, showErrorScreen } from './platform/errors';
-import { assemblyUnlocked, debugUnlocked, defaultSave, designUnlocked, loadSave, recordAssembly, recordDebug, recordDesign, recordRuntimeScore, SAVE_KEY, writeSave } from './core/progress';
+import { assemblyUnlocked, debugUnlocked, defaultSave, designUnlocked, loadSave, recordAssembly, recordDebug, recordDesign, recordQuiz, recordRuntimeScore, SAVE_KEY, writeSave } from './core/progress';
 import { ASSEMBLY_LEVELS } from './core/assembly/levels';
 import type { AsmLevel } from './core/assembly/board';
 import { AssemblyScene, type AssemblyResult } from './modes/assembly/assembly-scene';
@@ -34,6 +34,8 @@ import { createShareButtonFactory } from './ui/share-button';
 import { assemblyResultCard, debugResultCard, designResultCard, dailyResultCard, runtimeResultCard, type Card, type PassResult } from './ui/result-cards';
 import { aiInfoCard, badgesCard, levelListCard, settingsCard } from './ui/info-cards';
 import { partDetailCard, partsListCard } from './ui/parts-cards';
+import { learnHubCard, mindmapCard, quizCard } from './ui/learn-cards';
+import type { MindLink } from './core/learn/mindmap';
 import { partById, type PartId } from './core/parts/catalog';
 
 // Điểm vào của game: dựng canvas + vòng lặp, giữ trạng thái chung (tiến độ, âm thanh, scene đang chạy)
@@ -460,13 +462,47 @@ function boot(root: HTMLElement): void {
   // 7e. Thư viện linh kiện: danh sách → thẻ chi tiết có mô hình 3D xoay 360°
   const showParts = (focusId?: PartId): void => {
     setScene(new TitleScene());
-    const { card, focus } = partsListCard({ onPick: showPart, onBack: showStart, focusId });
+    const { card, focus } = partsListCard({ onPick: showPart, onBack: showLearn, focusId });
     showPanel(card, focus);
   };
   const showPart = (id: PartId): void => {
     const part = partById(id);
     if (!part) return showParts();
     const { card, focus } = partDetailCard(part, { reducedMotion: surface.reducedMotion, onPick: showPart, onList: () => showParts(id) });
+    showPanel(card, focus);
+  };
+  // 7f. Góc học tập: sơ đồ tư duy, trắc nghiệm, thư viện linh kiện
+  const showLearn = (): void => {
+    setScene(new TitleScene());
+    const { card, focus } = learnHubCard({ quizBest: save.learn.quizBest, onMindmap: showMindmap, onQuiz: showQuiz, onParts: () => showParts(), onBack: showStart });
+    showPanel(card, focus);
+  };
+  const followLink = (l: MindLink): void => {
+    if (l.kind === 'part') return showPart(l.id);
+    if (l.id === 'design') showLevels();
+    else if (l.id === 'debug') showDebugLevels();
+    else if (l.id === 'assembly') showAssemblyLevels();
+    else startRuntime('endless');
+  };
+  const showMindmap = (): void => {
+    const { card, focus } = mindmapCard({ onLink: followLink, onBack: showLearn, reducedMotion: surface.reducedMotion });
+    showPanel(card, focus);
+  };
+  const showQuiz = (): void => {
+    const seedParam = params.has('e2e') && params.has('seed') ? Number(params.get('seed')) : NaN;
+    let round = 0;
+    const { card, focus } = quizCard({
+      best: save.learn.quizBest,
+      // ?e2e&seed= để test tái lập; còn lại mỗi lượt một đề mới
+      seed: () => (Number.isFinite(seedParam) ? seedParam + round++ : (Math.random() * 2 ** 32) >>> 0),
+      onFinish: (correct) => {
+        const rec = recordQuiz(save, correct);
+        saveProgress();
+        audio.play(rec ? 'win' : 'ting');
+        return rec;
+      },
+      onBack: showLearn,
+    });
     showPanel(card, focus);
   };
   const showSettings = (): void => {
@@ -526,7 +562,7 @@ function boot(root: HTMLElement): void {
         onDaily: startDaily,
         onSettings: showSettings,
         onBadges: showBadges,
-        onParts: () => showParts(),
+        onLearn: showLearn,
         onPerf: () => {
           void audio.unlock();
           const sandbox = new SandboxScene(audio);
@@ -621,6 +657,17 @@ function boot(root: HTMLElement): void {
   }
 
   showStart();
+
+  // Phím Esc ở các bảng (danh sách màn, Góc học tập, Cài đặt...) = bấm nút quay lại của bảng đó.
+  // Không tác động khi đang chơi (bảng tạm dừng / thẻ kết quả có nút riêng).
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape' || levelPanel.hidden) return;
+    const b = levelPanel.querySelector<HTMLButtonElement>('[data-back]');
+    if (b) {
+      e.preventDefault();
+      b.click();
+    }
+  });
 
   // Mở game ở 2 tab: tab kia lưu thì nạp lại tiến độ, để lần lưu sau của tab này không ghi đè mất
   // (trước đây "tab nào lưu sau thắng"). Sự kiện 'storage' chỉ bắn ở các tab KHÁC tab vừa ghi.

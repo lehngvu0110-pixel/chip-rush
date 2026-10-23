@@ -27,6 +27,7 @@ const litPixels = (canvas: Locator): Promise<number> =>
 
 test('Linh kiện điện tử: xem điện trở 3D, xoay, phóng to, chuyển linh kiện', async ({ page, browserName }) => {
   await page.goto('/?e2e');
+  await page.getByRole('button', { name: /^Góc học tập/ }).click();
   await page.getByRole('button', { name: 'Linh kiện điện tử' }).click();
   const list = page.getByRole('dialog', { name: 'Linh kiện điện tử' });
   await expect(list.getByRole('button', { name: /^Điện trở:/ })).toBeVisible();
@@ -73,7 +74,7 @@ test('Linh kiện điện tử: xem điện trở 3D, xoay, phóng to, chuyển 
   await expect(cap.getByRole('application', { name: /^Mô hình 3D: Tụ gốm/ })).toBeVisible();
   await cap.getByRole('button', { name: 'Danh sách' }).click();
   await expect(page.getByRole('button', { name: /^Tụ gốm:/ })).toBeFocused();
-  await page.getByRole('button', { name: 'Về màn chính' }).click();
+  await page.getByRole('button', { name: 'Về Góc học tập' }).click();
   await expect(page.getByRole('button', { name: 'Linh kiện điện tử' })).toBeVisible();
 });
 
@@ -81,6 +82,7 @@ test('Mọi linh kiện đều vẽ được mô hình, không lỗi JavaScript'
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto('/?e2e');
+  await page.getByRole('button', { name: /^Góc học tập/ }).click();
   await page.getByRole('button', { name: 'Linh kiện điện tử' }).click();
   await page.getByRole('button', { name: /^Điện trở:/ }).click();
   for (let i = 0; i < 11; i++) {

@@ -39,3 +39,12 @@ export const ICON_LOCK = svg('<rect x="5" y="11" width="14" height="10" rx="2"/>
 
 /** Linh kiện: điện trở có 2 chân (link Thư viện linh kiện). */
 export const ICON_PART = svg('<path d="M2 12h4M18 12h4"/><rect x="6" y="8" width="12" height="8" rx="3"/><path d="M9 8v8M12 8v8M15 8v8" stroke-width="1.6"/>', 18);
+
+/** Sách mở (Góc học tập). */
+export const ICON_BOOK = svg('<path d="M2 5c3-1.5 6.5-1.5 10 1 3.5-2.5 7-2.5 10-1v14c-3-1.5-6.5-1.5-10 1-3.5-2.5-7-2.5-10-1z"/><path d="M12 6v14"/>', 22);
+
+/** Sơ đồ tư duy: nút giữa toả nhánh. */
+export const ICON_MINDMAP = svg('<circle cx="12" cy="12" r="3"/><circle cx="4" cy="5" r="2"/><circle cx="20" cy="5" r="2"/><circle cx="4" cy="19" r="2"/><circle cx="20" cy="19" r="2"/><path d="M9.7 10 5.5 6.4M14.3 10l4.2-3.6M9.7 14l-4.2 3.6M14.3 14l4.2 3.6"/>', 22);
+
+/** Trắc nghiệm: phiếu có dấu tích. */
+export const ICON_QUIZ = svg('<rect x="4" y="3" width="16" height="18" rx="2"/><path d="m8 9 2 2 4-4M8 16h8"/>', 22);

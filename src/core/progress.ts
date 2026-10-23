@@ -18,6 +18,8 @@ export interface SaveData {
   badges: Record<string, string>;
   /** LẮP RÁP: sao cao nhất và số lần cấp nguồn ít nhất mỗi màn (thêm 22/10, dữ liệu cũ không có thì coi như rỗng) */
   assembly: Record<string, { stars: number; powerOns: number }>;
+  /** Góc học tập: điểm trắc nghiệm cao nhất (số câu đúng / 10) và số lượt đã làm (thêm 23/10) */
+  learn: { quizBest: number | null; quizPlayed: number };
 }
 
 export function defaultSave(): SaveData {
@@ -30,6 +32,7 @@ export function defaultSave(): SaveData {
     settings: { muted: false, reducedMotion: false },
     badges: {},
     assembly: {},
+    learn: { quizBest: null, quizPlayed: 0 },
   };
 }
 
@@ -93,7 +96,21 @@ export function loadSave(storage: SafeStorage): LoadResult {
       d.assembly[id] = { stars: stars(v.stars), powerOns: Math.max(1, Math.floor(num(v.powerOns, 1))) };
     }
   }
+  if (isObj(raw.learn)) {
+    const lb = raw.learn.quizBest;
+    d.learn = { quizBest: isNum(lb) ? Math.min(10, Math.floor(lb)) : null, quizPlayed: Math.floor(num(raw.learn.quizPlayed, 0)) };
+  }
   return { data: d, wasReset: false };
+}
+
+/** Ghi một lượt trắc nghiệm; trả về true nếu là kỷ lục mới. */
+export function recordQuiz(data: SaveData, correct: number): boolean {
+  data.learn.quizPlayed++;
+  if (data.learn.quizBest === null || correct > data.learn.quizBest) {
+    data.learn.quizBest = correct;
+    return true;
+  }
+  return false;
 }
 
 export function writeSave(storage: SafeStorage, data: SaveData): boolean {
