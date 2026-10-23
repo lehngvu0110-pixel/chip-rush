@@ -4,6 +4,8 @@
 
 ## [Chưa phát hành]
 ### Thêm
+- Chế độ thứ tư LẮP RÁP: 11 màn cắm linh kiện lên bo mạch (LED + điện trở, đọc vạch màu, nút bấm, cổng AND/OR, diode, BJT, cổng NOT, tụ giữ điện, MOSFET + điện trở kéo xuống, mạch nháy 555). Bộ mô phỏng mạch điện tự viết, bộ chấm tự động, sao theo số lần cấp nguồn, lưu tiến độ `assembly` (dữ liệu cũ vẫn đọc được).
+- Màn chính: die chip 4 khối chạy vòng THIẾT KẾ → KIỂM THỬ → LẮP RÁP → VẬN HÀNH.
 - Thư viện "Linh kiện điện tử" (link ở màn chính): 11 linh kiện, mỗi cái có mô hình 3D xoay 360° và phóng to (kéo, chụm 2 ngón, lăn chuột, bàn phím), ký hiệu sơ đồ, thông số mẫu, cách nhận biết chân, liên hệ với thiết kế vi mạch. Bộ vẽ 3D tự viết trên Canvas 2D (`src/render/mesh3d.ts`), không thêm thư viện.
 - Video demo 45 s (`docs/submission/demo.mp4`) và GIF cho README, quay tự động bằng `tools/demo-video.mjs`.
 - Bậc đồ hoạ "min": máy chậm tự vẽ ở độ phân giải thấp hơn (CPU chậm 4×: ~23 → ~47 fps trên máy ảo); công cụ `tools/perf-bench.mjs`.
@@ -31,6 +33,7 @@
 - Nền tảng runtime: vòng lặp theo thời gian thực, canvas nét theo DPR (tối đa 2x), cảm ứng, âm thanh tổng hợp mở khóa bằng lần chạm đầu, tạm dừng khi ẩn tab/xoay màn hình, lưu trữ an toàn có dự phòng, màn hình lỗi có mã lỗi.
 - Overlay đo hiệu năng `?debug=1` và màn thử nghiệm kỹ thuật (thay tạm cho nút CHƠI NGAY).
 ### Đổi
+- Giao diện: danh sách màn rộng hết thẻ, số màn trong ô tròn (màn đã qua tô sáng, màn khoá có ổ khoá); link Huy hiệu / Linh kiện dạng viên có biểu tượng; vạch sáng ở mép trên thẻ.
 - Tách `main.ts` thành các module giao diện trong `src/ui/`; bật `noUnusedLocals`/`noUnusedParameters`, xoá code chết.
 ### Sửa
 - Rà soát code 21/10 (B-02 → B-09): phím tắt không còn tác động lên lưới khi thẻ kết quả/tạm dừng đang mở; bấm KIỂM TRA 2 lần không ghi 2 kết quả; ngón tay thứ hai không cắt nét vẽ; 2 tab không ghi đè tiến độ của nhau; dữ liệu lưu hỏng không còn tạo chi phí 0 giả; `?date=` chỉ nhận ngày có thật; VẬN HÀNH bỏ qua lặp phím và tổ hợp Ctrl/Cmd; bộ đệm quầng sáng có giới hạn.

@@ -14,16 +14,19 @@ Dự thi **Phần thi Công nghệ – Road to Predator League 2027**.
 - Bản mới nhất: **https://lehngvu0110-pixel.github.io/chip-rush/** (mở trên điện thoại cho trải nghiệm đúng nhất)
 - Thêm `?debug=1` vào cuối link để hiện bảng đo hiệu năng (FPS, thời gian khung hình).
 
-## Ba chế độ
+## Bốn chế độ
 | Chế độ | Kiểu chơi | Khái niệm vi mạch |
 | --- | --- | --- |
 | VẬN HÀNH | Arcade: chọn cổng AND/OR/XOR/NAND trước khi gói bit chạm đáy | Cổng logic |
 | THIẾT KẾ | Giải đố: vẽ dây, đặt cổng, làm LED sáng đúng mọi trường hợp | Routing, bảng chân trị, via, bộ cộng, PPA |
 | KIỂM THỬ | Suy luận: đo các điểm trên mạch để tìm cổng hỏng hoặc dây kẹt | Probing, fault model (gate-invert, stuck-at), lớp lỗi tương đương |
+| LẮP RÁP | Lắp mạch: cắm linh kiện từ khay lên bo mạch, xoay đúng chiều, cấp nguồn cho mạch chạy (11 màn) | Định luật Ohm, cực LED/diode/tụ hoá, AND/OR bằng công tắc, BJT/MOSFET làm công tắc, cổng NOT, hằng số RC, IC 555 |
 
 Thêm **12 huy hiệu** xuyên 3 chế độ (ví dụ "Hơn cả AI": thiết kế rẻ hơn AI kỹ sư) và **Chip hôm nay**: mỗi ngày (giờ Việt Nam) một đề THIẾT KẾ giống nhau cho mọi người, giữ chuỗi ngày và chia sẻ điểm.
 
 **Linh kiện điện tử** (link ở màn chính): thư viện 11 linh kiện (điện trở, tụ gốm, tụ hoá, cuộn cảm, diode, LED, BJT, MOSFET, IC 555, thạch anh, nút nhấn). Mỗi linh kiện có mô hình 3D dựng bằng code, kéo để xoay 360°, chụm 2 ngón hoặc lăn chuột để phóng to; kèm ký hiệu sơ đồ, thông số, cách nhận biết chân và mục "Liên hệ với vi mạch" nối với PPA và cổng logic trong game.
+
+**LẮP RÁP** chạy trên một bộ mô phỏng mạch điện tự viết (`src/core/assembly/circuit.ts`): phân tích điện áp nút, mô hình tuyến tính từng đoạn cho diode/LED/BJT/MOSFET, tụ điện theo thời gian (Euler lùi), IC 555 theo ngưỡng 1/3-2/3. Linh kiện quá tải thì bốc khói; khi có điện có thể ấn giữ nút ngay trên bo và chạm linh kiện để đo dòng, áp. Bộ chấm tự chạy mọi trường hợp bấm nút (như bảng chân trị) và đo tần số nháy, thời gian giữ sáng.
 
 Luật chi tiết: [`docs/SPEC.md`](docs/SPEC.md).
 

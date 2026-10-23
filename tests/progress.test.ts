@@ -1,7 +1,7 @@
 // Dữ liệu lưu bị hỏng từng phần: chỉ mất phần hỏng, phần còn lại giữ nguyên; ghi tiến độ đè lên vẫn chạy.
 import { describe, expect, it } from 'vitest';
 import { beatAiLevels } from '../src/core/badges';
-import { loadSave, recordDebug, recordDesign } from '../src/core/progress';
+import { assemblyUnlocked, defaultSave, loadSave, recordAssembly, recordDebug, recordDesign } from '../src/core/progress';
 import type { SafeStorage } from '../src/platform/storage';
 
 const mk = (raw: unknown): SafeStorage => ({ get: () => raw, set: () => true, remove: () => {}, onPersistenceLost: () => {} }) as unknown as SafeStorage;
@@ -48,5 +48,25 @@ describe('rà soát 21/10', () => {
     // chi phí mới 13 < 14 → phải ghi đè best
     recordDesign(d, 'd01', { A: 5, D: 1, P: 5, C: 13 }, 2);
     expect(d.design.d01?.best).toEqual({ A: 5, D: 1, P: 5 });
+  });
+});
+
+describe('LẮP RÁP (thêm 22/10)', () => {
+  it('dữ liệu cũ không có mục assembly → rỗng; mục hỏng bị bỏ, giá trị lạ bị kẹp', () => {
+    expect(loadSave(mk({ version: 1, design: {} })).data.assembly).toEqual({});
+    const d = loadSave(mk({ version: 1, assembly: { a01: { stars: 9, powerOns: 0 }, a02: 'x', zz: { stars: 3, powerOns: 1 }, a03: { stars: 2, powerOns: 4.7 } } })).data;
+    expect(d.assembly).toEqual({ a01: { stars: 3, powerOns: 1 }, a03: { stars: 2, powerOns: 4 } });
+  });
+  it('giữ sao cao nhất và số lần cấp nguồn ít nhất; màn sau mở khi qua màn trước', () => {
+    const d = defaultSave();
+    const ids = ['a01', 'a02'];
+    expect(assemblyUnlocked(d, ids, 0)).toBe(true);
+    expect(assemblyUnlocked(d, ids, 1)).toBe(false);
+    expect(recordAssembly(d, 'a01', 2, 2)).toBe(true);
+    expect(recordAssembly(d, 'a01', 1, 5)).toBe(false);
+    expect(d.assembly.a01).toEqual({ stars: 2, powerOns: 2 });
+    expect(recordAssembly(d, 'a01', 3, 1)).toBe(true);
+    expect(d.assembly.a01).toEqual({ stars: 3, powerOns: 1 });
+    expect(assemblyUnlocked(d, ids, 1)).toBe(true);
   });
 });

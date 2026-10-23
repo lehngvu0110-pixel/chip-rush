@@ -8,7 +8,10 @@ import { attachPointer } from './input/pointer';
 import { createSafeStorage } from './platform/storage';
 import { watchVisibility } from './platform/visibility';
 import { installGlobalErrorHandlers, showErrorScreen } from './platform/errors';
-import { debugUnlocked, defaultSave, designUnlocked, loadSave, recordDebug, recordDesign, recordRuntimeScore, SAVE_KEY, writeSave } from './core/progress';
+import { assemblyUnlocked, debugUnlocked, defaultSave, designUnlocked, loadSave, recordAssembly, recordDebug, recordDesign, recordRuntimeScore, SAVE_KEY, writeSave } from './core/progress';
+import { ASSEMBLY_LEVELS } from './core/assembly/levels';
+import type { AsmLevel } from './core/assembly/board';
+import { AssemblyScene, type AssemblyResult } from './modes/assembly/assembly-scene';
 import { DEBUG_LEVELS } from './core/level/debug-levels';
 import type { DebugLevel, DesignLevel } from './core/level/types';
 import { DebugScene, type DebugResult } from './modes/debug/debug-scene';
@@ -28,7 +31,7 @@ import { ICON_PAUSE, ICON_SOUND_OFF, ICON_SOUND_ON } from './ui/icons';
 import { startScreen } from './ui/start-screen';
 import { button, el, focusInside } from './ui/dom';
 import { createShareButtonFactory } from './ui/share-button';
-import { debugResultCard, designResultCard, dailyResultCard, runtimeResultCard, type Card, type PassResult } from './ui/result-cards';
+import { assemblyResultCard, debugResultCard, designResultCard, dailyResultCard, runtimeResultCard, type Card, type PassResult } from './ui/result-cards';
 import { aiInfoCard, badgesCard, levelListCard, settingsCard } from './ui/info-cards';
 import { partDetailCard, partsListCard } from './ui/parts-cards';
 import { partById, type PartId } from './core/parts/catalog';
@@ -403,6 +406,45 @@ function boot(root: HTMLElement): void {
     );
   };
 
+  // 7c'. LẮP RÁP: danh sách màn → bo mạch → thẻ kết quả
+  const asmIds = ASSEMBLY_LEVELS.map((l) => l.id);
+  const showAssemblyLevels = (): void => {
+    setScene(new TitleScene());
+    showPanel(
+      levelListCard({
+        title: 'LẮP RÁP',
+        note: 'Cắm linh kiện thật lên bo mạch cho mạch chạy đúng. Cấp nguồn càng ít lần càng nhiều sao.',
+        items: ASSEMBLY_LEVELS.map((lv, i) => {
+          const open = assemblyUnlocked(save, asmIds, i);
+          return { id: lv.id, name: lv.name, sub: open ? lv.concept : 'Qua màn trước để mở', open, stars: save.assembly[lv.id]?.stars ?? 0, onPick: () => startAssembly(lv) };
+        }),
+        onBack: showStart,
+        extra: { label: 'Xem thư viện linh kiện', onClick: () => showParts() },
+      }),
+    );
+  };
+  const startAssembly = (lv: AsmLevel): void => {
+    enterPlay();
+    exposeForTests(null);
+    setScene(new AssemblyScene(lv, { ui, audio, onPass: showAssemblyResult, isBlocked, tutorial: lv.id === 'a01' && !save.assembly[lv.id] }));
+  };
+  const showAssemblyResult = (lv: AsmLevel, r: AssemblyResult): void => {
+    if (!(scene instanceof AssemblyScene) || scene.level.id !== lv.id) return;
+    const improved = recordAssembly(save, lv.id, r.stars, r.powerOns);
+    saveProgress();
+    const next = ASSEMBLY_LEVELS[asmIds.indexOf(lv.id) + 1];
+    showCard(
+      assemblyResultCard(lv, { stars: r.stars, powerOns: r.powerOns, checks: r.report.checks }, {
+        improved,
+        share,
+        onNext: next ? () => startAssembly(next) : undefined,
+        onWatch: backToBoard,
+        onAgain: () => startAssembly(lv),
+        onList: showAssemblyLevels,
+      }),
+    );
+  };
+
   // 7d. "AI kỹ sư hoạt động thế nào?" + Cài đặt (nút bánh răng ở màn hình chính)
   const showAiInfo = (back: () => void): void => {
     const { card, focus } = aiInfoCard(back);
@@ -479,6 +521,7 @@ function boot(root: HTMLElement): void {
       {
         onDesign: showLevels,
         onDebug: showDebugLevels,
+        onAssembly: showAssemblyLevels,
         onRuntime: startRuntime,
         onDaily: startDaily,
         onSettings: showSettings,
@@ -508,6 +551,8 @@ function boot(root: HTMLElement): void {
         debugStars: Object.values(save.debug).reduce((n, d) => n + (d?.stars ?? 0), 0),
         debugMax: DEBUG_LEVELS.length * 3,
         debugOpen: save.design.d05 !== undefined,
+        assemblyStars: Object.values(save.assembly).reduce((n, d) => n + (d?.stars ?? 0), 0),
+        assemblyMax: ASSEMBLY_LEVELS.length * 3,
         bestEndless: save.runtime.bestEndless,
         best60: save.runtime.best60,
       }),
@@ -567,6 +612,7 @@ function boot(root: HTMLElement): void {
             : null,
         };
       },
+      assembly: () => (scene instanceof AssemblyScene ? scene.snapshot() : null),
       design: () =>
         scene instanceof DesignScene
           ? { level: scene.level.id, tool: scene.tool, layer: scene.layer, inputs: [...scene.inputs], wires: scene.grid.wires().length, tut: scene.tutStep, cell: (c: number, r: number) => (scene as DesignScene).cellCenter(c, r), showAi: () => (scene as DesignScene).showAiSolution(), applyAi: () => (scene as DesignScene).loadAiForTest() }

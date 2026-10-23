@@ -1,5 +1,5 @@
-// Màn hình chính: một con chip (die) nhìn từ trên xuống, chia 3 khối = 3 công đoạn (GDD "Câu chuyện khung"):
-// THIẾT KẾ, KIỂM THỬ, VẬN HÀNH. Khối vẽ trên canvas; nút bấm thật là nút DOM trong suốt đặt đúng chỗ
+// Màn hình chính: một con chip (die) nhìn từ trên xuống, chia 4 khối = 4 công đoạn (GDD "Câu chuyện khung"),
+// chạy vòng theo chiều kim đồng hồ: THIẾT KẾ → KIỂM THỬ → LẮP RÁP (lên bo mạch) → VẬN HÀNH. Khối vẽ trên canvas; nút bấm thật là nút DOM trong suốt đặt đúng chỗ
 // (đọc được bằng trình đọc màn hình, test tự động bấm được). Phần tĩnh vẽ sẵn 1 lần; mỗi frame chỉ vẽ xung trên bus.
 import type { RenderSurface } from '../../render/canvas';
 import { rgba } from '../../render/color';
@@ -10,13 +10,14 @@ import { PcbBackdrop } from '../../render/pcb';
 import { THEME } from '../../render/theme';
 import type { Scene } from '../../scene';
 
-export type BlockId = 'design' | 'debug' | 'runtime';
+export type BlockId = 'design' | 'debug' | 'assembly' | 'runtime';
 
-/** Vị trí 3 khối trong die (tỉ lệ 0..1) — dùng chung cho canvas và nút DOM. */
+/** Vị trí 4 khối trong die (tỉ lệ 0..1) — dùng chung cho canvas và nút DOM. */
 export const DIE_BLOCKS: Record<BlockId, { x: number; y: number; w: number; h: number }> = {
   design: { x: 0.07, y: 0.07, w: 0.48, h: 0.49 },
   debug: { x: 0.59, y: 0.07, w: 0.34, h: 0.49 },
-  runtime: { x: 0.07, y: 0.6, w: 0.86, h: 0.33 },
+  assembly: { x: 0.59, y: 0.6, w: 0.34, h: 0.33 },
+  runtime: { x: 0.07, y: 0.6, w: 0.48, h: 0.33 },
 };
 
 export interface HubStats {
@@ -25,11 +26,13 @@ export interface HubStats {
   debugStars: number;
   debugMax: number;
   debugOpen: boolean;
+  assemblyStars: number;
+  assemblyMax: number;
   bestEndless: number;
   best60: number;
 }
 
-const COLOR: Record<BlockId, string> = { design: THEME.bit1, debug: THEME.accent, runtime: '#a07cff' };
+const COLOR: Record<BlockId, string> = { design: THEME.bit1, debug: THEME.accent, assembly: '#3ddc84', runtime: '#a07cff' };
 
 /** RNG nhỏ có seed để hoạ tiết khối luôn giống nhau. */
 function rng(seed: number): () => number {
@@ -79,7 +82,7 @@ export class HubScene implements Scene {
     if (!s.reducedMotion) this.drawPulses(ctx, d);
   }
 
-  /** Xung dữ liệu chạy trên bus nối 3 khối: thiết kế → kiểm thử → vận hành. */
+  /** Xung dữ liệu chạy trên bus nối 4 khối theo vòng: thiết kế → kiểm thử → lắp ráp → vận hành → thiết kế. */
   private drawPulses(ctx: CanvasRenderingContext2D, d: { x: number; y: number; s: number }): void {
     const P = (fx: number, fy: number): [number, number] => [d.x + fx * d.s, d.y + fy * d.s];
     const D = DIE_BLOCKS;
@@ -90,11 +93,23 @@ export class HubScene implements Scene {
       const [x2] = P(D.debug.x, fy);
       buses.push([x1, y, x2, y, COLOR.design]);
     }
-    // thiết kế, kiểm thử → vận hành (dọc)
-    for (const fx of [0.2, 0.36, 0.7, 0.82]) {
-      const [x, y1] = P(fx, D.design.y + D.design.h);
-      const [, y2] = P(fx, D.runtime.y);
-      buses.push([x, y1, x, y2, fx < 0.55 ? COLOR.design : COLOR.debug]);
+    // kiểm thử → lắp ráp (dọc, bên phải)
+    for (const fx of [0.68, 0.84]) {
+      const [x, y1] = P(fx, D.debug.y + D.debug.h);
+      const [, y2] = P(fx, D.assembly.y);
+      buses.push([x, y1, x, y2, COLOR.debug]);
+    }
+    // lắp ráp → vận hành (ngang, chạy sang trái)
+    for (const fy of [0.7, 0.83]) {
+      const [x1, y] = P(D.assembly.x, fy);
+      const [x2] = P(D.runtime.x + D.runtime.w, fy);
+      buses.push([x1, y, x2, y, COLOR.assembly]);
+    }
+    // vận hành → thiết kế (dọc, chạy lên)
+    for (const fx of [0.2, 0.36]) {
+      const [x, y1] = P(fx, D.runtime.y);
+      const [, y2] = P(fx, D.design.y + D.design.h);
+      buses.push([x, y1, x, y2, COLOR.runtime]);
     }
     const prev = ctx.globalCompositeOperation;
     ctx.globalCompositeOperation = 'lighter';
@@ -103,10 +118,10 @@ export class HubScene implements Scene {
       drawGlow(ctx, col, 7, x1 + (x2 - x1) * t, y1 + (y2 - y1) * t, 1);
     });
     // khối đang "hoạt động": quầng sáng thở chậm
-    for (const id of ['design', 'debug', 'runtime'] as BlockId[]) {
+    for (const id of ['design', 'debug', 'assembly', 'runtime'] as BlockId[]) {
       if (id === 'debug' && !this.stats.debugOpen) continue;
       const b = D[id];
-      const a = 0.25 + 0.15 * Math.sin(this.time * 1.6 + (id === 'debug' ? 2 : id === 'runtime' ? 4 : 0));
+      const a = 0.25 + 0.15 * Math.sin(this.time * 1.6 + { design: 0, debug: 2, assembly: 3, runtime: 4 }[id]);
       ctx.globalAlpha = a;
       drawGlow(ctx, COLOR[id], d.s * 0.18, d.x + (b.x + b.w / 2) * d.s, d.y + (b.y + b.h / 2) * d.s, 1);
     }
@@ -114,7 +129,7 @@ export class HubScene implements Scene {
     ctx.globalCompositeOperation = prev;
   }
 
-  /** Vẽ die tĩnh (gốc 0,0, cạnh S): khung, chân pad, 3 khối có hoạ tiết riêng, nhãn và tiến độ. */
+  /** Vẽ die tĩnh (gốc 0,0, cạnh S): khung, chân pad, 4 khối có hoạ tiết riêng, nhãn và tiến độ. */
   private paintDie(g: CanvasRenderingContext2D, S: number): void {
     const R = rng(77);
     // khung die + viền kim loại
@@ -189,6 +204,28 @@ export class HubScene implements Scene {
             g.fillRect(xx, yy, 4, 4);
           }
         }
+      } else if (id === 'assembly') {
+        // bo mạch nhỏ: đường đồng + điện trở và LED cắm xuyên lỗ
+        for (let yy = top + 4; yy < bottom; yy += 12) {
+          g.strokeStyle = rgba(col, 0.35);
+          g.lineWidth = 1.5;
+          g.beginPath();
+          g.moveTo(x + 6, yy);
+          g.lineTo(x + w - 6, yy);
+          g.stroke();
+          for (let xx = x + 10 + R() * 12; xx < x + w - 18; xx += 18 + R() * 16) {
+            const led = R() < 0.3;
+            g.fillStyle = led ? 'rgba(255,90,100,0.9)' : rgba('#d8bf8a', 0.85);
+            if (led) {
+              g.beginPath();
+              g.arc(xx + 4, yy, 3, 0, Math.PI * 2);
+              g.fill();
+            } else g.fillRect(xx, yy - 2, 10, 4);
+            g.fillStyle = rgba('#d9ad52', 0.9);
+            g.fillRect(xx - 3, yy - 1.5, 3, 3);
+            g.fillRect(xx + 10, yy - 1.5, 3, 3);
+          }
+        }
       } else {
         // làn bit chạy ngang (như ALU / đường ống)
         for (let yy = top + 2; yy < y + h * 0.5; yy += 8) {
@@ -225,6 +262,7 @@ export class HubScene implements Scene {
     const st = this.stats;
     label('design', 'THIẾT KẾ', `${st.designStars}/${st.designMax} sao`, st.designMax ? st.designStars / st.designMax : 0, false);
     label('debug', 'KIỂM THỬ', st.debugOpen ? `${st.debugStars}/${st.debugMax} sao` : 'Qua D05 để mở', st.debugMax ? st.debugStars / st.debugMax : 0, !st.debugOpen);
-    label('runtime', 'VẬN HÀNH', `Kỷ lục vô tận ${st.bestEndless} · 60 giây ${st.best60}`, Math.min(1, st.bestEndless / 500), false);
+    label('assembly', 'LẮP RÁP', `${st.assemblyStars}/${st.assemblyMax} sao`, st.assemblyMax ? st.assemblyStars / st.assemblyMax : 0, false);
+    label('runtime', 'VẬN HÀNH', `Vô tận ${st.bestEndless} · 60 giây ${st.best60}`, Math.min(1, st.bestEndless / 500), false);
   }
 }

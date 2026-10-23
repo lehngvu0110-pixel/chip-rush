@@ -1,9 +1,9 @@
-// Màn bắt đầu: logo, die chip 3 khối (canvas vẽ ở HubScene, nút DOM trong suốt đè lên),
+// Màn bắt đầu: logo, die chip 4 khối (canvas vẽ ở HubScene, nút DOM trong suốt đè lên),
 // nút Chip hôm nay, CHƠI NGAY / 60 giây, kỷ lục, Huy hiệu, Linh kiện điện tử. Chỉ dựng DOM; hành động qua callback.
 import { versionLabel } from '../config';
 import { DIE_BLOCKS, type BlockId } from '../modes/hub/hub-scene';
 import { action, button, el } from './dom';
-import { ICON_GEAR, LOGO_SVG } from './icons';
+import { ICON_GEAR, ICON_MEDAL, ICON_PART, LOGO_SVG } from './icons';
 
 export interface StartScreenData {
   /** "26/10" */
@@ -21,6 +21,7 @@ export interface StartScreenData {
 export interface StartScreenActions {
   onDesign: () => void;
   onDebug: () => void;
+  onAssembly: () => void;
   onRuntime: (mode: 'endless' | 'sixty') => void;
   onDaily: () => void;
   onSettings: () => void;
@@ -36,7 +37,7 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
   const hero = el('div', 'hero');
   const titleRow = el('div', 'title-row');
   titleRow.append(logo, el('h1', 'title', 'CHIP RUSH'));
-  hero.append(titleRow, el('p', 'subtitle', 'Thiết kế · Kiểm thử · Vận hành'));
+  hero.append(titleRow, el('p', 'subtitle', 'Thiết kế · Kiểm thử · Lắp ráp · Vận hành'));
 
   // Die chip: nút DOM trong suốt đặt đúng vị trí từng khối (trình đọc màn hình + test bấm được)
   const slot = el('div', 'die-slot');
@@ -52,6 +53,7 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
   };
   blockBtn('design', 'THIẾT KẾ: tự vẽ mạch', a.onDesign);
   blockBtn('debug', 'KIỂM THỬ: tìm lỗi chip', a.onDebug);
+  blockBtn('assembly', 'LẮP RÁP: cắm linh kiện lên bo mạch', a.onAssembly);
   blockBtn('runtime', 'VẬN HÀNH: chơi vô tận', () => a.onRuntime('endless'));
 
   // Chip hôm nay: trạng thái hôm nay + chuỗi ngày
@@ -83,10 +85,15 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
   gear.setAttribute('aria-label', 'Cài đặt');
   gear.addEventListener('click', a.onSettings);
 
-  const badgeLink = action('btn-link badge-link', `Huy hiệu ${d.badges.earned}/${d.badges.total}`, a.onBadges);
+  const badgeLink = action('btn-chip badge-link', '', a.onBadges);
+  badgeLink.innerHTML = ICON_MEDAL;
+  badgeLink.append(el('span', '', `Huy hiệu ${d.badges.earned}/${d.badges.total}`));
   badgeLink.setAttribute('aria-label', `Huy hiệu: đã đạt ${d.badges.earned} trên ${d.badges.total}`);
   const links = el('div', 'start-links');
-  links.append(badgeLink, action('btn-link parts-link', 'Linh kiện điện tử', a.onParts));
+  const partsLink = action('btn-chip parts-link', '', a.onParts);
+  partsLink.innerHTML = ICON_PART;
+  partsLink.append(el('span', '', 'Linh kiện điện tử'));
+  links.append(badgeLink, partsLink);
 
   // Màn đo hiệu năng chỉ dành cho nhóm phát triển
   const perf = action('btn-link', 'Đo hiệu năng (dành cho nhóm phát triển)', a.onPerf);
@@ -100,7 +107,7 @@ export function startScreen(d: StartScreenData, a: StartScreenActions): { nodes:
       slot,
       daily,
       actions,
-      el('p', 'note', 'Chạm vào một khối của con chip để chọn công đoạn. CHƠI NGAY = VẬN HÀNH: cắm đúng cổng logic trước khi chip chạm ổ cắm.'),
+      el('p', 'note', 'Chạm một khối của con chip để chọn công đoạn: thiết kế mạch, tìm lỗi, lắp linh kiện lên bo, rồi vận hành. CHƠI NGAY = VẬN HÀNH.'),
       el('p', 'records', `Kỷ lục: Vô tận ${d.bestEndless} · 60 giây ${d.best60}`),
       links,
       perf,
