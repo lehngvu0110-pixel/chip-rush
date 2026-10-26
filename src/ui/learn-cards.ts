@@ -82,7 +82,11 @@ export function mindmapCard(o: { onLink: (l: MindLink) => void; onBack: () => vo
 
   const showDetail = (n: MindNode): void => {
     const items: HTMLElement[] = [el('h3', '', n.label)];
-    if (n.formula) items.push(el('p', 'mm-formula', n.formula));
+    if (n.formula) {
+      const f = el('div', 'mm-formulas');
+      f.append(...n.formula.map((x) => el('span', 'mm-formula', x)));
+      items.push(f);
+    }
     items.push(el('p', '', n.detail));
     if (n.link) {
       const l = n.link;

@@ -839,3 +839,8 @@ html, body {
 .asm-bar { padding-left: max(10px, calc(50% - 320px)); padding-right: max(10px, calc(50% - 320px)); }
 .asm-strip { left: max(10px, calc(50% - 320px)); right: max(10px, calc(50% - 320px)); }
 .asm-tray { justify-content: safe center; }
+.mm-formulas { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 6px; }
+.mm-formulas .mm-formula { margin: 0; }
+.asm-meter { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-dim); }
+.asm-meter-select { min-height: 40px; max-width: 200px; padding: 6px 8px; border-radius: 10px; border: 1px solid var(--line); background: rgba(13, 20, 48, 0.96); color: var(--text); font: 14px var(--font); }
+.asm-meter-select:focus-visible { outline: 3px solid var(--accent-2); outline-offset: 2px; }

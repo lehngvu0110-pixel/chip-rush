@@ -94,27 +94,45 @@ test('Thử thách 60 giây: đồng hồ chạy, nút Dừng tạm dừng và T
 test('Thử thách 60 giây chống spam: bấm sai bị khoá 0,8 s, spam 1 phím không lên điểm', async ({ page }) => {
   type S = RuntimeState & { lockLeft: number };
   const st = (): Promise<S> => state(page) as Promise<S>;
+  /** Bấm một cổng sai; gói A = B (mọi cổng đều đúng) thì trả lời đúng cho qua rồi thử gói sau. */
+  const pressWrong = async (): Promise<void> => {
+    for (;;) {
+      const s = await st();
+      const w = s.unlocked.find((g) => !s.validGates.includes(g));
+      if (w) return page.keyboard.press(String(GATES.indexOf(w) + 1));
+      await answerRight(page);
+      await expect.poll(async () => (await st()).validGates.join() !== s.validGates.join() || (await st()).score !== s.score).toBe(true);
+    }
+  };
   await page.goto('/?e2e&seed=20261023');
   await page.getByRole('button', { name: 'Thử thách 60 giây' }).click();
   await expect.poll(async () => (await st()).mode).toBe('sixty');
   // bấm sai → chập mạch: trả lời đúng ngay sau đó không được nhận
-  let s = await st();
-  const wrong = s.unlocked.find((g) => !s.validGates.includes(g))!;
-  await page.keyboard.press(String(GATES.indexOf(wrong) + 1));
+  await pressWrong();
   await expect.poll(async () => (await st()).lockLeft).toBeGreaterThan(0.3);
-  s = await st();
+  const scoreLocked = (await st()).score;
+  const s = await st();
   await page.keyboard.press(String(GATES.indexOf(s.validGates[0]!) + 1));
-  expect((await st()).score).toBe(0);
+  expect((await st()).score).toBe(scoreLocked);
   await page.screenshot({ path: test.info().outputPath('chap-mach.png') });
   // hết khoá thì trả lời bình thường
   await expect.poll(async () => (await st()).lockLeft, { timeout: 3000 }).toBe(0);
   await answerRight(page);
-  await expect.poll(async () => (await st()).score).toBe(10);
-  // spam phím 1 (AND) liên tục 6 giây: điểm không tăng đáng kể
-  const before = (await st()).score;
+  await expect.poll(async () => (await st()).score).toBe(scoreLocked + 10);
+  // 6 giây chơi thật (trả lời đúng mỗi 0,7 s) so với 6 giây spam phím 1 (AND) 10 lần/giây
+  let before = (await st()).score;
+  for (let i = 0; i < 8; i++) {
+    await answerRight(page);
+    await page.waitForTimeout(700);
+  }
+  const honest = (await st()).score - before;
+  await pressWrong(); // xoá chuỗi đúng để spam bắt đầu từ hệ số ×1 như người chơi mới
+  await expect.poll(async () => (await st()).lockLeft, { timeout: 3000 }).toBe(0);
+  before = (await st()).score;
   for (let i = 0; i < 60; i++) {
     await page.keyboard.press('1');
     await page.waitForTimeout(100);
   }
-  expect((await st()).score - before).toBeLessThan(60);
+  // số đo thống kê đầy đủ (30 đề × 60 s) ở tests/anti-spam.test.ts; ở đây chỉ chặn lỗi thô
+  expect((await st()).score - before).toBeLessThan(honest);
 });

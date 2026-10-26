@@ -328,8 +328,24 @@ function lightGot(sim: BoardSim, id: string): string {
   return mA(i);
 }
 
-/** Chạy mọi mục tiêu của màn trên bo đã lắp. Mỗi nhóm mục tiêu chạy trên một bo mới (linh kiện chưa cháy). */
-export function evaluate(level: AsmLevel, placement: Placement): Report {
+/** Số bước mô phỏng giữa hai lần nhường lượt (khoảng 1-2 ms trên máy tính). */
+const SLICE = 200;
+
+/** Chạy mô phỏng `seconds` giây, nhường lượt (yield) sau mỗi SLICE bước để màn chơi không bị khựng. */
+function* runFor(sim: BoardSim, seconds: number): Generator<void, void> {
+  const n = Math.max(1, Math.round(seconds / DT));
+  for (let k = 0; k < n; k++) {
+    sim.circuit.step(DT);
+    if (k % SLICE === SLICE - 1) yield;
+  }
+}
+
+/**
+ * Bộ chấm dạng generator: mỗi lần `next()` chạy một lát mô phỏng ngắn. Màn chơi chạy nó trong nhiều khung hình
+ * (không chặn giao diện trên điện thoại yếu, báo lỗi 26/10); `evaluate()` chạy liền một mạch cho test.
+ * Mỗi nhóm mục tiêu chạy trên một bo mới (linh kiện chưa cháy).
+ */
+export function* evaluateSteps(level: AsmLevel, placement: Placement): Generator<void, Report> {
   const checks: Check[] = [];
   const burnt = new Map<string, string>();
   let shorted = false;
@@ -345,7 +361,7 @@ export function evaluate(level: AsmLevel, placement: Placement): Report {
     const sim = new BoardSim(level, placement);
     for (const g of truth) {
       for (const s of switches) sim.setSwitch(s, g.when?.[s] ?? false);
-      sim.run(0.6);
+      yield* runFor(sim, 0.6);
       const lit = sim.isLit(g.light);
       const ok = sim.light(g.light) !== null && (g.kind === 'lit' ? lit : !lit);
       let got = lightGot(sim, g.light);
@@ -358,8 +374,10 @@ export function evaluate(level: AsmLevel, placement: Placement): Report {
   for (const g of level.goals) {
     if (g.kind === 'blink') {
       const sim = new BoardSim(level, placement);
-      sim.run(1);
-      let rises = 0;
+      yield* runFor(sim, 1);
+      // ghi thời điểm từng lần LED bật sáng; tần số = số chu kỳ / khoảng thời gian giữa lần bật đầu và cuối
+      // (trước 26/10 lấy số lần bật / 4 s nên bị làm tròn theo bước 0,25: 1,46 Hz hiện thành "1,3")
+      const rises: number[] = [];
       let onSteps = 0;
       let prev = sim.isLit(g.light);
       const T = 4;
@@ -368,27 +386,29 @@ export function evaluate(level: AsmLevel, placement: Placement): Report {
         sim.circuit.step(DT);
         const on = sim.isLit(g.light);
         if (on) onSteps++;
-        if (on && !prev) rises++;
+        if (on && !prev) rises.push(sim.circuit.t);
         prev = on;
+        if (k % SLICE === SLICE - 1) yield;
       }
-      const f = rises / T;
+      const f = rises.length >= 2 ? (rises.length - 1) / (rises[rises.length - 1]! - rises[0]!) : rises.length / T;
       const ok = sim.light(g.light) !== null && f >= g.min && f <= g.max;
       let got: string;
       if (sim.light(g.light) === null) got = `chỗ ${g.light} chưa có LED`;
-      else if (rises === 0) got = onSteps > n / 2 ? 'sáng liên tục, không nháy' : 'không sáng';
+      else if (rises.length === 0) got = onSteps > n / 2 ? 'sáng liên tục, không nháy' : 'không sáng';
       else if (f > 40) got = `nháy quá nhanh (> 40 lần/giây), mắt thấy như sáng liên tục`;
-      else got = `${f.toFixed(1).replace('.', ',')} lần/giây`;
+      else got = `${f.toFixed(2).replace('.', ',')} lần/giây`;
       checks.push({ text: `${lightName(level, g.light)} nháy ${String(g.min).replace('.', ',')}-${g.max} lần/giây`, ok, got });
       collect(sim);
     } else if (g.kind === 'hold') {
       const sim = new BoardSim(level, placement);
       sim.setSwitch(g.sw, true);
-      sim.run(1.5);
+      yield* runFor(sim, 1.5);
       sim.setSwitch(g.sw, false);
       let t = 0;
       while (t < g.max + 2 && sim.isLit(g.light)) {
         sim.run(0.02);
         t += 0.02;
+        if (Math.round(t / 0.02) % 10 === 0) yield;
       }
       const ok = sim.light(g.light) !== null && t >= g.min && t <= g.max;
       const got = sim.light(g.light) === null ? `chỗ ${g.light} chưa có LED` : `sáng thêm ${t.toFixed(1).replace('.', ',')} giây`;
@@ -399,6 +419,15 @@ export function evaluate(level: AsmLevel, placement: Placement): Report {
   const empty = level.footprints.filter((f) => !placement[f.id]).map((f) => f.id);
   const burntList = [...burnt].map(([id, reason]) => ({ id, reason }));
   return { pass: checks.every((c) => c.ok) && burntList.length === 0 && !shorted, checks, burnt: burntList, shorted, empty };
+}
+
+/** Chạy hết bộ chấm liền một mạch (test, công cụ). */
+export function evaluate(level: AsmLevel, placement: Placement): Report {
+  const gen = evaluateSteps(level, placement);
+  for (;;) {
+    const r = gen.next();
+    if (r.done) return r.value;
+  }
 }
 
 /** Sao theo số lần cấp nguồn tới khi chạy đúng: lần đầu 3 sao, ≤ 3 lần 2 sao, còn lại 1 sao. */

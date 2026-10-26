@@ -26,6 +26,11 @@ export const RUNTIME = {
    * (gói ngừng rơi trong lúc khoá) và trừ đúng số điểm câu đó lẽ ra được cộng (10 × hệ số hiện tại).
    */
   sixtyLockout: 0.8,
+  /**
+   * Tỉ lệ gói rút từ bảng công bằng FAIR_CELLS ở Thử thách 60 giây; phần còn lại rút đều trong MỌI ô (kể cả A = B),
+   * để chế độ vẫn luyện đọc bảng chân trị chứ không chỉ nhìn bit đích (26/10). Chọn theo số đo ở SPEC mục 1.
+   */
+  sixtyFairShare: 0.5,
   basePoints: 10,
   comboStep: 5,
   maxMultiplier: 4,

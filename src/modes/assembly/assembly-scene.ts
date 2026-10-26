@@ -2,7 +2,7 @@
 // Khi có điện, mạch chạy thời gian thực (core/assembly/circuit.ts): LED sáng theo dòng, linh kiện quá tải bốc khói,
 // ấn giữ nút nhấn ngay trên bo để thử; chạm linh kiện để đo dòng/áp như đồng hồ vạn năng.
 // Mọi thao tác chính đều có nút DOM (bàn phím, trình đọc màn hình, test tự động).
-import { BoardSim, KIND_NAME, PIN_COUNT, assemblyStars, evaluate, formatValue, partLabel, type AsmLevel, type Placement, type Report } from '../../core/assembly/board';
+import { BoardSim, KIND_NAME, PIN_COUNT, assemblyStars, evaluateSteps, formatValue, partLabel, type AsmLevel, type Placement, type Report } from '../../core/assembly/board';
 import type { GameAudio } from '../../render/audio';
 import type { RenderSurface } from '../../render/canvas';
 import { PcbBackdrop } from '../../render/pcb';
@@ -83,6 +83,10 @@ export class AssemblyScene implements Scene {
   private time = 0;
   private surf: RenderSurface | null = null;
   private passTimer = 0;
+  /** bộ chấm đang chạy dần qua các khung hình (null = không chấm) */
+  private grading: Generator<void, Report> | null = null;
+  /** đã báo qua màn cho main (chỉ báo 1 lần mỗi lần cấp nguồn) */
+  private passReported = false;
 
   // DOM
   private readonly bar = h('div', 'asm-bar');
@@ -139,6 +143,17 @@ export class AssemblyScene implements Scene {
     this.time += dt;
     if (this.sim) {
       this.sim.run(Math.min(dt, 0.05));
+    }
+    // chấm dần: tối đa ~6 ms mỗi khung hình để không khựng trên điện thoại yếu
+    if (this.grading) {
+      const t0 = performance.now();
+      while (this.grading && performance.now() - t0 < 6) {
+        const r = this.grading.next();
+        if (r.done) {
+          this.grading = null;
+          this.showReport(r.value);
+        }
+      }
     }
   }
 
@@ -301,11 +316,25 @@ export class AssemblyScene implements Scene {
 
   togglePower(): void {
     if (this.sim) {
+      // còn đang chấm: chấm nốt ngay (hiếm, chỉ khi tắt nguồn trong vài khung hình đầu)
+      if (this.grading) {
+        let r = this.grading.next();
+        while (!r.done) r = this.grading.next();
+        this.grading = null;
+        this.showReport(r.value);
+      }
+      const passedNow = this.report?.pass === true && !this.passReported;
       this.sim = null;
       this.report = null;
       this.pressed.clear();
       window.clearTimeout(this.passTimer);
       this.passTimer = 0;
+      // đã qua màn mà tắt nguồn trước khi thẻ kết quả kịp hiện: vẫn lưu và báo kết quả ngay (lỗi 26/10)
+      if (passedNow) {
+        this.refresh();
+        this.reportPass();
+        return;
+      }
       this.say('Đã tắt nguồn. Linh kiện cháy (nếu có) đã được thay mới, sửa lại rồi thử tiếp.', 'info');
       this.refresh();
       return;
@@ -319,18 +348,35 @@ export class AssemblyScene implements Scene {
     this.powerOns++;
     this.selTray = null;
     this.selFp = null;
-    this.report = evaluate(this.level, this.placement);
+    this.report = null;
+    this.passReported = false;
     this.sim = new BoardSim(this.level, this.placement);
-    const r = this.report;
+    this.grading = evaluateSteps(this.level, this.placement);
+    this.say('Đang đo mạch: thử mọi trường hợp bấm nút...', 'info');
+    this.refresh();
+  }
+
+  /** Báo qua màn cho main đúng 1 lần (lưu tiến độ + thẻ kết quả). */
+  private reportPass(): void {
+    const r = this.report ?? this.lastPass;
+    if (this.passReported || !r) return;
+    this.passReported = true;
+    window.clearTimeout(this.passTimer);
+    this.passTimer = 0;
+    this.deps.onPass(this.level, { stars: assemblyStars(this.powerOns), powerOns: this.powerOns, report: r });
+  }
+
+  private lastPass: Report | null = null;
+
+  /** Bộ chấm xong: hiện kết quả trên bo. */
+  private showReport(r: Report): void {
+    this.report = r;
     if (r.pass) {
       this.passed = true;
+      this.lastPass = r;
       this.deps.audio.play('win');
       this.say('Mạch chạy đúng mọi yêu cầu!', 'good');
-      if (!this.passTimer)
-        this.passTimer = window.setTimeout(() => {
-          this.passTimer = 0;
-          this.deps.onPass(this.level, { stars: assemblyStars(this.powerOns), powerOns: this.powerOns, report: r });
-        }, 1500);
+      if (!this.passTimer) this.passTimer = window.setTimeout(() => this.reportPass(), 1500);
     } else {
       this.deps.audio.play('error');
       const lines: string[] = [];
@@ -391,7 +437,23 @@ export class AssemblyScene implements Scene {
         });
         row.push(b);
       }
-      if (row.length === 0) row.push(h('span', 'asm-ctx-note', 'Chạm linh kiện trên bo để đo dòng và điện áp.'));
+      // đo bằng bàn phím / trình đọc màn hình (chạm linh kiện trên bo thì cũng đo được)
+      const meter = h('label', 'asm-meter');
+      const sel = h('select', 'asm-meter-select');
+      sel.append(h('option', '', 'Chọn linh kiện'));
+      sel.firstElementChild!.setAttribute('value', '');
+      for (const fp of this.level.footprints) {
+        const part = this.sim!.partAt(fp.id);
+        if (!part) continue;
+        const o = h('option', '', `${fp.id}: ${partLabel(part, this.level.hideValues)}`);
+        o.value = fp.id;
+        sel.append(o);
+      }
+      sel.addEventListener('change', () => {
+        if (sel.value) this.showReading(sel.value);
+      });
+      meter.append(h('span', '', 'Đo:'), sel);
+      row.push(meter);
     } else if (this.selTray !== null) {
       const part = this.level.tray[this.selTray]!;
       row.push(h('span', 'asm-ctx-note', 'Cắm vào:'));

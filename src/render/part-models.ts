@@ -28,10 +28,11 @@ function axialLead(x0: number, dir: 1 | -1): Mesh {
 /** Thân tròn xoay nằm ngang dài 2·half: bán kính r(y) dọc trục, màu theo vị trí y (vạch màu). */
 function axialBody(half: number, r: (a: number) => number, colorAt: (y: number) => string, cuts: number[]): Mesh {
   const ys = new Set<number>(cuts.filter((y) => Math.abs(y) < half));
-  for (let i = 0; i <= 40; i++) ys.add(-half + (2 * half * i) / 40);
+  // 18 lát dọc thân + các mép vạch màu: đủ mượt, ít mặt (máy yếu xoay vẫn mượt, 26/10)
+  for (let i = 0; i <= 18; i++) ys.add(-half + (2 * half * i) / 18);
   const sorted = [...ys].sort((a, b) => a - b);
   const profile: [number, number][] = [[0, -half], ...sorted.map((y): [number, number] => [r(Math.abs(y)), y]), [0, half]];
-  const mesh = lathe(profile, 20, (i) => {
+  const mesh = lathe(profile, 16, (i) => {
     const y0 = profile[i]![1];
     const y1 = profile[i + 1]![1];
     return colorAt((y0 + y1) / 2);
@@ -141,25 +142,25 @@ function inductor(): Mesh {
   const rho = 1.7;
   // lõi hình xuyến: biên tròn đi ngược chiều kim đồng hồ quanh (R, 0) rồi xoay để vòng dựng đứng
   const circle: [number, number][] = [];
-  for (let i = 0; i <= 16; i++) {
-    const a = (i / 16) * Math.PI * 2 - Math.PI / 2;
+  for (let i = 0; i <= 10; i++) {
+    const a = (i / 10) * Math.PI * 2 - Math.PI / 2;
     circle.push([R + rho * Math.cos(a), rho * Math.sin(a)]);
   }
-  const core = transform(lathe(circle, 30, '#3b3f48'), rotX(Math.PI / 2));
+  const core = transform(lathe(circle, 22, '#3b3f48'), rotX(Math.PI / 2));
   // dây đồng quấn quanh lõi (xoắn ốc trên mặt xuyến), chừa khe ở đáy cho 2 chân
-  const turns = 15;
+  const turns = 12;
   const gap = 0.42;
   const rw = rho + 0.3;
   const p0 = -Math.PI / 2 + gap;
   const p1 = (3 * Math.PI) / 2 - gap;
   const path: Vec3[] = [];
-  const n = turns * 12;
+  const n = turns * 7;
   const P = (phi: number, th: number, rr = rw): Vec3 => [(R + rr * Math.cos(th)) * Math.cos(phi), (R + rr * Math.cos(th)) * Math.sin(phi), rr * Math.sin(th)];
   for (let i = 0; i <= n; i++) {
     const t = i / n;
     path.push(P(p0 + (p1 - p0) * t, turns * Math.PI * 2 * t));
   }
-  const wire = tube(path, 0.3, 5, '#c8742e', metal);
+  const wire = tube(path, 0.32, 4, '#c8742e', metal);
   // 2 đầu dây (ở mép ngoài lõi) đi thẳng xuống làm chân
   const end = (phi: number): Mesh => {
     const s = P(phi, 0);

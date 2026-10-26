@@ -8,12 +8,12 @@ Dự thi **Phần thi Công nghệ, Road to Predator League 2027**.
 
 <p align="center">
   <a href="https://lehngvu0110-pixel.github.io/chip-rush/"><b>Chơi ngay</b></a> ·
-  <a href="docs/submission/demo.mp4">Video demo 45 giây</a> ·
+  <a href="docs/submission/demo.mp4">Video demo 1 phút</a> ·
   <a href="docs/SPEC.md">Luật chơi chi tiết</a> ·
   <a href="docs/ai-log/">Nhật ký dùng AI</a>
 </p>
 
-> **Trạng thái:** đủ 4 chế độ (12 màn THIẾT KẾ, 9 màn KIỂM THỬ, 11 màn LẮP RÁP, VẬN HÀNH Vô tận + 60 giây), Chip hôm nay, 12 huy hiệu và Góc học tập. Đang đo hiệu năng trên máy thật trước khi nộp ngày 26/10/2026.
+> **Trạng thái:** đủ 4 chế độ (12 màn THIẾT KẾ, 9 màn KIỂM THỬ, 11 màn LẮP RÁP, VẬN HÀNH Vô tận + 60 giây), Chip hôm nay, 12 huy hiệu và Góc học tập. Đang đo hiệu năng trên máy thật trước hạn nộp 15/11/2026.
 
 ## Mục lục
 - [Ảnh trong game](#ảnh-trong-game)
@@ -152,13 +152,13 @@ npm run e2e        # test đầu-cuối trên bản build (Android Chromium + iP
 ```
 
 ## Kiểm thử
-- **502 unit test** (Vitest), gồm:
+- **508 unit test** (Vitest), gồm:
   - luật chơi, solver AI;
   - bộ mô phỏng mạch so với kết quả tính tay (Ohm, β·Ib, nạp RC, tần số 555);
   - hình học bo mạch LẮP RÁP: đường đồng nối đúng lưới điện, lời giải chạy được, lỗi hay gặp bị chấm trượt;
   - đáp án câu trắc nghiệm tính toán khớp công thức;
   - chống spam ở Thử thách 60 giây: bot bấm bừa không kiếm được điểm.
-- **44 test đầu-cuối** (Playwright) trên bản build: chơi trọn từng chế độ, chơi bằng bàn phím, nhiều cỡ màn hình, dữ liệu lưu hỏng, bộ nhớ đầy, chạm ngẫu nhiên.
+- **45 test đầu-cuối** (Playwright) trên bản build: chơi trọn từng chế độ, chơi bằng bàn phím, nhiều cỡ màn hình, dữ liệu lưu hỏng, bộ nhớ đầy, chạm ngẫu nhiên.
 - **axe-core (WCAG 2.1 AA): 0 lỗi** trên các màn chính.
 - Thiết bị thật và số đo hiệu năng ghi ở [docs/TESTING.md](docs/TESTING.md).
 

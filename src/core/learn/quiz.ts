@@ -41,7 +41,7 @@ const AUTHORED: Authored[] = [
   { id: 'b-kcl', topic: 'basic', q: 'Định luật Kirchhoff về dòng điện (KCL) phát biểu rằng:', opts: ['Tổng dòng vào một nút bằng tổng dòng ra', 'Tổng điện áp quanh một vòng kín bằng 0', 'U = I · R', 'P = U · I'], explain: 'KCL nói về dòng tại một nút (điện tích không mất đi). Câu "tổng điện áp quanh vòng bằng 0" là KVL.' },
   { id: 'b-kvl', topic: 'basic', q: 'Pin 9 V nối một điện trở và một LED (sụt 2 V). Điện áp trên điện trở là?', opts: ['7 V', '9 V', '2 V', '11 V'], explain: 'Theo KVL, điện áp nguồn chia cho các phần tử nối tiếp: 9 − 2 = 7 V đặt lên điện trở.' },
   { id: 'b-short', topic: 'basic', q: '"Chập mạch" (đoản mạch) là gì?', opts: ['Hai điểm khác điện áp bị nối bằng đường gần như không có điện trở, dòng tăng vọt', 'Mạch bị đứt, không có dòng', 'Điện trở trong mạch quá lớn', 'Pin đã hết điện'], explain: 'Khi chập, R gần bằng 0 nên I = U / R rất lớn, có thể làm nóng dây, cháy nguồn.' },
-  { id: 'b-acdc', topic: 'basic', q: 'Điểm khác nhau chính giữa điện một chiều (DC) và xoay chiều (AC)?', opts: ['DC không đổi chiều, AC đổi chiều theo chu kỳ', 'DC luôn mạnh hơn AC', 'AC chỉ có trong pin', 'DC chỉ dùng cho động cơ'], explain: 'Pin cho dòng DC; điện lưới là AC, đổi chiều 50 lần mỗi giây ở Việt Nam.' },
+  { id: 'b-acdc', topic: 'basic', q: 'Điểm khác nhau chính giữa điện một chiều (DC) và xoay chiều (AC)?', opts: ['DC không đổi chiều, AC đổi chiều theo chu kỳ', 'DC luôn mạnh hơn AC', 'AC chỉ có trong pin', 'DC chỉ dùng cho động cơ'], explain: 'Pin cho dòng DC. Điện lưới Việt Nam là AC 50 Hz: 50 chu kỳ mỗi giây, mỗi chu kỳ dòng đổi chiều 2 lần, nên đổi chiều 100 lần mỗi giây.' },
   { id: 'b-grid', topic: 'basic', q: 'Điện lưới sinh hoạt ở Việt Nam có thông số danh định nào?', opts: ['220 V, 50 Hz', '110 V, 60 Hz', '12 V, một chiều', '5 V, một chiều'], explain: 'Việt Nam dùng điện lưới 220 V, 50 Hz. Một số nước như Mỹ dùng 120 V, 60 Hz.' },
   { id: 'b-khz', topic: 'basic', q: 'Tín hiệu có tần số 1 kHz lặp lại bao nhiêu lần mỗi giây?', opts: ['1000 lần', '1 lần', '100 lần', '1 000 000 lần'], explain: 'Tiền tố k (kilo) = 1000. Chu kỳ T = 1 / f = 1 ms.' },
   // ---- Linh kiện thụ động ----
@@ -80,12 +80,19 @@ export function vn(x: number): string {
 }
 const ohm = (r: number): string => (r >= 1e6 ? `${vn(r / 1e6)} MΩ` : r >= 1e3 ? `${vn(r / 1e3)} kΩ` : `${vn(r)} Ω`);
 
-/** Lấy 3 phương án sai đầu tiên không trùng đáp án và không trùng nhau. */
-function withWrong(correct: string, candidates: string[]): [string, string, string, string] {
-  const out = [correct];
-  for (const c of candidates) if (!out.includes(c) && out.length < 4) out.push(c);
-  let k = 2;
-  while (out.length < 4) out.push(`${correct} × ${k++}`); // dự phòng, gần như không xảy ra
+/**
+ * Đáp án + 3 phương án sai, khử trùng theo GIÁ TRỊ hiển thị (sau khi làm tròn, đổi đơn vị):
+ * "500 Ω" và "0,5 kΩ" không thể cùng xuất hiện. Thiếu phương án thì lấy thêm từ `fallback` (bội số của đáp án),
+ * không bao giờ ghép chữ kiểu "500 Ω × 2" (báo lỗi 26/10: phương án đó trùng giá trị với phương án khác).
+ */
+function numOpts(correct: number, fmt: (x: number) => string, candidates: number[], fallback = [2, 0.5, 3, 1.5, 10, 0.1, 4]): [string, string, string, string] {
+  const out = [fmt(correct)];
+  const add = (x: number): void => {
+    if (out.length < 4 && Number.isFinite(x) && x > 0 && !out.includes(fmt(x))) out.push(fmt(x));
+  };
+  candidates.forEach(add);
+  fallback.forEach((k) => add(correct * k));
+  if (out.length < 4) throw new Error(`numOpts: không đủ phương án cho ${fmt(correct)}`);
   return out as [string, string, string, string];
 }
 
@@ -120,7 +127,7 @@ export const GENERATORS: Generator[] = [
         id: 'g-ohm',
         topic: 'basic',
         q: `Đặt ${U} V lên điện trở ${ohm(R)}. Dòng điện qua điện trở là bao nhiêu?`,
-        opts: withWrong(`${vn(I)} mA`, [`${vn(I * 10)} mA`, `${vn(I / 10)} mA`, `${vn(I * 2)} mA`, `${vn(I / 2)} mA`]),
+        opts: numOpts(I, (x) => `${vn(x)} mA`, [I * 10, I / 10, I * 2, I / 2]),
         explain: `Định luật Ohm: I = U / R = ${U} V / ${R} Ω = ${vn(I / 1000)} A = ${vn(I)} mA.`,
       };
     },
@@ -136,7 +143,7 @@ export const GENERATORS: Generator[] = [
         id: 'g-power',
         topic: 'basic',
         q: `Một thiết bị dùng ${U} V và tiêu thụ ${vn(I)} A. Công suất của nó là?`,
-        opts: withWrong(`${vn(P)} W`, [`${vn(U / I)} W`, `${vn(P * 2)} W`, `${vn(P / 2)} W`, `${vn(U + I)} W`]),
+        opts: numOpts(P, (x) => `${vn(x)} W`, [U / I, P * 2, P / 2, U + I]),
         explain: `P = U · I = ${U} × ${vn(I)} = ${vn(P)} W.`,
       };
     },
@@ -154,7 +161,7 @@ export const GENERATORS: Generator[] = [
         id: 'g-network',
         topic: 'basic',
         q: `Hai điện trở ${ohm(a)} và ${ohm(b)} mắc ${par ? 'song song' : 'nối tiếp'}. Điện trở tương đương là?`,
-        opts: withWrong(ohm(par ? pr : ser), [ohm(par ? ser : pr), ohm(Math.abs(a - b) || a / 2), ohm((a + b) / 2), ohm(a * 2)]),
+        opts: numOpts(par ? pr : ser, ohm, [par ? ser : pr, Math.abs(a - b), (a + b) / 2, a * 2, b * 2]),
         explain: par ? `Song song: R = R1·R2 / (R1 + R2) = ${a}·${b} / ${a + b} ≈ ${vn(pr)} Ω.` : `Nối tiếp: R = R1 + R2 = ${a} + ${b} = ${ser} Ω.`,
       };
     },
@@ -170,7 +177,7 @@ export const GENERATORS: Generator[] = [
         id: 'g-led-r',
         topic: 'semi',
         q: `Nguồn ${U} V, LED đỏ sụt 2 V, muốn dòng ${mA} mA. Cần điện trở hạn dòng bao nhiêu?`,
-        opts: withWrong(ohm(R), [ohm(U / (mA / 1000)), ohm((U + 2) / (mA / 1000)), ohm(R / 10), ohm(R * 10)]),
+        opts: numOpts(R, ohm, [U / (mA / 1000), (U + 2) / (mA / 1000), R / 10, R * 10]),
         explain: `R = (U nguồn − U LED) / I = (${U} − 2) / ${vn(mA / 1000)} A ≈ ${ohm(R)}. Ngoài đời chọn giá trị tiêu chuẩn gần nhất, lớn hơn một chút cho an toàn.`,
       };
     },
@@ -190,7 +197,7 @@ export const GENERATORS: Generator[] = [
           id: 'g-bands',
           topic: 'parts',
           q: `Điện trở 4 vạch: ${bands.map((b) => b.name).join(' · ')}. Giá trị của nó là?`,
-          opts: withWrong(ohm(v), [ohm(v * 10), ohm(v / 10), ohm(swapped), ohm(v * 100)]),
+          opts: numOpts(v, ohm, [v * 10, v / 10, swapped, v * 100]),
           explain: `Vạch 1 (${bands[0]!.name}) = ${d[0]}, vạch 2 (${bands[1]!.name}) = ${d[1]}, vạch 3 (${bands[2]!.name}) = nhân 10 mũ ${d[2]}: ${d[0]}${d[1]} × ${10 ** d[2]} = ${ohm(v)}. Vạch nhũ vàng là sai số ±5%.`,
         };
       }
@@ -207,7 +214,7 @@ export const GENERATORS: Generator[] = [
         id: 'g-binary',
         topic: 'digital',
         q: `Số nhị phân ${bits} bằng bao nhiêu trong hệ thập phân?`,
-        opts: withWrong(String(n), [String(rev), String(n + 1), String(n - 1), String(n + 2)]),
+        opts: numOpts(n, String, [rev, n + 1, n - 1, n + 2], [n + 3, n + 4, n - 2]),
         explain: `${[...bits].map((b, i) => `${b}×${2 ** (3 - i)}`).join(' + ')} = ${n}.`,
       };
     },
