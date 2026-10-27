@@ -387,7 +387,9 @@ export class AssemblyScene implements Scene {
       if (bad.length > 2) lines.push(`và ${bad.length - 2} yêu cầu khác chưa đạt.`);
       this.say(`${lines.join(' ')} Bấm TẮT NGUỒN để sửa.`, 'bad');
     }
-    this.refresh();
+    // Không gọi refresh(): hàng ngữ cảnh khi có điện không phụ thuộc kết quả chấm. Dựng lại nó lúc
+    // người chơi đang giữ "Ấn giữ S1" sẽ xoá nút đang giữ: nhả tay không tới nút mới, công tắc kẹt ở
+    // trạng thái ấn, và lựa chọn trong ô "Đo" bị mất (lỗi 27/10, lộ ra trên WebKit vì chấm chậm hơn).
   }
 
   // ---------------- DOM ----------------
