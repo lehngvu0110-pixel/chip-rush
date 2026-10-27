@@ -207,13 +207,28 @@ describe('RuntimeGame – Thử thách 60 giây', () => {
         expect(share, `${key}: ${gate}`).toBeGreaterThan(0);
       }
     }
-    // Spawner chế độ công bằng thật sự rút theo bảng (tần suất thực tế ≈ trọng số)
-    const sp = new Spawner(createRng(3), null, true);
-    const gates = unlockedGates(250);
-    let andValid = 0;
-    const N = 20_000;
-    for (let i = 0; i < N; i++) if (sp.next(gates).validGates.includes('AND')) andValid++;
-    expect(andValid / N).toBeCloseTo(0.5, 1);
+  });
+
+  it('Thử thách 60 giây trộn bảng công bằng với mọi ô (26/10): đủ mọi kiểu gói, kể cả A = B; cổng "hời" nhất đúng ≤ 55%', () => {
+    for (const score of [0, 100, 250]) {
+      const gates = unlockedGates(score);
+      const sp = new Spawner(createRng(3 + score), null, true);
+      const kinds = new Set<string>();
+      const valid = new Map<GateType, number>();
+      const N = 20_000;
+      for (let i = 0; i < N; i++) {
+        const p = sp.next(gates);
+        kinds.add(`${p.a}${p.b}${p.target}`);
+        for (const g of p.validGates) valid.set(g, (valid.get(g) ?? 0) + 1);
+      }
+      // mọi bộ (A, B, đích) mà các cổng đã mở tạo ra được đều xuất hiện
+      const possible = new Set(allCells(gates).map((c) => makePacket(c, gates)).map((p) => `${p.a}${p.b}${p.target}`));
+      expect(kinds).toEqual(possible);
+      expect(kinds.has('000') && kinds.has('111')).toBe(true); // có gói A = B
+      // tỉ lệ đúng theo lý thuyết: 4 cổng 53%, 2-3 cổng 62-63% (lần khoá 0,8 s + phạt đối xứng chặn phần còn lại)
+      const maxShare = Math.max(...valid.values()) / N;
+      expect(maxShare).toBeLessThanOrEqual(gates.length === 4 ? 0.56 : 0.66);
+    }
   });
 
   it('dùng đường tăng tốc cố định theo số câu đúng', () => {

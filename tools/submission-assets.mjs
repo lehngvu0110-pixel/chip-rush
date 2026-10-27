@@ -1,4 +1,4 @@
-// Tạo ảnh nộp bài vào docs/submission/: 4 ảnh chơi thật (màn chính, THIẾT KẾ, KIỂM THỬ, VẬN HÀNH),
+// Tạo ảnh nộp bài vào docs/submission/: 6 ảnh chơi thật (màn chính, THIẾT KẾ, KIỂM THỬ, VẬN HÀNH, LẮP RÁP, Góc học tập),
 // logo PNG (512, 1024, nền trong suốt) và ảnh bìa 1920×1080. Mọi hình đều từ chính game (vẽ bằng code), không dùng AI tạo ảnh.
 // Cách chạy:  npm run build && npx vite preview --host 127.0.0.1 --port 4173 &   rồi   node tools/submission-assets.mjs
 // (CHROMIUM_PATH=/đường/dẫn/chrome nếu không dùng trình duyệt Playwright đã cài)
@@ -9,7 +9,9 @@ const B = process.env.BASE_URL ?? 'http://127.0.0.1:4173/';
 const b = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 fs.mkdirSync('docs/submission', { recursive: true });
 const out = 'docs/submission/';
-const seed = (design, debug = {}, rt = { bestEndless: 0, best60: 0 }) => JSON.stringify({ version: 1, design, debug, runtime: rt, daily: { lastDate: null, streak: 0 }, settings: { muted: true, reducedMotion: false } });
+// LẮP RÁP: đã qua a01-a10 (để mở a11); Góc học tập: đã làm trắc nghiệm 1 lượt
+const A = {}; for (let i = 1; i <= 10; i++) A['a' + String(i).padStart(2, '0')] = { stars: i % 3 ? 3 : 2, powerOns: i % 3 ? 1 : 2 };
+const seed = (design, debug = {}, rt = { bestEndless: 0, best60: 0 }) => JSON.stringify({ version: 1, design, debug, runtime: rt, daily: { lastDate: null, streak: 0 }, assembly: A, learn: { quizBest: 8, quizPlayed: 3 }, settings: { muted: true, reducedMotion: false } });
 const D = {}; for (let i = 1; i <= 11; i++) D['d' + String(i).padStart(2, '0')] = { stars: i % 4 ? 3 : 2, best: { A: 99, D: 9, P: 99 }, hinted: false };
 const T = { t01: { stars: 3, probes: 2 }, t02: { stars: 3, probes: 0 }, t03: { stars: 2, probes: 3 }, t04: { stars: 3, probes: 1 } };
 async function page(save) {
@@ -22,8 +24,8 @@ async function page(save) {
 // 1–2. màn chính + THIẾT KẾ d12 (lời giải AI kỹ sư)
 {
   const p = await page(seed(D, T, { bestEndless: 1840, best60: 960 }));
-  // ngày mở cổng nộp bài: nút Chip hôm nay hiện 26/10 thay vì ngày chụp
-  await p.goto(B + '?e2e&date=2026-10-26');
+  // hạn nộp bài: nút Chip hôm nay hiện 15/11 thay vì ngày chụp
+  await p.goto(B + '?e2e&date=2026-11-15');
   await p.waitForTimeout(1500);
   await p.screenshot({ path: out + '1-man-chinh.png' });
   await p.getByRole('button', { name: 'THIẾT KẾ: tự vẽ mạch' }).click();
@@ -56,6 +58,35 @@ async function page(save) {
   await p.waitForTimeout(900);
   await p.screenshot({ path: out + '4-van-hanh.png' });
 }
+{ // 5. LẮP RÁP a11: mạch nháy 555 đang chạy (lắp đúng lời giải qua khay linh kiện)
+  const p = await page(seed(D, T));
+  await p.goto(B + '?e2e');
+  await p.getByRole('button', { name: 'LẮP RÁP: cắm linh kiện lên bo mạch' }).click();
+  await p.getByRole('button', { name: /^a11 / }).click();
+  for (const [fp, tray, flip] of [['U1', 0, true], ['R1', 1], ['R2', 2], ['R3', 3], ['C1', 4], ['D1', 6]]) {
+    await p.locator('.asm-part').nth(tray).click();
+    await p.getByRole('button', { name: `Cắm vào ${fp}`, exact: true }).click();
+    if (flip) await p.getByRole('button', { name: 'Xoay 180°' }).click();
+  }
+  await p.getByRole('button', { name: 'CẤP NGUỒN' }).click();
+  // chụp đúng lúc LED đang sáng
+  for (let i = 0; i < 40; i++) {
+    await p.waitForTimeout(80);
+    if (await p.evaluate(() => window.__CHIPRUSH__.assembly()?.lit.D1)) break;
+  }
+  await p.screenshot({ path: out + '5-lap-rap.png' });
+}
+{ // 6. Góc học tập: sơ đồ tư duy, nhánh Bán dẫn, đang xem MOSFET
+  const p = await page(seed(D, T));
+  await p.goto(B + '?e2e');
+  await p.getByRole('button', { name: /^Góc học tập/ }).click();
+  await p.getByRole('button', { name: 'Sơ đồ tư duy' }).click();
+  await p.getByRole('button', { name: /^Bán dẫn, nhánh/ }).click();
+  await p.waitForTimeout(700);
+  await p.getByRole('button', { name: 'MOSFET', exact: true }).click();
+  await p.waitForTimeout(300);
+  await p.screenshot({ path: out + '6-goc-hoc-tap.png' });
+}
 
 // ---- logo + ảnh bìa ----
 const root = process.cwd();
@@ -76,15 +107,15 @@ for (const size of [512, 1024]) {
 await p.setViewportSize({ width: 1024, height: 1024 });
 await p.setContent(`<style>${css} body{width:1024px;height:1024px;background:transparent}</style>${svg}`);
 await p.screenshot({ path: 'docs/submission/logo-trong-suot-1024.png', omitBackground: true });
-// ảnh bìa 1920×1080: logo + tên + 3 ảnh chơi thật
+// ảnh bìa 1920×1080: logo + tên + 3 ảnh chơi thật (THIẾT KẾ, LẮP RÁP, Góc học tập)
 await p.setViewportSize({ width: 1920, height: 1080 });
 await p.setContent(`<style>${css}
 body{width:1920px;height:1080px;overflow:hidden;color:#e8eeff;background:radial-gradient(circle at 20% 30%,#17224f,#070b18 70%);position:relative}
 .grid{position:absolute;inset:0;background-image:linear-gradient(rgba(56,232,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(56,232,255,.06) 1px,transparent 1px);background-size:48px 48px}
 .left{position:absolute;left:110px;top:250px;width:640px}
 .logo{width:150px;height:150px;filter:drop-shadow(0 0 18px rgba(56,232,255,.6))}
-h1{font-size:118px;font-weight:700;color:#38e8ff;letter-spacing:2px;text-shadow:0 0 30px rgba(56,232,255,.45);margin-top:18px;line-height:1}
-.tag{font-size:40px;font-weight:700;margin-top:22px}
+h1{font-size:104px;white-space:nowrap;font-weight:700;color:#38e8ff;letter-spacing:2px;text-shadow:0 0 30px rgba(56,232,255,.45);margin-top:18px;line-height:1}
+.tag{font-size:33px;font-weight:700;margin-top:22px;white-space:nowrap}
 .sub{font-size:28px;color:#9aa6c8;margin-top:22px;line-height:1.45}
 .pill{display:inline-block;margin-top:34px;padding:12px 26px;border-radius:999px;background:linear-gradient(180deg,#ffd27a,#ffb020);color:#2a1a00;font-size:26px;font-weight:700}
 .phones{position:absolute;right:70px;top:70px;display:flex;gap:34px}
@@ -94,10 +125,10 @@ h1{font-size:118px;font-weight:700;color:#38e8ff;letter-spacing:2px;text-shadow:
 .lab{position:absolute;right:70px;bottom:60px;font-size:22px;color:#9aa6c8}
 </style><div class=grid></div>
 <div class=left><div class=logo>${svg}</div><h1>CHIP RUSH</h1>
-<div class=tag>Thiết kế · Kiểm thử · Vận hành một con chip</div>
-<div class=sub>Vẽ mạch, săn lỗi, phản xạ cổng logic — và so tài với "AI kỹ sư" ngay trên điện thoại.</div>
+<div class=tag>Thiết kế · Kiểm thử · Lắp ráp · Vận hành</div>
+<div class=sub>Vẽ mạch, săn lỗi, cắm linh kiện lên bo cho mạch chạy, phản xạ cổng logic; so tài với "AI kỹ sư" và học điện tử ngay trên điện thoại.</div>
 <div class=pill>Chơi ngay trên trình duyệt</div></div>
-<div class=phones><div class=ph><img src="${img('2-thiet-ke.png')}"></div><div class=ph><img src="${img('3-kiem-thu.png')}"></div><div class=ph><img src="${img('4-van-hanh.png')}"></div></div>`);
+<div class=phones><div class=ph><img src="${img('2-thiet-ke.png')}"></div><div class=ph><img src="${img('5-lap-rap.png')}"></div><div class=ph><img src="${img('6-goc-hoc-tap.png')}"></div></div>`);
 await p.waitForTimeout(300);
 await p.screenshot({ path: 'docs/submission/anh-bia-1920x1080.png' });
 await b.close();

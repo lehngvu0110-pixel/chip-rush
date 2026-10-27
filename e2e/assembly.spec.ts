@@ -68,14 +68,50 @@ test('a03: khi có điện, ấn giữ S1 thì LED sáng, nhả thì tắt', asy
     await page.getByRole('button', { name: `Cắm vào ${fp}` }).click();
   }
   await page.getByRole('button', { name: 'CẤP NGUỒN' }).click();
-  await expect.poll(async () => (await snap(page))!.lit.D1).toBe(false);
+  // lấy nút ngay khi vừa có điện (bộ chấm thường còn đang chạy dần qua các khung hình)
   const hold = page.getByRole('button', { name: 'Ấn giữ S1' });
+  const early = await hold.elementHandle();
+  // lần cấp nguồn đầu đã đúng → 3 sao. Thẻ kết quả che bo, nên giữ nút SAU khi quay lại bo:
+  // giữ trước đó thì thứ tự phụ thuộc tốc độ máy (thẻ hiện sau 1,5 s có thể đè lên nút).
+  const result = page.getByRole('dialog', { name: 'Kết quả' });
+  await expect(result.getByRole('img', { name: '3 trên 3 sao' })).toBeVisible();
+  await result.getByRole('button', { name: 'Xem mạch chạy' }).click();
+  // chấm xong không được dựng lại nút: nếu người chơi đang giữ, nút mới không nhận được lúc nhả tay
+  // và công tắc kẹt ở trạng thái ấn (lỗi 27/10, CI WebKit báo boundingBox null)
+  expect(await early!.evaluate((el) => el.isConnected)).toBe(true);
+  await expect.poll(async () => (await snap(page))!.lit.D1).toBe(false);
   const bb = (await hold.boundingBox())!;
   await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2);
   await page.mouse.down();
   await expect.poll(async () => (await snap(page))!.lit.D1).toBe(true);
   await page.mouse.up();
   await expect.poll(async () => (await snap(page))!.lit.D1).toBe(false);
-  // lần cấp nguồn đầu đã đúng → 3 sao
-  await expect(page.getByRole('dialog', { name: 'Kết quả' }).getByRole('img', { name: '3 trên 3 sao' })).toBeVisible();
+});
+
+test('qua màn rồi TẮT NGUỒN ngay vẫn lưu kết quả; đo linh kiện bằng bàn phím (lỗi 26/10)', async ({ page }) => {
+  await page.goto('/?e2e');
+  await page.getByRole('button', { name: 'LẮP RÁP: cắm linh kiện lên bo mạch' }).click();
+  await page.getByRole('button', { name: /^a01 / }).click();
+  await page.getByRole('button', { name: 'Điện trở 470 Ω' }).click();
+  await page.getByRole('button', { name: 'Cắm vào R1' }).click();
+  await page.getByRole('button', { name: 'LED', exact: true }).click();
+  await page.getByRole('button', { name: 'Cắm vào D1' }).click();
+  // lượt 1: LED đang ngược → đo bằng bàn phím trong ô "Đo" thấy 0 mA
+  await page.getByRole('button', { name: 'CẤP NGUỒN' }).click();
+  await expect(page.getByText(/LED D1 sáng: đo được 0,0 mA/)).toBeVisible();
+  const meter = page.getByRole('combobox', { name: 'Đo:' });
+  await meter.focus();
+  await meter.selectOption('D1');
+  await expect(page.getByText(/^Đo D1 \(LED\): dòng 0,0 mA/)).toBeVisible();
+  await page.getByRole('button', { name: 'TẮT NGUỒN' }).click();
+  // lượt 2: xoay đúng, cấp nguồn, vừa đạt là tắt nguồn ngay (trước 1,5 s): kết quả vẫn được báo và lưu
+  await page.getByRole('button', { name: 'LED, đang cắm ở D1' }).click();
+  await page.getByRole('button', { name: 'Xoay 180°' }).click();
+  await page.getByRole('button', { name: 'CẤP NGUỒN' }).click();
+  await expect.poll(() => snap(page).then((s) => s?.pass), { intervals: [50] }).toBe(true);
+  await page.getByRole('button', { name: 'TẮT NGUỒN' }).click();
+  await expect(page.getByRole('dialog', { name: 'Kết quả' }).getByText('Mạch chạy rồi!')).toBeVisible();
+  await page.reload();
+  await page.getByRole('button', { name: 'LẮP RÁP: cắm linh kiện lên bo mạch' }).click();
+  await expect(page.getByRole('button', { name: /^a01 .*, 2 sao$/ })).toBeVisible();
 });

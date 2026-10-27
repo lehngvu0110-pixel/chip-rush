@@ -68,7 +68,7 @@ describe('danh mục linh kiện', () => {
       expect(PART_SYMBOLS[p.id]).toContain('<svg');
       const m = partModel(p.id);
       expect(m.length).toBeGreaterThan(20);
-      expect(m.length).toBeLessThan(2500); // giữ nhẹ cho máy yếu
+      expect(m.length, p.id).toBeLessThan(700); // giữ nhẹ cho máy yếu (26/10: cuộn cảm từng 1406 mặt)
       for (const f of m) for (const v of f.pts) for (const c of v) expect(Number.isFinite(c)).toBe(true);
     }
     expect(partById('khong-co')).toBeUndefined();

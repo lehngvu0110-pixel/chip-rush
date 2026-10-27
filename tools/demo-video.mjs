@@ -1,4 +1,4 @@
-// Quay video demo ~45 s từ chính game (Playwright ghi màn hình), không dựng hình bằng công cụ khác.
+// Quay video demo khoảng 1 phút từ chính game (4 công đoạn + Góc học tập) (Playwright ghi màn hình), không dựng hình bằng công cụ khác.
 // Ra: docs/submission/demo.mp4 (dọc, cho Portal/mạng xã hội) và docs/demo.gif (đoạn ngắn cho README).
 // Cách chạy: npm run build && npx vite preview --host 127.0.0.1 --port 4173 &   rồi   node tools/demo-video.mjs
 // Cần ffmpeg trong PATH. CHROMIUM_PATH=... nếu không dùng trình duyệt Playwright đã cài.
@@ -29,7 +29,10 @@ await p.addInitScript(() => {
   for (const id of ['d01', 'd02', 'd03', 'd04', 'd05', 'd06', 'd07', 'd08', 'd09', 'd10', 'd11']) d[id] = { stars: 3, best: { A: 99, D: 9, P: 99 }, hinted: false };
   const t = {};
   for (const id of ['t01', 't02', 't03', 't04']) t[id] = { stars: 3, probes: 1 };
-  localStorage.setItem('chiprush.v1', JSON.stringify({ version: 1, design: d, debug: t, runtime: { bestEndless: 1240, best60: 520 }, daily: { lastDate: '2026-10-25', streak: 4, history: {} }, settings: { muted: true, reducedMotion: false } }));
+  // LẮP RÁP: đã qua a01-a10 để mở màn mạch nháy 555
+  const a = {};
+  for (let i = 1; i <= 10; i++) a['a' + String(i).padStart(2, '0')] = { stars: 3, powerOns: 1 };
+  localStorage.setItem('chiprush.v1', JSON.stringify({ version: 1, design: d, debug: t, assembly: a, runtime: { bestEndless: 1240, best60: 520 }, daily: { lastDate: '2026-11-14', streak: 4, history: {} }, settings: { muted: true, reducedMotion: false } }));
 });
 
 /** Dòng chú thích phía trên màn hình (chỉ có trong video, không có trong game). */
@@ -59,7 +62,7 @@ const designCell = (c, r) => p.evaluate(([c, r]) => window.__CHIPRUSH__.design()
 const debugCell = (c, r) => p.evaluate(([c, r]) => window.__CHIPRUSH__.debug().cell(c, r), [c, r]);
 
 // 1. Màn chính
-await p.goto(B + '?e2e&date=2026-10-26&seed=9');
+await p.goto(B + '?e2e&date=2026-11-15&seed=9');
 await p.waitForTimeout(600);
 await caption('CHIP RUSH – làm một con chip từ A đến Z');
 await p.waitForTimeout(2500);
@@ -89,7 +92,7 @@ for (const [c, r] of [[0, 1], [0, 3], [0, 5]]) {
 await p.waitForTimeout(1200);
 
 // 4. KIỂM THỬ t05: đo 2 dây rồi xem AI đo
-await p.goto(B + '?e2e&date=2026-10-26&seed=9');
+await p.goto(B + '?e2e&date=2026-11-15&seed=9');
 await p.getByRole('button', { name: 'KIỂM THỬ: tìm lỗi chip' }).click();
 await p.getByRole('button', { name: /^t05 / }).click();
 await caption('KIỂM THỬ: chip có 1 lỗi ẩn – đo dây để tìm');
@@ -109,10 +112,35 @@ await p.getByRole('button', { name: /BÁO: KẸT Ở 1/ }).click();
 await p.waitForTimeout(1600);
 await p.getByRole('button', { name: 'Xem AI kỹ sư đo' }).click();
 await caption('Xem AI kỹ sư suy luận từng bước (minimax)');
-await p.waitForTimeout(6500);
+await p.waitForTimeout(4500);
+
+// 4b. LẮP RÁP a11: cắm linh kiện, xoay IC cho đúng vết khuyết, cấp nguồn → LED nháy
+await p.goto(B + '?e2e&date=2026-11-15&seed=9');
+await p.getByRole('button', { name: 'LẮP RÁP: cắm linh kiện lên bo mạch' }).click();
+await p.getByRole('button', { name: /^a11 / }).click();
+await caption('LẮP RÁP: cắm linh kiện lên bo mạch');
+await p.waitForTimeout(900);
+for (const [fp, tray, flip] of [['U1', 0, true], ['R1', 1], ['R2', 2], ['R3', 3], ['C1', 4], ['D1', 6]]) {
+  await p.locator('.asm-part').nth(tray).click();
+  await p.waitForTimeout(220);
+  await p.getByRole('button', { name: `Cắm vào ${fp}`, exact: true }).click();
+  await p.waitForTimeout(220);
+  if (flip) {
+    await p.getByRole('button', { name: 'Xoay 180°' }).click();
+    await p.waitForTimeout(300);
+  }
+}
+await p.getByRole('button', { name: 'CẤP NGUỒN' }).click();
+await caption('Cấp nguồn: bộ chấm mô phỏng mạch điện thật');
+await p.getByRole('button', { name: 'Xem mạch chạy' }).waitFor();
+await p.waitForTimeout(1300);
+// quay lại bo để thấy LED nháy (thẻ kết quả che mất bo)
+await p.getByRole('button', { name: 'Xem mạch chạy' }).click();
+await caption('IC 555 làm LED nháy khoảng 1,4 lần mỗi giây');
+await p.waitForTimeout(3000);
 
 // 5. VẬN HÀNH
-await p.goto(B + '?e2e&date=2026-10-26&seed=9');
+await p.goto(B + '?e2e&date=2026-11-15&seed=9');
 await p.getByRole('button', { name: 'CHƠI NGAY' }).click();
 await caption('VẬN HÀNH: chọn cổng đúng trước khi chip chạm ổ cắm');
 for (let i = 0; i < 12; i++) {
@@ -123,8 +151,26 @@ for (let i = 0; i < 12; i++) {
 }
 await p.waitForTimeout(600);
 
+// 5b. Góc học tập: sơ đồ tư duy + trắc nghiệm
+await p.goto(B + '?e2e&date=2026-11-15&seed=9');
+await p.getByRole('button', { name: /^Góc học tập/ }).click();
+await p.getByRole('button', { name: 'Sơ đồ tư duy' }).click();
+await caption('Góc học tập: sơ đồ tư duy điện - điện tử');
+await p.waitForTimeout(1000);
+await p.getByRole('button', { name: /^Bán dẫn, nhánh/ }).click();
+await p.waitForTimeout(900);
+await p.getByRole('button', { name: 'LED', exact: true }).click();
+await p.waitForTimeout(1500);
+await p.keyboard.press('Escape');
+await p.getByRole('button', { name: 'Trắc nghiệm' }).click();
+await p.getByRole('button', { name: 'Bắt đầu 10 câu' }).click();
+await caption('Trắc nghiệm có lời giải từng câu');
+await p.waitForTimeout(1200);
+await p.locator('.quiz-opt').first().click();
+await p.waitForTimeout(2200);
+
 // 6. Chip hôm nay + Huy hiệu
-await p.goto(B + '?e2e&date=2026-10-26&seed=9');
+await p.goto(B + '?e2e&date=2026-11-15&seed=9');
 await caption('Mỗi ngày một đề mới + 12 huy hiệu');
 await p.waitForTimeout(1500);
 await p.getByRole('button', { name: /^Huy hiệu/ }).click();

@@ -51,9 +51,9 @@ export function isUnique(cell: Cell, gates: readonly GateType[]): boolean {
 
 /**
  * Bảng gói "công bằng" cho Thử thách 60 giây (chống spam, 23/10): chọn ô theo trọng số sao cho với MỌI cổng đã mở,
- * cổng đó chỉ là đáp án đúng ở tối đa 50% số gói. Vì vậy bấm mãi một cổng (hoặc bấm ngẫu nhiên) chỉ đúng ≤ 50%,
- * kết hợp phạt đối xứng (sai trừ đúng số điểm lẽ ra được cộng) thì kỳ vọng điểm của đoán bừa ≤ 0.
- * 50% là mức thấp nhất có thể: gói nào cũng có ít nhất 1 cổng đúng, nên với 2 cổng thì tổng tỉ lệ đúng ≥ 100%.
+ * cổng đó chỉ là đáp án đúng ở tối đa 50% số gói (mức thấp nhất có thể: gói nào cũng có ít nhất 1 cổng đúng).
+ * Chỉ dùng bảng này thì có 4-6 kiểu gói, dễ học thuộc; nên từ 26/10 Thử thách 60 giây rút `RUNTIME.sixtyFairShare`
+ * số gói từ bảng, phần còn lại rút đều trong mọi ô (có A = B). Lần khoá 0,8 s + phạt đối xứng chặn phần spam còn lại.
  * Mỗi dòng: [ô, trọng số]; tests/runtime-game.test.ts kiểm tra lại giới hạn 50% bằng chính makePacket().
  */
 export const FAIR_CELLS: Record<string, [Cell, number][]> = {
@@ -93,6 +93,7 @@ export class Spawner {
 
   next(gates: readonly GateType[]): Packet {
     const table = this.fair ? FAIR_CELLS[gates.join(',')] : undefined;
+    if (table && this.rng() >= RUNTIME.sixtyFairShare) return makePacket(pick(this.rng, allCells(gates)), gates);
     if (table) {
       let r = this.rng();
       for (const [cell, w] of table) {

@@ -1,6 +1,6 @@
 // LẮP RÁP: hình học bo mạch (đường đồng khớp lưới điện), lời giải mẫu chạy được, lỗi hay gặp bị bắt đúng.
 import { describe, expect, it } from 'vitest';
-import { BoardSim, PIN_COUNT, assemblyStars, evaluate, padIndex, padsOf, type AsmLevel, type Placement, type Pt } from '../src/core/assembly/board';
+import { BoardSim, PIN_COUNT, assemblyStars, evaluate, evaluateSteps, padIndex, padsOf, type AsmLevel, type Placement, type Pt } from '../src/core/assembly/board';
 import { ASSEMBLY_LEVELS, assemblyLevel } from '../src/core/assembly/levels';
 
 const key = (p: Pt): string => `${p[0]},${p[1]}`;
@@ -174,6 +174,35 @@ describe('lỗi hay gặp bị bắt đúng', () => {
     const bjt = evaluate(lv, { ...lv.solution, Q1: { tray: 3, flip: false } });
     expect(bjt.pass).toBe(false);
     expect(bjt.checks[0]!.ok).toBe(false);
+  });
+  it('a11: tần số đo được khớp công thức 1,44 / ((R1 + 2·R2)·C) ≈ 1,46 Hz trong 7%, hiện 2 chữ số thập phân (lỗi 26/10: "1,3")', () => {
+    const lv = assemblyLevel('a11')!;
+    const got = evaluate(lv, lv.solution).checks[0]!.got;
+    const f = Number(/([\d,]+) lần\/giây/.exec(got)![1]!.replace(',', '.'));
+    expect(f / (1.44 / (21_000 * 47e-6))).toBeGreaterThan(0.93);
+    expect(f / (1.44 / (21_000 * 47e-6))).toBeLessThan(1.07);
+    expect(got).toMatch(/^\d,\d\d lần\/giây$/);
+  });
+  it('a02: dòng khi dùng 10 Ω khớp gợi ý "khoảng 150 mA"', () => {
+    const lv = assemblyLevel('a02')!;
+    // LED cháy ngay ở bước mô phỏng đầu tiên; lý do cháy ghi dòng đo được lúc đó
+    const reason = evaluate(lv, { ...lv.solution, R1: { tray: 0, flip: false } }).burnt.find((b) => b.id === 'D1')!.reason;
+    const mA = Number(/dòng (\d+) mA/.exec(reason)![1]);
+    expect(mA).toBeGreaterThan(130);
+    expect(mA).toBeLessThan(160);
+    expect(lv.hint).toContain('khoảng 150 mA');
+  });
+  it('bộ chấm chia lát: mỗi lần next() chỉ chạy một đoạn ngắn, kết quả giống chạy liền', () => {
+    const lv = assemblyLevel('a11')!;
+    const gen = evaluateSteps(lv, lv.solution);
+    let slices = 0;
+    let r = gen.next();
+    while (!r.done) {
+      slices++;
+      r = gen.next();
+    }
+    expect(slices).toBeGreaterThan(20);
+    expect(r.value).toEqual(evaluate(lv, lv.solution));
   });
   it('a11: IC ngược → cháy; tụ 100 nF → nháy quá nhanh', () => {
     const { lv, pl } = tweak('a11', { U1: { tray: 0, flip: true } });

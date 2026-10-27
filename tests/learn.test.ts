@@ -21,6 +21,16 @@ describe('sơ đồ tư duy', () => {
       expect(b.children!.length).toBeLessThanOrEqual(6);
     }
   });
+  it('công thức: mỗi ô một công thức, không dùng "·" (dấu nhân) để ngăn cách hai công thức (lỗi 26/10)', () => {
+    expect(findMindPath('p-capacitor')!.at(-1)!.formula).toEqual(['Q = C · U', 'τ = R · C']);
+    for (const n of allMindNodes())
+      for (const f of n.formula ?? []) {
+        // "·" phải nằm giữa hai thừa số, không đứng trước một nhãn mới ("· Song song:") hay một vế mới ("· τ =")
+        expect(f, n.id).not.toMatch(/·\s*[^·=]*:/);
+        expect(f, n.id).not.toMatch(/·\s*[A-Za-zτ]\s*=/);
+      }
+  });
+
   it('tìm đường đi từ gốc tới một ý', () => {
     expect(findMindPath('ohm')!.map((n) => n.id)).toEqual(['root', 'laws', 'ohm']);
     expect(findMindPath('khong-co')).toBeNull();
@@ -38,17 +48,29 @@ describe('câu soạn sẵn', () => {
   });
 });
 
+describe('độ đúng kiến thức', () => {
+  it('điện 50 Hz đổi chiều 100 lần mỗi giây (50 chu kỳ × 2), không phải 50 lần (lỗi 26/10)', () => {
+    const q = AUTHORED_QUESTIONS.find((x) => x.id === 'b-acdc')!;
+    expect(q.explain).toContain('100 lần');
+    for (const x of AUTHORED_QUESTIONS) expect(x.explain, x.id).not.toMatch(/đổi chiều 50 lần/);
+    for (const n of allMindNodes()) expect(n.detail, n.id).not.toMatch(/đổi chiều 50 lần/);
+  });
+});
+
 describe('câu tính toán', () => {
   const num = (s: string): number => {
     const m = /([\d,]+)\s*(m|k|M)?(A|W|Ω)?/.exec(s)!;
     const v = Number(m[1]!.replace(',', '.'));
     return v * (m[2] === 'k' ? 1e3 : m[2] === 'M' ? 1e6 : m[2] === 'm' ? 1e-3 : 1);
   };
-  it('mỗi bộ sinh: 4 phương án khác nhau qua 200 seed', () => {
+  it('mỗi bộ sinh: 4 phương án khác nhau cả về chữ lẫn GIÁ TRỊ, qua 3000 seed (lỗi 26/10: "500 Ω × 2")', () => {
     for (const g of GENERATORS)
-      for (let s = 1; s <= 200; s++) {
+      for (let s = 1; s <= 3000; s++) {
         const q = g.make(createRng(s));
-        expect(new Set(q.opts).size, `${g.id} seed ${s}: ${q.opts.join(' | ')}`).toBe(4);
+        const why = `${g.id} seed ${s}: ${q.opts.join(' | ')}`;
+        expect(new Set(q.opts).size, why).toBe(4);
+        expect(q.opts.join(' '), why).not.toContain('×');
+        if (g.id !== 'g-gate') expect(new Set(q.opts.map(num)).size, why).toBe(4);
       }
   });
   it('đáp án Ohm, công suất, LED, nhị phân khớp công thức', () => {

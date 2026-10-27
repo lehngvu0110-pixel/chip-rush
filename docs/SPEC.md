@@ -10,7 +10,7 @@
 | Gói bit | 2 bit đầu vào A, B + 1 bit mục tiêu, rơi từ trên xuống cổng ở đáy |
 | Thao tác | Chạm 1 trong 4 nút AND / OR / XOR / NAND trước khi gói chạm đáy; cổng nào cho đầu ra đúng đều tính đúng |
 | Mở khóa cổng | Bắt đầu AND, OR; XOR từ 100 điểm; NAND từ 250 điểm |
-| Sinh gói | Vô tận: ≥ 60% số gói chỉ có đúng 1 cổng (trong các cổng đã mở) cho kết quả đúng. Thử thách 60 giây: rút theo bảng công bằng `FAIR_CELLS`, mỗi cổng đã mở là đáp án đúng ở tối đa 50% số gói |
+| Sinh gói | Vô tận: ≥ 60% số gói chỉ có đúng 1 cổng (trong các cổng đã mở) cho kết quả đúng. Thử thách 60 giây: 50% số gói rút theo bảng công bằng `FAIR_CELLS` (mỗi cổng là đáp án đúng ở tối đa 50% số gói trong bảng), 50% rút đều trong mọi ô kể cả A = B (`sixtyFairShare`), để đủ mọi kiểu gói |
 | Tốc độ | Thời gian rơi bắt đầu 3,0 s; cứ 5 câu đúng nhân 0,96; tối thiểu 0,9 s |
 | Điểm | Đúng = 10 × hệ số; hệ số = 1 + floor(combo / 5), tối đa 4; sai thì combo về 0 |
 | Vô tận | 3 mạng; sai mất 1 mạng; hết mạng là thua; bật độ khó thích nghi (mục 5.3) |
@@ -166,6 +166,7 @@ Cài đặt: `src/ai/debug-solver.ts`, chạy offline trong `tools/solve-levels.
 | 07/10/2026 | Lưới THIẾT KẾ | Làm rõ, chờ duyệt | Dây theo cạnh, cắt nhau cùng lớp = chập, cổng 1 ô có chân theo phía, cách tính Area |
 | 12/10/2026 | Daily Chip | Làm sớm + làm rõ, chờ duyệt | Có từ trước 26/10 (quay vòng), cách sinh đề, luật chuỗi ngày, `daily.history` |
 | 17/10/2026 | Huy hiệu | Thêm, chờ duyệt | 12 huy hiệu xuyên 3 chế độ, điều kiện trong `src/core/badges.ts`; trao bù im lặng cho dữ liệu cũ; xoá tiến độ thì xoá cả huy hiệu |
+| 26/10/2026 | Thử thách 60 giây: trộn lại gói A = B | Chỉ bảng công bằng → 50% bảng công bằng + 50% mọi ô | Vũ báo: chỉ còn 4-6 kiểu gói, học thuộc được, không còn luyện bảng chân trị. Đo (`sixtyFairShare` = 1 / 0,5 / 0): số kiểu gói khi mở 4 cổng 5 / 8 / 8; đoán chỉ bằng bit đích đúng 50% / 66% / 81%; spam tệ nhất 3% / 9% / 33% điểm người chơi thật. Lưu ý: khi mới có AND, OR thì "đích 0 → AND, đích 1 → OR" luôn đúng 100% với MỌI cách sinh gói (AND ≤ OR), có thêm XOR thì "đích 1 → OR" luôn đúng; đây là tính chất của luật "cổng nào cho đúng bit đều tính đúng", chỉ hết khi mở NAND. Chọn 0,5: đủ mọi kiểu gói, lần khoá 0,8 s + phạt đối xứng giữ spam ≤ 10% |
 | 23/10/2026 | Thử thách 60 giây: chống spam | Sai −5 → sai trừ 10 × hệ số; thêm khoá 0,8 s khi bấm sai; sinh gói theo bảng công bằng (mỗi cổng đúng ≤ 50%) | Báo lỗi: bấm liên tục 1 cổng vẫn lên điểm. Đo trên 30 seed, bot bấm 8 lần/giây: spam AND 1958 điểm so với 2340 của người trả lời đúng mỗi 0,9 s (84%). Sau khi sửa: spam mọi cổng 62-79 điểm, bấm ngẫu nhiên 70, người chơi thật vẫn 2340; người chơi sai 5% / 10% giảm nhẹ 1591 → 1512 / 1172 → 1037. Kiểm tra trong `tests/anti-spam.test.ts`. Vô tận không đổi (đã giới hạn bởi 3 mạng) |
 | 23/10/2026 | Góc học tập | Thêm, chờ duyệt | Mục 4c; dữ liệu lưu thêm `learn`, dữ liệu cũ không cần chuyển đổi |
 | 23/10/2026 | LẮP RÁP | Thêm, chờ duyệt | Chế độ thứ tư, luật ở mục 4b; dữ liệu lưu thêm `assembly`, dữ liệu cũ không cần chuyển đổi |

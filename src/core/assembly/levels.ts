@@ -42,7 +42,7 @@ export const ASSEMBLY_LEVELS: readonly AsmLevel[] = [
     name: 'Đọc vạch màu',
     concept: 'Định luật Ohm, mã màu điện trở',
     brief: 'Ba điện trở đã bị bóc nhãn! Đọc vạch màu, chọn cái cho LED sáng vừa đủ (khoảng 10-20 mA).',
-    hint: 'Nguồn 5 V, LED sụt khoảng 2 V → còn 3 V trên điện trở. I = 3 V / R: 10 Ω cho 300 mA (cháy LED), 100 kΩ cho 0,03 mA (gần như tối). Cần R khoảng 150-300 Ω. Bảng màu: Đen 0, Nâu 1, Đỏ 2, Cam 3, Vàng 4...',
+    hint: 'Nguồn 5 V, LED sụt khoảng 2 V → còn 3 V trên điện trở. I = 3 V / R: với 10 Ω tính nhanh ra 300 mA; thực tế LED và pin cũng có chút điện trở nên đồng hồ đo khoảng 150 mA, vẫn gấp 5 lần mức 30 mA LED chịu được (cháy). Với 100 kΩ chỉ 0,03 mA (gần như tối). Cần R khoảng 150-300 Ω. Bảng màu: Đen 0, Nâu 1, Đỏ 2, Cam 3, Vàng 4...',
     cols: 10,
     rows: 14,
     battery: BATTERY(5),
